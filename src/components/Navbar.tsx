@@ -1,13 +1,16 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Bell, Search, Menu, X, Moon, Sun, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useApp } from "@/lib/store";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 const links = [
   { to: "/", label: "Home" },
+  { to: "/discover-builders", label: "Discover Builders" },
   { to: "/my-team", label: "My Team" },
   { to: "/find-projects", label: "Find Projects" },
   { to: "/profile", label: "Profile" },
@@ -15,13 +18,15 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(false);
   const loc = useLocation();
+  const { state } = useApp();
+  const { resolvedTheme, setTheme } = useTheme();
+  const currentUser = state.currentUser;
+  const avatar = currentUser?.avatar || "AC";
+  const isImageAvatar = !!currentUser?.avatar && /^(data:|https?:\/\/)/.test(currentUser.avatar);
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => { setOpen(false); }, [loc.pathname]);
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-  }, [dark]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-xl">
@@ -62,24 +67,33 @@ export default function Navbar() {
 
         <Link to="/notifications" className="relative size-10 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-colors">
           <Bell className="size-4.5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger" />
+          {(state.notifications ? Object.values(state.notifications).some((n) => !n.read) : false) && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger" />}
         </Link>
 
-        <button onClick={() => setDark(!dark)} className="size-10 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-colors" aria-label="Toggle theme">
-          {dark ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
+        <button onClick={() => setTheme(isDark ? "light" : "dark")} className="size-10 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-colors" aria-label="Toggle theme">
+          {isDark ? <Sun className="size-4.5" /> : <Moon className="size-4.5" />}
         </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="hidden md:flex items-center gap-2 pl-1 pr-3 h-10 rounded-xl bg-secondary hover:bg-accent transition-colors">
-              <Avatar className="size-8"><AvatarFallback className="bg-gradient-primary text-white text-xs font-semibold">AS</AvatarFallback></Avatar>
-              <span className="text-sm font-medium">Aditi</span>
-            </button>
+            {currentUser ? (
+              <button className="hidden md:flex items-center gap-2 pl-1 pr-3 h-10 rounded-xl bg-secondary hover:bg-accent transition-colors">
+                <Avatar className="size-8 overflow-hidden">
+                  {isImageAvatar ? <img src={avatar} alt={currentUser?.name || "Profile"} className="size-full object-cover" /> : <AvatarFallback className="bg-gradient-primary text-white text-xs font-semibold">{avatar}</AvatarFallback>}
+                </Avatar>
+                <span className="text-sm font-medium">{currentUser?.name?.split(" ")[0]}</span>
+              </button>
+            ) : (
+              <Link to="/onboarding/profile-setup" className="hidden md:flex items-center gap-2 pl-3 pr-3 h-10 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors">
+                Login
+              </Link>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Aditi Singh</DropdownMenuLabel>
+            <DropdownMenuLabel>{currentUser?.name || "Guest"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/onboarding/profile-setup">Onboarding</Link></DropdownMenuItem>
             <DropdownMenuSeparator />

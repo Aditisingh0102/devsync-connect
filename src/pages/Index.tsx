@@ -73,9 +73,12 @@ export default function Index() {
             </div>
             <div className="mt-8 flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex -space-x-2">
-                {["AS", "AN", "AG", "AK"].map((a, i) => (
-                  <div key={a} className="size-8 rounded-full ring-2 ring-background bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center" style={{ zIndex: 10 - i }}>{a}</div>
-                ))}
+                {["AC", "PM", "RV", "SK"].map((a, i) => {
+                  const depthClasses = ["z-40", "z-30", "z-20", "z-10"];
+                  return (
+                    <div key={a} className={`size-8 rounded-full ring-2 ring-background bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center ${depthClasses[i]}`}>{a}</div>
+                  );
+                })}
               </div>
               <div><span className="font-semibold text-foreground">8.6K+ students</span> already syncing</div>
             </div>
@@ -86,10 +89,10 @@ export default function Index() {
               <Hero3D className="absolute inset-0" />
             </Suspense>
             <div className="absolute top-4 left-4 glass-panel rounded-xl px-3 py-2 text-xs font-medium border border-border">
-              <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-success animate-pulse" /> Live network · 8.6K nodes</span>
+                  <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-success animate-pulse" /> 3D shoe preview · live</span>
             </div>
             <div className="absolute bottom-4 right-4 glass-panel rounded-xl px-3 py-2 text-xs border border-border">
-              <div className="font-semibold">Skill Match</div>
+              <div className="font-semibold">Design Quality</div>
               <div className="text-primary font-bold text-lg">92%</div>
             </div>
           </div>
@@ -152,8 +155,11 @@ export default function Index() {
               return (
                 <div key={s}>
                   <div className="flex justify-between text-sm mb-1.5"><span className="font-medium">{s}</span><span className="text-muted-foreground">{v}%</span></div>
-                  <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-primary rounded-full" style={{ width: `${v}%` }} />
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 20 }).map((_, idx) => {
+                      const activeSegments = Math.max(1, Math.round((v / 100) * 20));
+                      return <div key={idx} className={`flex-1 h-1 rounded-full ${idx < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
+                    })}
                   </div>
                 </div>
               );
@@ -215,7 +221,7 @@ export default function Index() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {roadmap.map((r) => (
               <div key={r.title} className="ds-card ds-card-hover p-5 flex items-center gap-4">
-                <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 bg-${r.color}/10 text-${r.color}`} style={{ background: `hsl(var(--${r.color === "warning" ? "warning" : r.color === "success" ? "success" : r.color}) / 0.1)`, color: `hsl(var(--${r.color === "warning" ? "warning" : r.color === "success" ? "success" : r.color}))` }}>
+                  <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${r.color === "warning" ? "bg-warning/10 text-warning" : r.color === "success" ? "bg-success/10 text-success" : r.color === "danger" ? "bg-danger/10 text-danger" : r.color === "cyan" ? "bg-cyan/10 text-cyan" : r.color === "purple" ? "bg-purple/10 text-purple" : "bg-primary/10 text-primary"}`}>
                   <r.icon className="size-5" />
                 </div>
                 <div className="flex-1">
@@ -231,16 +237,15 @@ export default function Index() {
 
       {/* CTA */}
       <section className="container py-20">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-primary p-10 md:p-16 text-center text-white shadow-glow">
-          <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 30% 50%, white, transparent 50%)" }} />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-primary p-10 md:p-16 text-center text-white shadow-glow cta-glow">
           <div className="relative">
             <h2 className="font-display text-3xl md:text-5xl font-bold">Start syncing with your next team.</h2>
             <p className="mt-3 text-white/85 max-w-xl mx-auto">Join thousands of students discovering projects, building teams, and shipping real-world experience.</p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
-              <Link to="/onboarding/profile-setup" className="h-12 px-6 rounded-xl bg-white text-primary font-semibold inline-flex items-center gap-2 hover:bg-white/90 transition-all">
+              <Link to="/onboarding/profile-setup" className="h-12 px-6 rounded-xl bg-card text-foreground border border-border font-semibold inline-flex items-center gap-2 hover:bg-secondary transition-all">
                 Get started <Zap className="size-4" />
               </Link>
-              <Link to="/find-projects" className="h-12 px-6 rounded-xl bg-white/10 border border-white/20 backdrop-blur font-semibold inline-flex items-center gap-2 hover:bg-white/20 transition-all">
+              <Link to="/find-projects" className="h-12 px-6 rounded-xl bg-secondary/70 border border-border backdrop-blur font-semibold inline-flex items-center gap-2 hover:bg-secondary transition-all">
                 Browse projects
               </Link>
             </div>

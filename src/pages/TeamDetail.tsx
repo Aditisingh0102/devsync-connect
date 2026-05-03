@@ -52,9 +52,13 @@ export default function TeamDetail() {
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-2">
-            {roleData.map((d) => (
-              <div key={d.name} className="flex items-center gap-2 text-xs"><span className="size-2.5 rounded-full" style={{ background: d.color }} />{d.name}</div>
-            ))}
+            {roleData.map((d) => {
+              return (
+                <div key={d.name} className="flex items-center gap-2 text-xs">
+                  <span className={`size-2.5 rounded-full ${d.color === "success" ? "bg-success" : d.color === "warning" ? "bg-warning" : d.color === "danger" ? "bg-danger" : d.color === "cyan" ? "bg-cyan" : d.color === "purple" ? "bg-purple" : "bg-primary"}`} />{d.name}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

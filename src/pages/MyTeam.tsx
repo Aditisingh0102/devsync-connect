@@ -32,8 +32,11 @@ export default function MyTeam() {
           <p className="text-sm text-muted-foreground mt-1">{team.sprint.name} · {team.sprint.daysLeft} days left</p>
           <div className="mt-5">
             <div className="flex justify-between text-xs text-muted-foreground mb-1.5"><span>Sprint progress</span><span>{team.sprint.progress}%</span></div>
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-primary rounded-full" style={{ width: `${team.sprint.progress}%` }} />
+            <div className="flex gap-0.5">
+              {Array.from({ length: 20 }).map((_, i) => {
+                const activeSegments = Math.max(1, Math.round((team.sprint.progress / 100) * 20));
+                return <div key={i} className={`flex-1 h-1.5 rounded-full ${i < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
+              })}
             </div>
           </div>
         </div>
@@ -109,10 +112,10 @@ export default function MyTeam() {
         <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><ActivityIcon className="size-4 text-primary" /> Recent Activity</h3>
         <ul className="space-y-3">
           {[
-            { who: "Anshuman", what: "pushed 5 commits to matching-engine", when: "1h" },
-            { who: "Ansh", what: "moved 'Profile cards' to Review", when: "3h" },
-            { who: "Ambar", what: "merged PR #42 — CI pipeline", when: "Yesterday" },
-            { who: "Aditi", what: "scheduled Sprint Review for Friday", when: "Yesterday" },
+            { who: "Priya Mehta", what: "pushed 5 commits to matching-engine", when: "1h" },
+            { who: "Rohan Verma", what: "moved 'Profile cards' to Review", when: "3h" },
+            { who: "Sarah Khan", what: "merged PR #42 — CI pipeline", when: "Yesterday" },
+            { who: "Alex Carter", what: "scheduled Sprint Review for Friday", when: "Yesterday" },
           ].map((a, i) => (
             <li key={i} className="flex items-start gap-3">
               <div className="size-8 rounded-lg bg-primary-soft text-primary flex items-center justify-center text-xs font-semibold">{a.who[0]}</div>

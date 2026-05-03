@@ -66,7 +66,7 @@ export default function ProjectDetail() {
           <div className="ds-card p-6">
             <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><MessageSquare className="size-4 text-primary" /> Discussion</h3>
             <div className="space-y-3">
-              {[{ u: "Anshuman", t: "Pushed v0 of matching scoring — feedback welcome." }, { u: "Ansh", t: "Profile cards in review, demo Friday." }].map((d, i) => (
+              {[{ u: "Priya Mehta", t: "Pushed v0 of matching scoring — feedback welcome." }, { u: "Rohan Verma", t: "Profile cards in review, demo Friday." }].map((d, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="size-9 rounded-lg bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center shrink-0">{d.u[0]}</div>
                   <div className="flex-1"><p className="text-sm"><span className="font-semibold">{d.u}</span> · 2h ago</p><p className="text-sm text-muted-foreground">{d.t}</p></div>
@@ -96,7 +96,7 @@ export default function ProjectDetail() {
           <div className="ds-card p-6">
             <h3 className="font-semibold text-lg mb-3 flex items-center gap-2"><Users className="size-4 text-primary" /> Contributors</h3>
             <div className="space-y-2">
-              {["Aditi Singh", "Anshuman", "Ansh Gupta"].map((c) => (
+              {["Alex Carter", "Priya Mehta", "Rohan Verma"].map((c) => (
                 <div key={c} className="flex items-center gap-3">
                   <div className="size-9 rounded-lg bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center">{c.split(" ").map(n => n[0]).join("")}</div>
                   <span className="text-sm">{c}</span>

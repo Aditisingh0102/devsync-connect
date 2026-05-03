@@ -2,9 +2,10 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, GraduationCap, Sparkles, User, Briefcase, ListChecks } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { skills } from "@/data/mock";
+import { useApp } from "@/lib/store";
 
 const steps = [
-  { icon: GraduationCap, title: "College Login", desc: "Sign in with your verified college ERP." },
+  { icon: GraduationCap, title: "Email Verification", desc: "Use your email to begin setting up your profile. College verification will be added later." },
   { icon: User, title: "Skills & Interests", desc: "Tell us what you build and what you want to learn." },
   { icon: GraduationCap, title: "Academic Details", desc: "Year, branch, and a short bio." },
   { icon: Briefcase, title: "Roles & Domains", desc: "Pick the roles and domains that excite you." },
@@ -14,9 +15,19 @@ const steps = [
 const roles = ["Frontend", "Backend", "Full Stack", "Designer", "ML Engineer", "PM", "DevOps", "Mobile"];
 const domains = ["AI", "Web", "Mobile", "EdTech", "Hackathons", "OpenSource", "DevTools"];
 
+type OnboardingFormData = {
+  email: string;
+  name: string;
+  year: string;
+  bio: string;
+  skills: string[];
+  roles: string[];
+  domains: string[];
+};
+
 export default function Onboarding() {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState({ erp: "", name: "", year: "", bio: "", skills: [] as string[], roles: [] as string[], domains: [] as string[] });
+  const [data, setData] = useState<OnboardingFormData>({ email: "", name: "", year: "", bio: "", skills: [], roles: [], domains: [] });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
@@ -24,15 +35,45 @@ export default function Onboarding() {
     setData({ ...data, [key]: data[key].includes(v) ? data[key].filter((x) => x !== v) : [...data[key], v] });
   };
 
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const { dispatch } = useApp();
+
   const next = () => {
     const e: Record<string, string> = {};
-    if (step === 0 && data.erp.length < 3) e.erp = "Enter your ERP / college ID";
+    if (step === 0) {
+      if (!data.name.trim()) e.name = "Enter your full name";
+      if (!data.email.trim()) e.email = "Enter your email address";
+      else if (!isValidEmail(data.email.trim())) e.email = "Enter a valid email address";
+    }
     if (step === 1 && data.skills.length < 3) e.skills = "Pick at least 3 skills";
     if (step === 2 && !data.year) e.year = "Select your year";
     setErrors(e);
     if (Object.keys(e).length) return;
-    if (step === steps.length - 1) navigate("/");
-    else setStep(step + 1);
+    if (step === steps.length - 1) {
+      // Generate unique username from name
+      const username = data.name
+        ? `${data.name.split(" ")[0].toLowerCase()}_${Date.now().toString().slice(-5)}`
+        : `user_${Date.now()}`;
+
+      const user = {
+        id: username,
+        name: data.name,
+        handle: data.name ? `@${data.name.split(" ")[0].toLowerCase()}` : undefined,
+        avatar: data.name ? data.name.split(" ").map((s) => s[0]).slice(0, 2).join("") : "AC",
+        bio: data.bio,
+        college: data.year ? `Year ${data.year}` : undefined,
+        skills: data.skills,
+        roles: data.roles,
+        domains: data.domains,
+        followers: [],
+        following: [],
+        pendingRequests: [],
+        sentRequests: [],
+      } as any;
+      dispatch({ type: "setCurrentUser", payload: user });
+      navigate("/dashboard");
+    } else setStep(step + 1);
   };
 
   return (
@@ -60,10 +101,10 @@ export default function Onboarding() {
 
         {step === 0 && (
           <div className="space-y-4">
-            <Field label="ERP / College ID" error={errors.erp}>
-              <input value={data.erp} onChange={(e) => setData({ ...data, erp: e.target.value })} placeholder="e.g. 2022CSE001" className="ds-input" />
+            <Field label="Email Address" error={errors.email}>
+              <input value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} type="email" placeholder="yourname@gmail.com" className="ds-input" />
             </Field>
-            <Field label="Full name">
+            <Field label="Full Name" error={errors.name}>
               <input value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })} placeholder="Your full name" className="ds-input" />
             </Field>
           </div>
@@ -84,7 +125,7 @@ export default function Onboarding() {
         {step === 2 && (
           <div className="space-y-4">
             <Field label="Academic Year" error={errors.year}>
-              <select value={data.year} onChange={(e) => setData({ ...data, year: e.target.value })} className="ds-input">
+              <select aria-label="Academic Year" value={data.year} onChange={(e) => setData({ ...data, year: e.target.value })} className="ds-input">
                 <option value="">Select year</option>{["1", "2", "3", "4"].map((y) => <option key={y} value={y}>Year {y}</option>)}
               </select>
             </Field>
@@ -118,7 +159,7 @@ export default function Onboarding() {
         {step === 4 && (
           <div className="space-y-3">
             {[
-              ["ID", data.erp || "—"], ["Name", data.name || "—"], ["Year", data.year ? `Year ${data.year}` : "—"],
+              ["Email", data.email || "—"], ["Name", data.name || "—"], ["Year", data.year ? `Year ${data.year}` : "—"],
               ["Skills", data.skills.join(", ") || "—"], ["Roles", data.roles.join(", ") || "—"], ["Domains", data.domains.join(", ") || "—"],
             ].map(([k, v]) => (
               <div key={k as string} className="flex items-start justify-between p-3 rounded-xl bg-surface-alt border border-border gap-4">

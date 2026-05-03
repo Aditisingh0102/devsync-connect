@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
+import DiscoverBuilders from "./pages/DiscoverBuilders";
 import FindProjects from "./pages/FindProjects";
 import MyTeam from "./pages/MyTeam";
 import Profile from "./pages/Profile";
@@ -13,6 +14,13 @@ import TeamDetail from "./pages/TeamDetail";
 import Notifications from "./pages/Notifications";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
+import FeedPage from "./pages/FeedPage";
+import PostPage from "./pages/PostPage";
+import RequestsPage from "./pages/Requests";
+import ReviewsPage from "./pages/Reviews";
+import SettingsPage from "./pages/Settings";
+import { AppProvider } from "@/lib/store";
 
 const queryClient = new QueryClient();
 
@@ -21,21 +29,32 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <AppProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/feed" element={<FeedPage />} />
+            <Route path="/discover-builders" element={<DiscoverBuilders />} />
             <Route path="/find-projects" element={<FindProjects />} />
+            <Route path="/find-builders" element={<DiscoverBuilders />} />
             <Route path="/my-team" element={<MyTeam />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:id" element={<Profile />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/team/:id" element={<TeamDetail />} />
+            <Route path="/post/:id" element={<PostPage />} />
+            <Route path="/requests" element={<RequestsPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/onboarding/profile-setup" element={<Onboarding />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </AppProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
