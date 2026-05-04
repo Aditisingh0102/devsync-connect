@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
-import { Bell, CheckCheck, MessageSquare, UserPlus, Zap, Settings, ArrowRight } from "lucide-react";
+import { Bell, CheckCheck, MessageSquare, UserPlus, Zap, Settings, ArrowRight, Star } from "lucide-react";
 
 const icons = {
   invite: UserPlus,
@@ -10,7 +10,7 @@ const icons = {
   system: Settings,
   request: MessageSquare,
   follow: UserPlus,
-  review: CheckCheck,
+  review: Star,
 } as const;
 
 const colors = {
@@ -18,10 +18,19 @@ const colors = {
   project: "bg-[hsl(var(--cyan)/0.12)] text-cyan",
   task: "bg-[hsl(var(--warning)/0.12)] text-warning",
   system: "bg-secondary text-muted-foreground",
-  request: "bg-[hsl(var(--green)/0.12)] text-success",
-  follow: "bg-primary-soft text-primary",
+  request: "bg-primary-soft text-primary",
+  follow: "bg-[hsl(var(--purple)/0.12)] text-purple",
   review: "bg-success-bg text-success",
 } as const;
+
+function bucket(date: string): "Today" | "This Week" | "Earlier" {
+  const d = +new Date(date);
+  const now = Date.now();
+  const day = 86400000;
+  if (now - d < day) return "Today";
+  if (now - d < 7 * day) return "This Week";
+  return "Earlier";
+}
 
 export default function Notifications() {
   const { state, dispatch } = useApp();
@@ -30,6 +39,9 @@ export default function Notifications() {
   const items = useMemo(() => Object.values(state.notifications).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.notifications]);
   const unread = items.filter((item) => !item.read).length;
   const shown = items.filter((item) => filter === "all" || !item.read);
+
+  const groups: Record<string, typeof shown> = { Today: [], "This Week": [], Earlier: [] };
+  shown.forEach((n) => groups[bucket(n.createdAt)].push(n));
 
   return (
     <div className="container py-10 max-w-3xl">
@@ -52,31 +64,47 @@ export default function Notifications() {
         ))}
       </div>
 
-      <div className="space-y-2">
-        {shown.length === 0 && <div className="ds-card p-12 text-center text-muted-foreground">You're all caught up.</div>}
-        {shown.map((notification) => {
-          const Icon = icons[notification.type];
-          return (
-            <Link
-              key={notification.id}
-              to={notification.href || "#"}
-              onClick={() => dispatch({ type: "markNotificationRead", payload: { id: notification.id } })}
-              className={`ds-card p-4 flex gap-4 cursor-pointer transition-all hover:shadow-card ${!notification.read ? "border-primary/30 bg-primary-soft/30" : ""}`}
-            >
-              <div className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${colors[notification.type]}`}><Icon className="size-5" /></div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-sm">{notification.title}</p>
-                  <span className="text-xs text-muted-foreground shrink-0">{new Date(notification.createdAt).toLocaleString()}</span>
+      {shown.length === 0 ? (
+        <div className="ds-card p-12 text-center">
+          <div className="size-14 rounded-2xl bg-secondary mx-auto flex items-center justify-center mb-3"><Bell className="size-6 text-muted-foreground" /></div>
+          <p className="font-semibold">You're all caught up</p>
+          <p className="text-sm text-muted-foreground mt-1">New collaboration requests, follows, and post activity will show up here.</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {(["Today", "This Week", "Earlier"] as const).map((label) =>
+            groups[label].length ? (
+              <div key={label}>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{label}</div>
+                <div className="space-y-2">
+                  {groups[label].map((notification) => {
+                    const Icon = icons[notification.type];
+                    return (
+                      <Link
+                        key={notification.id}
+                        to={notification.href || "#"}
+                        onClick={() => dispatch({ type: "markNotificationRead", payload: { id: notification.id } })}
+                        className={`ds-card p-4 flex gap-4 cursor-pointer transition-all hover:shadow-[var(--shadow-md)] ${!notification.read ? "border-primary/30 bg-primary-soft/30" : ""}`}
+                      >
+                        <div className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${colors[notification.type]}`}><Icon className="size-5" /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-sm">{notification.title}</p>
+                            <span className="text-xs text-muted-foreground shrink-0">{new Date(notification.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-0.5">{notification.body}</p>
+                          {notification.href && <span className="mt-2 text-xs font-semibold text-primary inline-flex items-center gap-1">Open <ArrowRight className="size-3.5" /></span>}
+                        </div>
+                        {!notification.read && <div className="size-2 rounded-full bg-primary mt-2" />}
+                      </Link>
+                    );
+                  })}
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">{notification.body}</p>
-                {notification.href && <span className="mt-2 text-xs font-semibold text-primary inline-flex items-center gap-1">Open <ArrowRight className="size-3.5" /></span>}
               </div>
-              {!notification.read && <div className="size-2 rounded-full bg-primary mt-2" />}
-            </Link>
-          );
-        })}
-      </div>
+            ) : null
+          )}
+        </div>
+      )}
     </div>
   );
 }
