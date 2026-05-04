@@ -42,44 +42,50 @@ export default function Hero3D({ className }: Hero3DProps) {
       ));
     }
 
-    // Glowing node points
+    // Premium dark navy nodes
     const nodeGeom = new THREE.BufferGeometry().setFromPoints(nodes);
     const nodeMat = new THREE.PointsMaterial({
-      color: 0x60a5fa,
-      size: 0.18,
+      color: 0x1e293b,
+      size: 0.16,
       transparent: true,
       opacity: 0.95,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
     });
     const nodePoints = new THREE.Points(nodeGeom, nodeMat);
     group.add(nodePoints);
 
-    // Connections between nearby nodes
+    // Subtle accent halo nodes (low-opacity blue glow)
+    const haloMat = new THREE.PointsMaterial({
+      color: 0x2563eb,
+      size: 0.34,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const haloPoints = new THREE.Points(nodeGeom, haloMat);
+    group.add(haloPoints);
+
+    // Muted slate edges
     const positions: number[] = [];
-    const colors: number[] = [];
-    const c1 = new THREE.Color(0x2563eb);
-    const c2 = new THREE.Color(0x06b6d4);
     const threshold = 2.4;
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         if (nodes[i].distanceTo(nodes[j]) < threshold) {
           positions.push(nodes[i].x, nodes[i].y, nodes[i].z, nodes[j].x, nodes[j].y, nodes[j].z);
-          colors.push(c1.r, c1.g, c1.b, c2.r, c2.g, c2.b);
         }
       }
     }
     const lineGeom = new THREE.BufferGeometry();
     lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    lineGeom.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     const lineMat = new THREE.LineBasicMaterial({
-      vertexColors: true, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending,
+      color: 0x334155, transparent: true, opacity: 0.45,
     });
     const lines = new THREE.LineSegments(lineGeom, lineMat);
     group.add(lines);
 
-    // Floating ambient particles
-    const PARTICLES = isMobile ? 80 : 200;
+    // Quiet ambient particles — refined slate dust
+    const PARTICLES = isMobile ? 60 : 140;
     const partPos = new Float32Array(PARTICLES * 3);
     for (let i = 0; i < PARTICLES; i++) {
       partPos[i * 3] = (Math.random() - 0.5) * 14;
@@ -89,7 +95,7 @@ export default function Hero3D({ className }: Hero3DProps) {
     const partGeom = new THREE.BufferGeometry();
     partGeom.setAttribute("position", new THREE.BufferAttribute(partPos, 3));
     const partMat = new THREE.PointsMaterial({
-      color: 0x7c3aed, size: 0.05, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false,
+      color: 0x475569, size: 0.04, transparent: true, opacity: 0.5, depthWrite: false,
     });
     const particles = new THREE.Points(partGeom, partMat);
     scene.add(particles);
