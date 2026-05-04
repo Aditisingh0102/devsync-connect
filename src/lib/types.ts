@@ -17,6 +17,7 @@ export type User = {
   following?: ID[];
   pendingRequests?: ID[]; // incoming request ids
   sentRequests?: ID[]; // sent request ids
+  profileCompleted?: boolean;
   preferences?: {
     profileVisibility?: "public" | "team-only";
     emailNotifications?: boolean;
@@ -45,6 +46,8 @@ export type Post = {
   tech?: string[];
   projectType?: string;
   lookingFor?: string;
+  imageUrl?: string;
+  referenceLink?: string;
   createdAt: string;
   status?: "open" | "closed" | "filled";
   responses?: ID[];

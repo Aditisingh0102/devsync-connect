@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useApp } from "@/lib/store";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -19,9 +20,10 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
-  const { state } = useApp();
   const { resolvedTheme, setTheme } = useTheme();
+  const { state, dispatch } = useApp();
   const currentUser = state.currentUser;
+  const navigate = useNavigate();
   const avatar = currentUser?.avatar || "AC";
   const isImageAvatar = !!currentUser?.avatar && /^(data:|https?:\/\/)/.test(currentUser.avatar);
   const isDark = resolvedTheme === "dark";
@@ -84,7 +86,7 @@ export default function Navbar() {
                 <span className="text-sm font-medium">{currentUser?.name?.split(" ")[0]}</span>
               </button>
             ) : (
-              <Link to="/onboarding/profile-setup" className="hidden md:flex items-center gap-2 pl-3 pr-3 h-10 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors">
+              <Link to="/login" className="hidden md:flex items-center gap-2 pl-3 pr-3 h-10 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors">
                 Login
               </Link>
             )}
@@ -97,7 +99,16 @@ export default function Navbar() {
             <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/onboarding/profile-setup">Onboarding</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <button
+                onClick={() => {
+                  dispatch({ type: "setCurrentUser" });
+                  navigate("/onboarding/profile-setup");
+                }}
+              >
+                Sign out
+              </button>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

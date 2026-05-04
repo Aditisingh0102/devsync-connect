@@ -13,6 +13,8 @@ import ProjectDetail from "./pages/ProjectDetail";
 import TeamDetail from "./pages/TeamDetail";
 import Notifications from "./pages/Notifications";
 import Onboarding from "./pages/Onboarding";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import FeedPage from "./pages/FeedPage";
@@ -21,6 +23,7 @@ import RequestsPage from "./pages/Requests";
 import ReviewsPage from "./pages/Reviews";
 import SettingsPage from "./pages/Settings";
 import { AppProvider } from "@/lib/store";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +33,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AppProvider>
+      <ErrorBoundary>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -50,10 +54,13 @@ const App = () => (
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/onboarding/profile-setup" element={<Onboarding />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </ErrorBoundary>
       </AppProvider>
     </TooltipProvider>
   </QueryClientProvider>

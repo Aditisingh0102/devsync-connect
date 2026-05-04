@@ -23,41 +23,62 @@ function saveState(state: AppState) {
 }
 
 function getInitialState(): AppState {
-  const users: Record<string, User> = {};
-  const posts: Record<string, Post> = {};
-  const reviews: Record<string, Review> = {};
+  // Seed demo users and posts to make the app feel multi-user and alive
+  const demoUsers: Record<string, User> = {};
+  const names = ["Priya Mehta", "Rohan Verma", "Alex Carter", "Sarah Khan", "Jordan Lee", "Neha Sharma", "Aarav Gupta"];
+  names.forEach((n, i) => {
+    const id = `u_${i + 1}`;
+    demoUsers[id] = {
+      id,
+      name: n,
+      username: `${n.split(" ")[0].toLowerCase()}${Math.floor(100 + Math.random() * 900)}`,
+      handle: `@${n.split(" ")[0].toLowerCase()}`,
+      avatar: n.split(" ").map((s) => s[0]).slice(0, 2).join("") ,
+      bio: "Building useful projects and collaborating with college teams.",
+      college: `Institute of Technology ${Math.floor(1 + Math.random() * 10)}`,
+      skills: ["React", "Node", "Python"].slice(0, 2 + (i % 2)),
+      roles: ["Frontend", "Full Stack"].slice(0, 1 + (i % 2)),
+      domains: ["Web", "AI", "OpenSource"].slice(0, 1 + (i % 3)),
+      links: { github: "https://github.com/example", linkedin: "https://linkedin.com/", portfolio: "https://example.com" },
+      followers: [],
+      following: [],
+      pendingRequests: [],
+      sentRequests: [],
+      profileCompleted: true,
+    } as User;
+  });
 
-  const seed = [
-    { id: "u_priya", name: "Priya Mehta", username: "priyam", college: "IIT Delhi", bio: "ML student building dev tools for students.", skills: ["Python","FastAPI","ML"], domains: ["AI/ML"], roles: ["ML Engineer"], links: { github: "#", linkedin: "#" } },
-    { id: "u_rohan", name: "Rohan Verma", username: "rohanv", college: "BITS Pilani", bio: "Frontend dev, design-curious, hackathon regular.", skills: ["React","TS","Tailwind"], domains: ["Frontend"], roles: ["Frontend Dev"], links: { github: "#" } },
-    { id: "u_sarah", name: "Sarah Khan", username: "sarahk", college: "VIT Vellore", bio: "Backend + cloud. Loves clean APIs.", skills: ["Node","PostgreSQL","AWS"], domains: ["Backend"], roles: ["Backend Dev"], links: { github: "#" } },
-    { id: "u_jordan", name: "Jordan Lee", username: "jordanl", college: "NIT Trichy", bio: "Full stack builder shipping side projects weekly.", skills: ["Next.js","Supabase"], domains: ["Full Stack"], roles: ["Full Stack"], links: { github: "#" } },
-    { id: "u_neha", name: "Neha Sharma", username: "nehas", college: "IIIT Hyderabad", bio: "UI/UX designer who codes prototypes in React.", skills: ["Figma","React","Motion"], domains: ["UI/UX"], roles: ["Designer"], links: { portfolio: "#" } },
-    { id: "u_aarav", name: "Aarav Gupta", username: "aaravg", college: "DTU", bio: "Open source enthusiast, DevOps in training.", skills: ["Docker","K8s","Go"], domains: ["DevOps"], roles: ["DevOps"], links: { github: "#" } },
+  const demoPosts: Record<string, Post> = {};
+  const sample = [
+    { authorIndex: 0, title: "Looking for Frontend for HackPrep Planner", body: "Building a dashboard to help students prepare for hackathons. Need a frontend dev.", type: "Looking for Team" },
+    { authorIndex: 1, title: "Need ML help for PeerCode Review Hub", body: "Seeking an ML engineer to help build code quality suggestions.", type: "Seeking Contributor" },
+    { authorIndex: 2, title: "Open to Collaborate on Campus Connect Live", body: "Working on a live events platform for college clubs.", type: "Open to Join" },
   ];
-  for (const u of seed) users[u.id] = { ...u, followers: [], following: [], pendingRequests: [], sentRequests: [] };
-
-  const samplePosts = [
-    { authorId: "u_priya", title: "Looking for frontend dev for hackathon team", body: "Building a student match engine for HackX. Need a React dev comfortable with Tailwind. 2-week sprint.", type: "Hiring for Hackathon", domain: "Frontend", tech: ["React","Tailwind"], projectType: "Hackathon" },
-    { authorId: "u_rohan", title: "Need backend contributor for PeerCode Review Hub", body: "Async code review platform for student projects. Looking for Node + Postgres collaborator.", type: "Seeking Contributor", domain: "Backend", tech: ["Node","PostgreSQL"], projectType: "Open Source" },
-    { authorId: "u_neha", title: "Open to join a final year project (UI/UX)", body: "Final-year student designer open to join a serious FYP team. Strong Figma + prototyping.", type: "Open to Join", domain: "UI/UX", tech: ["Figma"], projectType: "Final Year Project" },
-    { authorId: "u_jordan", title: "Project Update: StudySprint shipped v0.2", body: "Sprint planner for student teams now supports recurring sessions and quick check-ins.", type: "Project Update", domain: "Full Stack", tech: ["Next.js","Supabase"], projectType: "Service" },
-  ];
-  for (let i = 0; i < samplePosts.length; i++) {
-    const sp: any = samplePosts[i];
-    const id = `p_seed_${i}`;
-    posts[id] = { id, authorId: sp.authorId, title: sp.title, body: sp.body, type: sp.type, domain: sp.domain, tech: sp.tech, projectType: sp.projectType, createdAt: new Date(Date.now() - (i+1)*3600_000).toISOString(), status: "open", responses: [] };
-  }
-
-  reviews["rv_1"] = { id: "rv_1", reviewerId: "u_rohan", subjectId: "u_priya", rating: 5, text: "Excellent collaborator, shipped fast and communicated clearly.", createdAt: new Date().toISOString() };
-  reviews["rv_2"] = { id: "rv_2", reviewerId: "u_sarah", subjectId: "u_priya", rating: 4, text: "Strong ML chops, great team energy.", createdAt: new Date().toISOString() };
+  sample.forEach((s, idx) => {
+    const id = `p_${idx + 1}`;
+    const authorId = `u_${s.authorIndex + 1}`;
+    demoPosts[id] = {
+      id,
+      authorId,
+      title: s.title,
+      body: s.body,
+      type: s.type as any,
+      domain: idx % 2 === 0 ? "Frontend" : "AI/ML",
+      tech: idx % 2 === 0 ? ["React", "TypeScript"] : ["Python", "PyTorch"],
+      projectType: idx % 2 === 0 ? "Hackathon" : "Open Source",
+      lookingFor: ["Frontend", "Designer"],
+      createdAt: new Date(Date.now() - (idx * 1000 * 60 * 60 * 24)).toISOString(),
+      status: "open",
+      responses: [],
+    } as Post;
+  });
 
   return {
     currentUser: undefined,
-    users,
-    posts,
+    users: demoUsers,
+    posts: demoPosts,
     responses: {},
-    reviews,
+    reviews: {},
     requests: {},
     notifications: {},
   };
@@ -83,9 +104,14 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, currentUser: action.payload, users: { ...state.users, [action.payload.id]: action.payload } };
     case "createPost": {
       const p = action.payload as Post;
+      const author = state.users[p.authorId] || state.currentUser;
       return {
         ...state,
         posts: { ...state.posts, [p.id]: p },
+        users: author ? {
+          ...state.users,
+          [author.id]: { ...author, profileCompleted: true },
+        } : state.users,
         notifications: {
           ...state.notifications,
           [p.id.replace(/^p_/, "n_post_")]: createNotification({

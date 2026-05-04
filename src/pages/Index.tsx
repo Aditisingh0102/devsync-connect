@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { activities, projects, skills } from "@/data/mock";
 import ProjectCard from "@/components/ProjectCard";
+import { useApp } from "@/lib/store";
 
 const Hero3D = lazy(() => import("@/components/Hero3D"));
 
@@ -44,6 +45,10 @@ const roadmap = [
 ];
 
 export default function Index() {
+  const { state } = useApp();
+  const isLoggedIn = !!state.currentUser;
+  const isProfileComplete = !!state.currentUser?.profileCompleted;
+
   return (
     <div>
       {/* HERO */}
@@ -66,9 +71,6 @@ export default function Index() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/find-projects" className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-primary text-primary-foreground font-semibold shadow-glow hover:bg-primary-hover transition-all">
                 Explore Projects <ArrowRight className="size-4" />
-              </Link>
-              <Link to="/onboarding/profile-setup" className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-card border border-border font-semibold hover:bg-secondary transition-all">
-                Complete Profile
               </Link>
             </div>
             <div className="mt-8 flex items-center gap-6 text-sm text-muted-foreground">
@@ -123,7 +125,7 @@ export default function Index() {
             <span className="ds-chip-primary mb-2">Recommended for you</span>
             <h2 className="ds-section-title mt-2">Projects matching your skills</h2>
           </div>
-          <Link to="/find-projects" className="text-sm font-semibold text-primary hover:text-primary-hover hidden md:flex items-center gap-1">
+          <Link to="/find-projects" className="hidden md:inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-primary text-white font-semibold shadow-glow hover:bg-primary-hover transition-all">
             View all <ArrowRight className="size-4" />
           </Link>
         </div>

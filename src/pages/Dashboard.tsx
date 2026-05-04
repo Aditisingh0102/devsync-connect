@@ -1,110 +1,119 @@
-import { Link } from "react-router-dom";
+import type { ComponentType } from "react";
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { ArrowRight, Bell, Compass, Sparkles, Users2, Zap } from "lucide-react";
-import PostCard from "@/components/PostCard";
 
 export default function Dashboard() {
   const { state } = useApp();
   const me = state.currentUser;
-
-  const recentPosts = useMemo(
-    () => Object.values(state.posts).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 4),
-    [state.posts]
-  );
-  const notifications = useMemo(
-    () => Object.values(state.notifications).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 4),
-    [state.notifications]
-  );
-
-  if (!me) {
-    return (
-      <div className="container py-20 max-w-2xl">
-        <div className="ds-card p-12 text-center bg-gradient-hero">
-          <div className="size-14 rounded-2xl bg-gradient-primary text-white flex items-center justify-center mx-auto mb-4 shadow-glow"><Sparkles className="size-6" /></div>
-          <h1 className="ds-page-title">Set up your DevSync profile</h1>
-          <p className="text-sm text-muted-foreground mt-2">Complete onboarding to see a personalized dashboard with matched projects, builders, and posts.</p>
-          <Link to="/onboarding/profile-setup" className="mt-5 inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-primary text-white font-semibold hover:bg-primary-hover">Get started <ArrowRight className="size-4" /></Link>
-        </div>
-      </div>
-    );
-  }
-
-  const stats = [
-    { label: "Followers", value: (me.followers || []).length, icon: Users2 },
-    { label: "Following", value: (me.following || []).length, icon: Users2 },
-    { label: "Pending", value: (me.pendingRequests || []).length, icon: Bell },
-    { label: "Posts", value: Object.values(state.posts).filter((p) => p.authorId === me.id).length, icon: Compass },
-  ];
+  const myPosts = useMemo(() => (me ? Object.values(state.posts).filter((post) => post.authorId === me.id).slice(0, 3) : []), [state.posts, me]);
+  const incomingRequests = useMemo(() => (me ? Object.values(state.requests).filter((request) => request.toId === me.id && request.status === "pending").slice(0, 3) : []), [state.requests, me]);
+  const recentFollowers = useMemo(() => (me ? (me.followers || []).slice(-3).map((id) => state.users[id]).filter(Boolean) : []), [me, state.users]);
 
   return (
     <div className="container py-10 space-y-6">
-      <div className="ds-card p-7 bg-gradient-hero">
-        <span className="ds-chip-primary"><Sparkles className="size-3.5" /> Welcome back</span>
-        <h1 className="ds-page-title mt-2">Hi {me.name?.split(" ")[0]}, ready to build?</h1>
-        <p className="text-sm text-muted-foreground mt-1">Your personalized collaboration feed, requests, and recommended builders — all in one place.</p>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="ds-card p-5">
-            <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-3"><s.icon className="size-5" /></div>
-            <div className="text-2xl font-bold">{s.value}</div>
-            <div className="text-sm text-muted-foreground">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg">Recent collaboration posts</h3>
-            <Link to="/feed" className="text-sm font-semibold text-primary inline-flex items-center gap-1">Open feed <ArrowRight className="size-4" /></Link>
-          </div>
-          {recentPosts.length === 0 ? (
-            <div className="ds-card p-10 text-center">
-              <p className="font-semibold">No posts yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Share your first collaboration request to connect with builders.</p>
-              <Link to="/feed" className="mt-4 inline-flex h-10 px-4 items-center gap-2 rounded-xl bg-primary text-white font-semibold"><Zap className="size-4" /> Create Post</Link>
+      <div className="max-w-6xl mx-auto">
+        {me ? (
+          <div className="space-y-6">
+            <div className="ds-card p-7 bg-gradient-hero flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <span className="ds-chip-primary">Dashboard</span>
+                <h1 className="ds-page-title mt-2">Welcome back, {me.name}!</h1>
+                <p className="text-muted-foreground mt-1 max-w-2xl">Your projects, requests, followers, and recent activity are connected here.</p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Link to="/feed" className="h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center gap-2 hover:bg-primary-hover">
+                  <FolderPlus className="size-4" /> Create Post
+                </Link>
+                <Link to="/discover-builders" className="h-11 px-5 rounded-xl bg-card border border-border font-semibold inline-flex items-center justify-center gap-2 hover:bg-secondary">
+                  <Users className="size-4" /> Discover Builders
+                </Link>
+              </div>
             </div>
-          ) : recentPosts.map((p) => <PostCard key={p.id} post={p} />)}
-        </div>
 
-        <div className="space-y-5">
-          <div className="ds-card p-6">
-            <h3 className="font-semibold text-lg mb-3">Notifications</h3>
-            {notifications.length === 0 ? (
-              <p className="text-sm text-muted-foreground">You're all caught up.</p>
-            ) : (
-              <ul className="space-y-3">
-                {notifications.map((n) => (
-                  <li key={n.id} className="text-sm">
-                    <p className="font-medium">{n.title}</p>
-                    <p className="text-xs text-muted-foreground">{n.body}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Link to="/notifications" className="mt-4 inline-flex text-sm font-semibold text-primary items-center gap-1">View all <ArrowRight className="size-4" /></Link>
-          </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Stat title="Posts" value={Object.values(state.posts).filter((post) => post.authorId === me.id).length} icon={ClipboardList} />
+              <Stat title="Followers" value={me.followers?.length || 0} icon={Users} />
+              <Stat title="Following" value={me.following?.length || 0} icon={UserPlus} />
+              <Stat title="Pending Requests" value={incomingRequests.length} icon={Bell} />
+            </div>
 
-          <div className="ds-card p-6">
-            <h3 className="font-semibold text-lg mb-3">Suggested builders</h3>
-            <ul className="space-y-3">
-              {Object.values(state.users).filter((u) => u.id !== me.id).slice(0, 3).map((u) => (
-                <li key={u.id} className="flex items-center gap-3">
-                  <div className="size-9 rounded-full bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center">{u.name?.split(" ").map((s) => s[0]).slice(0,2).join("")}</div>
-                  <div className="flex-1 min-w-0">
-                    <Link to={`/profile/${u.id}`} className="text-sm font-medium hover:text-primary truncate block">{u.name}</Link>
-                    <div className="text-xs text-muted-foreground truncate">@{u.username}</div>
+            <div className="grid lg:grid-cols-3 gap-5">
+              <div className="ds-card p-6 lg:col-span-2">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-lg">Recent collaboration posts</h3>
+                  <Link to="/feed" className="text-sm font-semibold text-primary inline-flex items-center gap-1">
+                    Open feed <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {myPosts.length ? myPosts.map((post) => (
+                    <div key={post.id} className="p-4 rounded-xl bg-surface-alt border border-border">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-sm">{post.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{post.domain || "General"} · {post.projectType || post.type}</p>
+                        </div>
+                        <span className="ds-chip-primary text-[10px] py-1">{post.status || "open"}</span>
+                      </div>
+                    </div>
+                  )) : <EmptyCard title="No posts yet" body="Create your first collaboration request to start building visibility." actionLabel="Create Post" href="/feed" />}
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="ds-card p-6">
+                  <h3 className="font-semibold text-lg mb-3">Quick profile summary</h3>
+                  <div className="text-sm text-muted-foreground">{me.college || "College not added"}</div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">{(me.skills || []).slice(0, 4).map((s) => <span key={s} className="ds-chip-primary">{s}</span>)}</div>
+                </div>
+                <div className="ds-card p-6">
+                  <h3 className="font-semibold text-lg mb-3">Incoming requests</h3>
+                  <div className="space-y-2">
+                    {incomingRequests.length ? incomingRequests.map((request) => (
+                      <div key={request.id} className="p-3 rounded-xl bg-surface-alt border border-border text-sm">
+                        {state.users[request.fromId]?.name || "A builder"} wants to collaborate.
+                      </div>
+                    )) : <p className="text-sm text-muted-foreground">No pending requests right now.</p>}
                   </div>
-                </li>
-              ))}
-            </ul>
-            <Link to="/discover-builders" className="mt-4 inline-flex text-sm font-semibold text-primary items-center gap-1">Discover all <ArrowRight className="size-4" /></Link>
+                </div>
+                <div className="ds-card p-6">
+                  <h3 className="font-semibold text-lg mb-3">Recent followers</h3>
+                  <div className="space-y-2">
+                    {recentFollowers.length ? recentFollowers.map((user: any) => <div key={user.id} className="text-sm p-3 rounded-xl bg-surface-alt border border-border">{user?.name}</div>) : <p className="text-sm text-muted-foreground">No recent followers yet.</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-20 ds-card">
+            <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
+            <p className="text-lg text-muted-foreground">Please log in to view your dashboard.</p>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function Stat({ title, value, icon: Icon }: { title: string; value: number; icon: ComponentType<{ className?: string }> }) {
+  return (
+    <div className="ds-card p-5">
+      <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-3"><Icon className="size-5" /></div>
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-sm text-muted-foreground">{title}</div>
+    </div>
+  );
+}
+
+function EmptyCard({ title, body, actionLabel, href }: { title: string; body: string; actionLabel: string; href: string }) {
+  return (
+    <div className="p-4 rounded-xl bg-surface-alt border border-border text-center">
+      <p className="font-semibold text-sm">{title}</p>
+      <p className="text-xs text-muted-foreground mt-1">{body}</p>
+      <Link to={href} className="mt-3 h-9 px-3 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center justify-center">{actionLabel}</Link>
     </div>
   );
 }

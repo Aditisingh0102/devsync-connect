@@ -30,6 +30,7 @@ export default function Onboarding() {
   const [data, setData] = useState<OnboardingFormData>({ email: "", name: "", year: "", bio: "", skills: [], roles: [], domains: [] });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
+  const { state, dispatch } = useApp();
 
   const toggle = (key: "skills" | "roles" | "domains", v: string) => {
     setData({ ...data, [key]: data[key].includes(v) ? data[key].filter((x) => x !== v) : [...data[key], v] });
@@ -37,7 +38,23 @@ export default function Onboarding() {
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  const { dispatch } = useApp();
+  const existingUser = state.currentUser;
+
+  if (existingUser?.profileCompleted) {
+    return (
+      <div className="container py-12 max-w-3xl">
+        <div className="ds-card p-7 bg-gradient-hero text-center">
+          <span className="ds-chip-primary"><Sparkles className="size-3.5" /> Onboarding</span>
+          <h1 className="ds-page-title mt-3">You're already signed in and your profile is set up</h1>
+          <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Your profile data is already saved. Go to the dashboard or profile to continue collaborating.</p>
+          <div className="mt-6 flex justify-center gap-3 flex-wrap">
+            <button onClick={() => navigate("/dashboard")} className="h-11 px-5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover">Go to Dashboard</button>
+            <button onClick={() => navigate("/profile")} className="h-11 px-5 rounded-xl bg-card border border-border text-sm font-semibold hover:bg-secondary">Open Profile</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const next = () => {
     const e: Record<string, string> = {};
@@ -61,6 +78,7 @@ export default function Onboarding() {
         name: data.name,
         handle: data.name ? `@${data.name.split(" ")[0].toLowerCase()}` : undefined,
         avatar: data.name ? data.name.split(" ").map((s) => s[0]).slice(0, 2).join("") : "AC",
+        email: data.email,
         bio: data.bio,
         college: data.year ? `Year ${data.year}` : undefined,
         skills: data.skills,
@@ -70,6 +88,8 @@ export default function Onboarding() {
         following: [],
         pendingRequests: [],
         sentRequests: [],
+        profileCompleted: true,
+        links: { github: "", linkedin: "", portfolio: "" },
       } as any;
       dispatch({ type: "setCurrentUser", payload: user });
       navigate("/dashboard");

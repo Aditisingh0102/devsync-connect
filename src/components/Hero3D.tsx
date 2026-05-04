@@ -42,17 +42,24 @@ export default function Hero3D({ className }: Hero3DProps) {
       ));
     }
 
-    // Premium dark navy nodes
-    const nodeGeom = new THREE.BufferGeometry().setFromPoints(nodes);
-    const nodeMat = new THREE.PointsMaterial({
-      color: 0x1e293b,
-      size: 0.16,
-      transparent: true,
-      opacity: 0.95,
-      depthWrite: false,
+    const sphereGeom = new THREE.SphereGeometry(0.12, 10, 8);
+    const nodeMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color("#1E293B"), // deep navy
+      metalness: 0.2,
+      roughness: 0.45,
+      emissive: new THREE.Color("#2563EB"),
+      emissiveIntensity: 0.06,
     });
-    const nodePoints = new THREE.Points(nodeGeom, nodeMat);
-    group.add(nodePoints);
+    const instanced = new THREE.InstancedMesh(sphereGeom, nodeMat, nodes.length);
+    instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < nodes.length; i++) {
+      dummy.position.copy(nodes[i]);
+      dummy.scale.setScalar(1 - (Math.random() * 0.28));
+      dummy.updateMatrix();
+      instanced.setMatrixAt(i, dummy.matrix);
+    }
+    group.add(instanced);
 
     // Subtle accent halo nodes (low-opacity blue glow)
     const haloMat = new THREE.PointsMaterial({
@@ -79,7 +86,10 @@ export default function Hero3D({ className }: Hero3DProps) {
     const lineGeom = new THREE.BufferGeometry();
     lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     const lineMat = new THREE.LineBasicMaterial({
-      color: 0x334155, transparent: true, opacity: 0.45,
+      color: new THREE.Color("#334155"),
+      transparent: true,
+      opacity: 0.36,
+      linewidth: 1,
     });
     const lines = new THREE.LineSegments(lineGeom, lineMat);
     group.add(lines);
@@ -95,10 +105,17 @@ export default function Hero3D({ className }: Hero3DProps) {
     const partGeom = new THREE.BufferGeometry();
     partGeom.setAttribute("position", new THREE.BufferAttribute(partPos, 3));
     const partMat = new THREE.PointsMaterial({
-      color: 0x475569, size: 0.04, transparent: true, opacity: 0.5, depthWrite: false,
+      color: 0x1f2937, size: 0.04, transparent: true, opacity: 0.28, depthWrite: false,
     });
     const particles = new THREE.Points(partGeom, partMat);
     scene.add(particles);
+
+    // Lighting: subtle cool-blue ambient + soft directional for depth
+    const hemi = new THREE.HemisphereLight(new THREE.Color("#0f172a"), new THREE.Color("#020617"), 0.45);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(new THREE.Color("#93c5fd"), 0.08);
+    dir.position.set(5, 8, 2);
+    scene.add(dir);
 
     const handleMouse = (e: MouseEvent) => {
       const rect = mount.getBoundingClientRect();
@@ -116,13 +133,17 @@ export default function Hero3D({ className }: Hero3DProps) {
     window.addEventListener("resize", handleResize);
 
     let raf = 0;
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const animate = () => {
       raf = requestAnimationFrame(animate);
-      group.rotation.y += 0.0025;
-      group.rotation.x += 0.0008;
-      group.rotation.y += (mouse.current.x * 0.4 - group.rotation.y * 0.05) * 0.02;
-      group.rotation.x += (mouse.current.y * 0.25 - group.rotation.x * 0.05) * 0.02;
-      particles.rotation.y -= 0.0006;
+      // heavier, weighty rotation but subtle
+      if (!prefersReduced) {
+        group.rotation.y += 0.0012; // slower, weighty
+        group.rotation.x += 0.0005;
+        group.rotation.y += (mouse.current.x * 0.3 - group.rotation.y * 0.04) * 0.015;
+        group.rotation.x += (mouse.current.y * 0.18 - group.rotation.x * 0.04) * 0.015;
+        particles.rotation.y -= 0.0003;
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -131,7 +152,9 @@ export default function Hero3D({ className }: Hero3DProps) {
       cancelAnimationFrame(raf);
       window.removeEventListener("mousemove", handleMouse);
       window.removeEventListener("resize", handleResize);
-      nodeGeom.dispose(); nodeMat.dispose();
+      sphereGeom.dispose();
+      instanced.dispose();
+      nodeMat.dispose();
       lineGeom.dispose(); lineMat.dispose();
       partGeom.dispose(); partMat.dispose();
       renderer.dispose();

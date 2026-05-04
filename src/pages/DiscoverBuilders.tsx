@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Search, MapPin, Sparkles, UserPlus, Users2 } from "lucide-react";
 import UserFollowButton from "@/components/UserFollowButton";
+import { Link } from "react-router-dom";
 
 const DOMAINS = ["All", "Frontend", "Backend", "Full Stack", "UI/UX", "AI/ML", "DevOps"];
 
