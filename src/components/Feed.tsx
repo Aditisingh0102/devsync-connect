@@ -23,7 +23,7 @@ export default function Feed() {
     return allPosts.filter((p) => {
       if (domain && p.domain && p.domain.toLowerCase() !== domain.toLowerCase()) return false;
       if (projectType && p.projectType && p.projectType !== projectType) return false;
-      if (role && role.length && p.lookingFor && !p.lookingFor.map(r=>r.toLowerCase()).includes(role.toLowerCase())) return false;
+      if (role && role.length && p.lookingFor && !(Array.isArray(p.lookingFor) ? p.lookingFor : [p.lookingFor]).map((r:string)=>r.toLowerCase()).includes(role.toLowerCase())) return false;
       if (tech.length) {
         const hasTech = tech.every(t => (p.tech||[]).map(x=>x.toLowerCase()).includes(t.toLowerCase()));
         if (!hasTech) return false;
