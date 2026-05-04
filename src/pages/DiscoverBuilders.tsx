@@ -1,83 +1,75 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
-import { Search, MapPin, Sparkles, UserPlus, Users2 } from "lucide-react";
-import UserFollowButton from "@/components/UserFollowButton";
-import { Link } from "react-router-dom";
-
-const DOMAINS = ["All", "Frontend", "Backend", "Full Stack", "UI/UX", "AI/ML", "DevOps"];
 
 export default function DiscoverBuilders() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
   const [q, setQ] = useState("");
-  const [domain, setDomain] = useState("All");
+  const [filterSkill, setFilterSkill] = useState("");
 
-  const builders = useMemo(() => {
-    const all = Object.values(state.users).filter((u) => !state.currentUser || u.id !== state.currentUser.id);
-    return all.filter((u) => {
-      if (domain !== "All" && !(u.domains || []).includes(domain)) return false;
-      if (!q.trim()) return true;
-      const needle = q.toLowerCase();
-      return (
-        u.name?.toLowerCase().includes(needle) ||
-        u.username?.toLowerCase().includes(needle) ||
-        (u.skills || []).some((s) => s.toLowerCase().includes(needle)) ||
-        (u.domains || []).some((d) => d.toLowerCase().includes(needle)) ||
-        (u.roles || []).some((r) => r.toLowerCase().includes(needle))
-      );
-    });
-  }, [state.users, state.currentUser, q, domain]);
+  const users = useMemo(() => Object.values(state.users || {}), [state.users]);
+  const results = useMemo(() => users.filter(u => {
+    if (!u) return false;
+    if (!q) return true;
+    const s = q.toLowerCase();
+    if ((u.name || "").toLowerCase().includes(s)) return true;
+    if ((u.username || "").toLowerCase().includes(s)) return true;
+    if ((u.handle || "").toLowerCase().includes(s)) return true;
+    if ((u.skills || []).join(" ").toLowerCase().includes(s)) return true;
+    return false;
+  }).filter(u => !filterSkill || (u.skills || []).map(x=>x.toLowerCase()).includes(filterSkill.toLowerCase())), [users, q, filterSkill]);
+
+  const follow = (toId: string) => {
+    if (!state.currentUser) return;
+    dispatch({ type: "follow", payload: { fromId: state.currentUser.id, toId } });
+  };
+  const unfollow = (toId: string) => {
+    if (!state.currentUser) return;
+    dispatch({ type: "unfollow", payload: { fromId: state.currentUser.id, toId } });
+  };
+
+  const sendRequest = (toId: string) => {
+    if (!state.currentUser) return;
+    const req = { id: `req_${Date.now()}`, fromId: state.currentUser.id, toId, message: "Hi — I'd like to collaborate on your project", status: "pending", createdAt: new Date().toISOString() } as any;
+    dispatch({ type: "sendRequest", payload: req });
+  };
 
   return (
-    <div className="container py-10 space-y-6">
-      <div className="ds-card p-7 bg-gradient-hero relative overflow-hidden">
-        <span className="ds-chip-primary"><Sparkles className="size-3.5" /> Discover builders</span>
-        <h1 className="ds-page-title mt-2">Find your next collaborator</h1>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xl">Search by name, username, skill, role or domain. Follow builders to see their full activity and send collaboration requests.</p>
-
-        <div className="mt-5 flex flex-col md:flex-row gap-3">
-          <div className="flex items-center gap-2 px-3 h-11 flex-1 rounded-xl bg-card border border-border">
-            <Search className="size-4 text-muted-foreground" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by username, skill, role…" className="bg-transparent outline-none text-sm flex-1" />
-          </div>
-          <select value={domain} onChange={(e) => setDomain(e.target.value)} className="h-11 px-3 rounded-xl bg-card border border-border text-sm">
-            {DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+    <div className="container py-10">
+      <div className="ds-card p-6 mb-6">
+        <h1 className="text-2xl font-semibold">Discover Builders</h1>
+        <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain.</p>
+        <div className="mt-4 flex gap-2">
+          <input placeholder="Search builders..." value={q} onChange={(e)=>setQ(e.target.value)} className="ds-input" />
+          <input placeholder="Filter skill (optional)" value={filterSkill} onChange={(e)=>setFilterSkill(e.target.value)} className="ds-input w-48" />
         </div>
       </div>
 
-      {builders.length === 0 ? (
-        <div className="ds-card p-12 text-center">
-          <div className="size-14 rounded-2xl bg-secondary mx-auto flex items-center justify-center mb-3"><Users2 className="size-6 text-muted-foreground" /></div>
-          <h3 className="font-semibold">No builders match your search</h3>
-          <p className="text-sm text-muted-foreground mt-1">Try a different skill, domain, or username.</p>
-        </div>
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {builders.map((u) => {
-            const initials = (u.name || "U").split(" ").map((s) => s[0]).slice(0, 2).join("");
-            return (
-              <div key={u.id} className="ds-card ds-card-hover p-5">
-                <div className="flex items-start gap-3">
-                  <div className="size-12 rounded-2xl bg-gradient-primary text-white font-semibold flex items-center justify-center shadow-glow shrink-0">{initials}</div>
-                  <div className="min-w-0 flex-1">
-                    <Link to={`/profile/${u.id}`} className="font-semibold hover:text-primary block truncate">{u.name}</Link>
-                    <div className="text-xs text-muted-foreground truncate">@{u.username}</div>
-                    {u.college && <div className="text-xs text-muted-foreground mt-0.5 inline-flex items-center gap-1"><MapPin className="size-3" /> {u.college}</div>}
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {results.length ? results.map(u => (
+          <div key={u.id} className="ds-card p-4">
+            <div className="flex items-center gap-3">
+              <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center">{(u.name||"U").split(" ").map((s:any)=>s[0]).slice(0,2).join("")}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between"><div>
+                  <div className="font-semibold">{u.name}</div>
+                  <div className="text-xs text-muted-foreground">{u.handle} · {u.college || "—"}</div>
                 </div>
-                {u.bio && <p className="text-sm text-muted-foreground mt-3 line-clamp-2">{u.bio}</p>}
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {(u.skills || []).slice(0, 4).map((s) => <span key={s} className="ds-chip-primary">{s}</span>)}
                 </div>
-                <div className="flex gap-2 mt-4">
-                  <UserFollowButton userId={u.id} />
-                  <Link to={`/profile/${u.id}`} className="h-9 px-3 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 hover:bg-secondary"><UserPlus className="size-3.5" /> View</Link>
-                </div>
+                <div className="mt-2 flex flex-wrap gap-2">{(u.skills||[]).slice(0,5).map(s=> <span key={s} className="ds-chip-primary">{s}</span>)}</div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              {state.currentUser && (state.currentUser.following || []).includes(u.id) ? (
+                <button onClick={()=>unfollow(u.id)} className="h-9 px-3 rounded-xl bg-card border">Unfollow</button>
+              ) : (
+                <button onClick={()=>follow(u.id)} className="h-9 px-3 rounded-xl bg-primary text-white">Follow</button>
+              )}
+              <button onClick={()=>sendRequest(u.id)} className="h-9 px-3 rounded-xl bg-card border">Request</button>
+              <a href={`/profile/${u.id}`} className="h-9 px-3 rounded-xl bg-card border">View</a>
+            </div>
+          </div>
+        )) : <div className="ds-card p-4 text-sm text-muted-foreground">No builders found. Try different keywords.</div>}
+      </div>
     </div>
   );
 }

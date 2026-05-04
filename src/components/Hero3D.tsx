@@ -61,19 +61,6 @@ export default function Hero3D({ className }: Hero3DProps) {
     }
     group.add(instanced);
 
-    // Subtle accent halo nodes (low-opacity blue glow)
-    const haloMat = new THREE.PointsMaterial({
-      color: 0x2563eb,
-      size: 0.34,
-      transparent: true,
-      opacity: 0.18,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const haloPoints = new THREE.Points(nodeGeom, haloMat);
-    group.add(haloPoints);
-
-    // Muted slate edges
     const positions: number[] = [];
     const threshold = 2.4;
     for (let i = 0; i < nodes.length; i++) {
@@ -94,7 +81,6 @@ export default function Hero3D({ className }: Hero3DProps) {
     const lines = new THREE.LineSegments(lineGeom, lineMat);
     group.add(lines);
 
-    // Quiet ambient particles — refined slate dust
     const PARTICLES = isMobile ? 60 : 140;
     const partPos = new Float32Array(PARTICLES * 3);
     for (let i = 0; i < PARTICLES; i++) {

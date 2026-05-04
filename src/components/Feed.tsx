@@ -53,24 +53,24 @@ export default function Feed() {
       <div className="ds-card p-4 mb-4">
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="flex items-center gap-3 flex-wrap">
-            <select value={domain} onChange={(e) => setDomain(e.target.value)} className="h-9 px-3 rounded-md bg-card border">
+            <select aria-label="Filter by domain" value={domain} onChange={(e) => setDomain(e.target.value)} className="h-9 px-3 rounded-md bg-card border">
               <option value="">All Domains</option>
               {DOMAINS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
 
-            <select value={projectType} onChange={(e)=>setProjectType(e.target.value)} className="h-9 px-3 rounded-md bg-card border">
+            <select aria-label="Filter by project type" value={projectType} onChange={(e)=>setProjectType(e.target.value)} className="h-9 px-3 rounded-md bg-card border">
               <option value="">All Types</option>
               {PROJECT_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
             </select>
 
-            <select value={role} onChange={(e)=>setRole(e.target.value)} className="h-9 px-3 rounded-md bg-card border">
+            <select aria-label="Filter by role" value={role} onChange={(e)=>setRole(e.target.value)} className="h-9 px-3 rounded-md bg-card border">
               <option value="">Any Role</option>
               {ROLES.map(r=> <option key={r} value={r}>{r}</option>)}
             </select>
 
             <div className="hidden md:flex items-center gap-2">
               <label className="text-sm text-muted-foreground">Recent only</label>
-              <input type="checkbox" checked={recentOnly} onChange={(e)=>setRecentOnly(e.target.checked)} />
+              <input aria-label="Show recent only" type="checkbox" checked={recentOnly} onChange={(e)=>setRecentOnly(e.target.checked)} />
             </div>
           </div>
 

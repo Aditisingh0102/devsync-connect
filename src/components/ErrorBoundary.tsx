@@ -26,7 +26,7 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
           <div className="max-w-xl w-full bg-card p-6 rounded-xl border border-border">
             <h2 className="text-lg font-semibold">Something went wrong</h2>
             <p className="text-sm text-muted-foreground mt-2">A runtime error occurred in the application. Check the browser console for details.</p>
-            <pre className="mt-3 text-xs bg-surface-alt p-3 rounded text-foreground overflow-auto" style={{ maxHeight: 240 }}>{String(this.state.error)}</pre>
+            <pre className="mt-3 text-xs bg-surface-alt p-3 rounded text-foreground overflow-auto max-h-60">{String(this.state.error)}</pre>
             <div className="mt-4 flex justify-end">
               <button onClick={() => location.reload()} className="h-10 px-4 rounded-xl bg-primary text-white">Reload app</button>
             </div>

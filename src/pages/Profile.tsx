@@ -141,7 +141,7 @@ export default function Profile() {
             <div className="ds-card p-6">
               <h3 className="font-semibold text-lg">Profile Completion</h3>
               <div className="flex items-end gap-2 mt-3"><span className="text-3xl font-bold">{completion}%</span><span className="text-xs text-muted-foreground mb-1">3 steps left</span></div>
-              <div className="h-2 bg-secondary rounded-full mt-3 overflow-hidden"><div className="h-full bg-gradient-primary rounded-full" style={{ width: `${completion}%` }} /></div>
+              <div className="h-2 bg-secondary rounded-full mt-3 overflow-hidden"><div className="h-full w-[78%] bg-gradient-primary rounded-full" /></div>
               <ul className="mt-4 space-y-2 text-sm">
                 {["Add portfolio link", "Verify college email", "Add 2 more skills"].map((s) => (
                   <li key={s} className="flex items-center gap-2 text-muted-foreground"><div className="size-1.5 rounded-full bg-primary" /> {s}</li>

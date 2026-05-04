@@ -39,7 +39,10 @@ export default function AvatarUpload({ userId }: { userId: string }) {
             {preview ? <img src={preview} className="w-full h-full object-cover" alt="preview" /> : <div className="text-muted-foreground">{(user?.name||"U").split(" ").map((s:any)=>s[0]).slice(0,2).join("")}</div>}
           </div>
 
-          <input ref={fileRef} type="file" accept="image/*" onChange={(e)=> onFile(e.target.files?.[0])} />
+          <label className="h-10 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center justify-center cursor-pointer hover:bg-secondary">
+            Choose file
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e)=> onFile(e.target.files?.[0])} />
+          </label>
           <div className="flex gap-2">
             <button onClick={save} className="h-10 px-4 rounded-xl bg-primary text-white">Save</button>
             <button onClick={()=>{ setPreview(null); if (fileRef.current) fileRef.current.value = ""; setOpen(false); }} className="h-10 px-4 rounded-xl bg-card border">Cancel</button>

@@ -66,7 +66,7 @@ function getInitialState(): AppState {
       domain: idx % 2 === 0 ? "Frontend" : "AI/ML",
       tech: idx % 2 === 0 ? ["React", "TypeScript"] : ["Python", "PyTorch"],
       projectType: idx % 2 === 0 ? "Hackathon" : "Open Source",
-      lookingFor: ["Frontend", "Designer"],
+      lookingFor: "Frontend, Designer",
       createdAt: new Date(Date.now() - (idx * 1000 * 60 * 60 * 24)).toISOString(),
       status: "open",
       responses: [],

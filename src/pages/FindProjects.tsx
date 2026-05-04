@@ -72,11 +72,11 @@ export default function FindProjects() {
 
       {pages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-10">
-          <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="size-10 rounded-xl bg-card border border-border disabled:opacity-40 flex items-center justify-center"><ChevronLeft className="size-4" /></button>
+          <button aria-label="Previous page" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="size-10 rounded-xl bg-card border border-border disabled:opacity-40 flex items-center justify-center"><ChevronLeft className="size-4" /></button>
           {Array.from({ length: pages }).map((_, i) => (
             <button key={i} onClick={() => setPage(i + 1)} className={`size-10 rounded-xl text-sm font-semibold ${page === i + 1 ? "bg-primary text-white" : "bg-card border border-border"}`}>{i + 1}</button>
           ))}
-          <button onClick={() => setPage(Math.min(pages, page + 1))} disabled={page === pages} className="size-10 rounded-xl bg-card border border-border disabled:opacity-40 flex items-center justify-center"><ChevronRight className="size-4" /></button>
+          <button aria-label="Next page" onClick={() => setPage(Math.min(pages, page + 1))} disabled={page === pages} className="size-10 rounded-xl bg-card border border-border disabled:opacity-40 flex items-center justify-center"><ChevronRight className="size-4" /></button>
         </div>
       )}
     </div>
@@ -86,7 +86,7 @@ export default function FindProjects() {
 function Select({ value, onChange, options, label }: { value: string; onChange: (v: string) => void; options: string[]; label: string }) {
   return (
     <div className="relative">
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="h-11 pl-3 pr-9 rounded-xl bg-secondary border border-border text-sm font-medium appearance-none cursor-pointer outline-none focus:border-primary min-w-[140px]">
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="h-11 pl-3 pr-9 rounded-xl bg-secondary border border-border text-sm font-medium appearance-none cursor-pointer outline-none focus:border-primary min-w-[140px]">
         {options.map((o) => <option key={o} value={o}>{label}: {o}</option>)}
       </select>
       <ChevronRight className="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-muted-foreground" />

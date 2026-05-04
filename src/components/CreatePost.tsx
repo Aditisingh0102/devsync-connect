@@ -78,7 +78,7 @@ export default function CreatePost() {
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Post title or headline" className="ds-input mb-2" />
           <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Describe what you're looking for..." className="ds-input mb-2 resize-none" rows={3} />
           <div className="flex gap-2 items-center">
-            <select value={type} onChange={(e) => setType(e.target.value as PostType)} className="ds-input w-auto">
+            <select aria-label="Post type" value={type} onChange={(e) => setType(e.target.value as PostType)} className="ds-input w-auto">
               {postTypes.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
             <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="Domain (e.g., Frontend)" className="ds-input w-48" />
