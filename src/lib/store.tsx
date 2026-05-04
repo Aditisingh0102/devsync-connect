@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect } from "react";
 import type { AppState, AppAction, AppNotification, User, Post, Response, Review, Request } from "./types";
 
 // Persistence helpers
-const STORAGE_KEY = "devsync_app_state";
+const STORAGE_KEY = "devsync_app_state_v2";
 
 function loadState(): AppState {
   try {
