@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useMemo } from "react";
-import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, UserPlus, Inbox, Users, Send } from "lucide-react";
+import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
 const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
@@ -90,7 +90,6 @@ export default function Profile() {
           <div className="flex gap-2">
             <AvatarUpload userId={profile?.id || ""} />
             <button className="h-10 px-4 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2"><Edit3 className="size-4" /> Edit</button>
-            <button className="h-10 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover inline-flex items-center gap-2"><UserPlus className="size-4" /> Invite to Team</button>
           </div>
         </div>
       </div>
