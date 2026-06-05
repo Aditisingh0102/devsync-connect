@@ -38,13 +38,75 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
             </div>
           </div>
 
-          <h4 className="font-semibold mt-3 leading-snug">{post.title}</h4>
+          <h4 className="font-semibold mt-3 text-base leading-snug text-foreground flex items-center gap-2">
+            <span className="text-xs font-normal px-2 py-0.5 rounded bg-primary-soft text-primary">{post.projectType || "Project"}</span>
+            {post.title}
+          </h4>
           <p className="mt-1 text-sm text-muted-foreground">{post.body}</p>
+
+          {post.imageUrl && (
+            <div className="mt-3 rounded-xl overflow-hidden border border-border bg-surface-alt max-h-60">
+              <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover max-h-60" />
+            </div>
+          )}
+
+          {/* Project Details Grid */}
+          {(post.projectName || post.projectType || post.domain || post.lookingFor || post.referenceLink) && (
+            <div className="grid grid-cols-2 gap-3 mt-3.5 p-3 rounded-xl bg-surface-alt border border-border text-xs">
+              {post.projectName && (
+                <div className="col-span-2 pb-1.5 border-b border-border/50">
+                  <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Project Name</span>
+                  <span className="font-semibold text-foreground text-sm mt-0.5 block">{post.projectName}</span>
+                </div>
+              )}
+              {post.projectType && (
+                <div>
+                  <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Project Type</span>
+                  <span className="font-semibold text-foreground mt-0.5 block">{post.projectType}</span>
+                </div>
+              )}
+              {post.domain && (
+                <div>
+                  <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Domain(s)</span>
+                  <span className="font-semibold text-foreground mt-0.5 block">
+                    {Array.isArray(post.domain) ? post.domain.join(", ") : post.domain}
+                  </span>
+                </div>
+              )}
+              {post.lookingFor && (
+                <div className="col-span-2 border-t border-border/50 pt-2 mt-1">
+                  <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px] mb-1.5">Looking For (Roles/Skills)</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.isArray(post.lookingFor) ? (
+                      post.lookingFor.map((role) => (
+                        <span key={role} className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px]">
+                          {role}
+                        </span>
+                      ))
+                    ) : (
+                      (post.lookingFor || "").split(",").map((s) => s.trim()).filter(Boolean).map((role) => (
+                        <span key={role} className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px]">
+                          {role}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+              {post.referenceLink && (
+                <div className="col-span-2 border-t border-border/50 pt-2 mt-1">
+                  <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Reference Link</span>
+                  <a href={post.referenceLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold mt-0.5 block truncate">
+                    {post.referenceLink}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
 
           {(post.tech && post.tech.length > 0) && (
             <div className="flex flex-wrap gap-1.5 mt-3">
-              {post.domain && <span className="ds-chip">{post.domain}</span>}
-              {post.tech.map((t) => <span key={t} className="ds-chip">{t}</span>)}
+              {post.tech.map((t) => <span key={t} className="ds-chip text-[10px]">{t}</span>)}
             </div>
           )}
 

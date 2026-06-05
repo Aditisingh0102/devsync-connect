@@ -1,10 +1,12 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { useTheme } from "next-themes";
 
 interface ProfileHero3DProps { className?: string }
 
 export default function ProfileHero3D({ className }: ProfileHero3DProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -26,6 +28,13 @@ export default function ProfileHero3D({ className }: ProfileHero3DProps) {
     const group = new THREE.Group();
     scene.add(group);
 
+    const isDark = resolvedTheme !== "light";
+    const lineColor = isDark ? "#ffffff" : "#000000";
+    const lineOpacity = isDark ? 0.36 : 0.22;
+    const dotColor = isDark ? "#dc2626" : "#1e40af"; // red in dark mode, dark blue in light mode
+    const dotEmissive = isDark ? "#ef4444" : "#3b82f6";
+    const dotEmissiveIntensity = isDark ? 0.5 : 0.2;
+
     const NODE_COUNT = 28;
     const radius = 2.2;
     const nodes: THREE.Vector3[] = [];
@@ -41,11 +50,11 @@ export default function ProfileHero3D({ className }: ProfileHero3DProps) {
 
     const sphereGeom = new THREE.SphereGeometry(0.08, 8, 6);
     const nodeMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#1E293B"),
+      color: new THREE.Color(dotColor),
       metalness: 0.15,
       roughness: 0.5,
-      emissive: new THREE.Color("#2563EB"),
-      emissiveIntensity: 0.05,
+      emissive: new THREE.Color(dotEmissive),
+      emissiveIntensity: dotEmissiveIntensity,
     });
     const instanced = new THREE.InstancedMesh(sphereGeom, nodeMat, nodes.length);
     const dummy = new THREE.Object3D();
@@ -68,7 +77,7 @@ export default function ProfileHero3D({ className }: ProfileHero3DProps) {
     }
     const lineGeom = new THREE.BufferGeometry();
     lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color("#334155"), transparent: true, opacity: 0.36 });
+    const lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(lineColor), transparent: true, opacity: lineOpacity });
     const lines = new THREE.LineSegments(lineGeom, lineMat);
     group.add(lines);
 
@@ -81,13 +90,20 @@ export default function ProfileHero3D({ className }: ProfileHero3DProps) {
     }
     const partGeom = new THREE.BufferGeometry();
     partGeom.setAttribute("position", new THREE.BufferAttribute(partPos, 3));
-    const partMat = new THREE.PointsMaterial({ color: 0x0f172a, size: 0.03, transparent: true, opacity: 0.22 });
+    const partMat = new THREE.PointsMaterial({ color: isDark ? 0x1f2937 : 0x94a3b8, size: 0.03, transparent: true, opacity: isDark ? 0.22 : 0.35 });
     const particles = new THREE.Points(partGeom, partMat);
     scene.add(particles);
 
-    const hemi = new THREE.HemisphereLight(new THREE.Color("#0f172a"), new THREE.Color("#020617"), 0.45);
+    const hemi = new THREE.HemisphereLight(
+      isDark ? new THREE.Color("#0f172a") : new THREE.Color("#e2e8f0"),
+      isDark ? new THREE.Color("#020617") : new THREE.Color("#cbd5e1"),
+      isDark ? 0.45 : 0.75
+    );
     scene.add(hemi);
-    const dir = new THREE.DirectionalLight(new THREE.Color("#93c5fd"), 0.06);
+    const dir = new THREE.DirectionalLight(
+      isDark ? new THREE.Color("#93c5fd") : new THREE.Color("#3b82f6"),
+      isDark ? 0.06 : 0.2
+    );
     dir.position.set(4, 5, 2);
     scene.add(dir);
 
@@ -124,7 +140,7 @@ export default function ProfileHero3D({ className }: ProfileHero3DProps) {
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [resolvedTheme]);
 
   return <div ref={mountRef} className={className} aria-hidden />;
 }

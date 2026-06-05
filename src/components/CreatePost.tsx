@@ -19,6 +19,7 @@ export default function CreatePost() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [type, setType] = useState<PostType>("Looking for Team");
+  const [projectName, setProjectName] = useState("");
   const [domain, setDomain] = useState("");
   const [tech, setTech] = useState("");
   const [projectType, setProjectType] = useState("");
@@ -51,6 +52,7 @@ export default function CreatePost() {
       title,
       body,
       type,
+      projectName,
       domain,
       tech: tech.split(",").map((s) => s.trim()).filter(Boolean),
       projectType,
@@ -59,7 +61,7 @@ export default function CreatePost() {
       imageUrl,
     });
     dispatch({ type: "createPost", payload: p });
-    setTitle(""); setBody(""); setTech(""); setDomain(""); setProjectType(""); setLookingFor(""); setReferenceLink(""); setImageUrl("");
+    setTitle(""); setBody(""); setTech(""); setDomain(""); setProjectType(""); setLookingFor(""); setReferenceLink(""); setImageUrl(""); setProjectName("");
   };
 
   if (!state.currentUser) {
@@ -86,10 +88,11 @@ export default function CreatePost() {
               <button onClick={submit} className="h-10 px-4 rounded-xl bg-primary text-white">Post</button>
           </div>
             <div className="mt-2 grid md:grid-cols-2 gap-2">
+              <input value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="Project name (e.g. DevSync Team Match AI)" className="ds-input" />
               <input value={projectType} onChange={(e) => setProjectType(e.target.value)} placeholder="Project type (Hackathon, FYP, Open Source)" className="ds-input" />
               <input value={lookingFor} onChange={(e) => setLookingFor(e.target.value)} placeholder="Looking for (Frontend, Designer, ML…)" className="ds-input" />
               <input value={referenceLink} onChange={(e) => setReferenceLink(e.target.value)} placeholder="Reference link (optional)" className="ds-input" />
-              <label className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-2 cursor-pointer hover:bg-secondary">
+              <label className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-2 cursor-pointer hover:bg-secondary col-span-2">
                 <Link className="size-4" />
                 Add image
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImage(e.target.files?.[0])} />

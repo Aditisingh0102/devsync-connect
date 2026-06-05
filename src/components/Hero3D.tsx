@@ -1,11 +1,13 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { useTheme } from "next-themes";
 
 interface Hero3DProps { className?: string }
 
 export default function Hero3D({ className }: Hero3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const mouse = useRef({ x: 0, y: 0 });
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -28,6 +30,13 @@ export default function Hero3D({ className }: Hero3DProps) {
     const group = new THREE.Group();
     scene.add(group);
 
+    const isDark = resolvedTheme !== "light";
+    const lineColor = isDark ? "#ffffff" : "#000000";
+    const lineOpacity = isDark ? 0.4 : 0.25;
+    const dotColor = isDark ? "#dc2626" : "#1e40af"; // red in dark mode, dark blue in light mode
+    const dotEmissive = isDark ? "#ef4444" : "#3b82f6";
+    const dotEmissiveIntensity = isDark ? 0.5 : 0.2;
+
     // Network nodes on a sphere
     const NODE_COUNT = isMobile ? 26 : 48;
     const radius = 3.6;
@@ -44,11 +53,11 @@ export default function Hero3D({ className }: Hero3DProps) {
 
     const sphereGeom = new THREE.SphereGeometry(0.12, 10, 8);
     const nodeMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#1E293B"), // deep navy
+      color: new THREE.Color(dotColor),
       metalness: 0.2,
       roughness: 0.45,
-      emissive: new THREE.Color("#2563EB"),
-      emissiveIntensity: 0.06,
+      emissive: new THREE.Color(dotEmissive),
+      emissiveIntensity: dotEmissiveIntensity,
     });
     const instanced = new THREE.InstancedMesh(sphereGeom, nodeMat, nodes.length);
     instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -73,9 +82,9 @@ export default function Hero3D({ className }: Hero3DProps) {
     const lineGeom = new THREE.BufferGeometry();
     lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     const lineMat = new THREE.LineBasicMaterial({
-      color: new THREE.Color("#334155"),
+      color: new THREE.Color(lineColor),
       transparent: true,
-      opacity: 0.36,
+      opacity: lineOpacity,
       linewidth: 1,
     });
     const lines = new THREE.LineSegments(lineGeom, lineMat);
@@ -91,15 +100,26 @@ export default function Hero3D({ className }: Hero3DProps) {
     const partGeom = new THREE.BufferGeometry();
     partGeom.setAttribute("position", new THREE.BufferAttribute(partPos, 3));
     const partMat = new THREE.PointsMaterial({
-      color: 0x1f2937, size: 0.04, transparent: true, opacity: 0.28, depthWrite: false,
+      color: isDark ? 0x1f2937 : 0x94a3b8,
+      size: 0.04,
+      transparent: true,
+      opacity: isDark ? 0.28 : 0.4,
+      depthWrite: false,
     });
     const particles = new THREE.Points(partGeom, partMat);
     scene.add(particles);
 
     // Lighting: subtle cool-blue ambient + soft directional for depth
-    const hemi = new THREE.HemisphereLight(new THREE.Color("#0f172a"), new THREE.Color("#020617"), 0.45);
+    const hemi = new THREE.HemisphereLight(
+      isDark ? new THREE.Color("#0f172a") : new THREE.Color("#e2e8f0"),
+      isDark ? new THREE.Color("#020617") : new THREE.Color("#cbd5e1"),
+      isDark ? 0.45 : 0.75
+    );
     scene.add(hemi);
-    const dir = new THREE.DirectionalLight(new THREE.Color("#93c5fd"), 0.08);
+    const dir = new THREE.DirectionalLight(
+      isDark ? new THREE.Color("#93c5fd") : new THREE.Color("#3b82f6"),
+      isDark ? 0.08 : 0.25
+    );
     dir.position.set(5, 8, 2);
     scene.add(dir);
 
@@ -122,9 +142,8 @@ export default function Hero3D({ className }: Hero3DProps) {
     const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const animate = () => {
       raf = requestAnimationFrame(animate);
-      // heavier, weighty rotation but subtle
       if (!prefersReduced) {
-        group.rotation.y += 0.0012; // slower, weighty
+        group.rotation.y += 0.0012;
         group.rotation.x += 0.0005;
         group.rotation.y += (mouse.current.x * 0.3 - group.rotation.y * 0.04) * 0.015;
         group.rotation.x += (mouse.current.y * 0.18 - group.rotation.x * 0.04) * 0.015;
@@ -146,7 +165,7 @@ export default function Hero3D({ className }: Hero3DProps) {
       renderer.dispose();
       if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [resolvedTheme]);
 
   return <div ref={mountRef} className={className} aria-hidden />;
 }

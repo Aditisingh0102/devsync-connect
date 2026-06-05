@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { projects } from "@/data/mock";
 import ProjectCard from "@/components/ProjectCard";
+import CreatePostModal from "@/components/CreatePostModal";
 
 const categories = ["All", "AI", "Web", "Mobile", "DevTools", "Productivity", "Research", "OpenSource", "Education"];
 const statuses = ["All", "Recruiting", "In Progress", "Completed"];
@@ -13,6 +15,7 @@ export default function FindProjects() {
   const [status, setStatus] = useState("All");
   const [sort, setSort] = useState("Recommended");
   const [page, setPage] = useState(1);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const perPage = 6;
 
   const filtered = useMemo(() => {
@@ -31,9 +34,23 @@ export default function FindProjects() {
 
   return (
     <div className="container py-10">
-      <div className="ds-card p-7 mb-6 bg-gradient-hero">
-        <h1 className="ds-page-title">Find Projects</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">Discover real-world student projects matched to your skills, interests, and availability.</p>
+      <div className="ds-card p-7 mb-6 bg-gradient-hero flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 className="ds-page-title">Find Projects</h1>
+          <p className="text-muted-foreground mt-2 max-w-2xl">Discover real-world student projects matched to your skills, interests, and availability.</p>
+        </div>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="ds-card p-4 flex items-center gap-4 border border-primary/20 hover:border-primary bg-card/30 hover:bg-card transition-all md:w-64 shrink-0 group text-left"
+        >
+          <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Plus className="size-5" />
+          </div>
+          <div>
+            <div className="font-semibold text-sm group-hover:text-primary transition-colors">Post a New Project</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Find student builders</div>
+          </div>
+        </button>
       </div>
 
       <div className="ds-card p-4 mb-6 flex flex-col lg:flex-row gap-3">
@@ -79,6 +96,7 @@ export default function FindProjects() {
           <button aria-label="Next page" onClick={() => setPage(Math.min(pages, page + 1))} disabled={page === pages} className="size-10 rounded-xl bg-card border border-border disabled:opacity-40 flex items-center justify-center"><ChevronRight className="size-4" /></button>
         </div>
       )}
+      <CreatePostModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
     </div>
   );
 }

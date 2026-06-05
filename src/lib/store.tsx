@@ -50,9 +50,9 @@ function getInitialState(): AppState {
 
   const demoPosts: Record<string, Post> = {};
   const sample = [
-    { authorIndex: 0, title: "Looking for Frontend for HackPrep Planner", body: "Building a dashboard to help students prepare for hackathons. Need a frontend dev.", type: "Looking for Team" },
-    { authorIndex: 1, title: "Need ML help for PeerCode Review Hub", body: "Seeking an ML engineer to help build code quality suggestions.", type: "Seeking Contributor" },
-    { authorIndex: 2, title: "Open to Collaborate on Campus Connect Live", body: "Working on a live events platform for college clubs.", type: "Open to Join" },
+    { authorIndex: 0, title: "Looking for Frontend for HackPrep Planner", body: "Building a dashboard to help students prepare for hackathons. Need a frontend dev.", type: "Looking for Team", projectName: "HackPrep Planner" },
+    { authorIndex: 1, title: "Need ML help for PeerCode Review Hub", body: "Seeking an ML engineer to help build code quality suggestions.", type: "Seeking Contributor", projectName: "PeerCode Review Hub" },
+    { authorIndex: 2, title: "Open to Collaborate on Campus Connect Live", body: "Working on a live events platform for college clubs.", type: "Open to Join", projectName: "Campus Connect Live" },
   ];
   sample.forEach((s, idx) => {
     const id = `p_${idx + 1}`;
@@ -63,6 +63,7 @@ function getInitialState(): AppState {
       title: s.title,
       body: s.body,
       type: s.type as any,
+      projectName: s.projectName,
       domain: idx % 2 === 0 ? "Frontend" : "AI/ML",
       tech: idx % 2 === 0 ? ["React", "TypeScript"] : ["Python", "PyTorch"],
       projectType: idx % 2 === 0 ? "Hackathon" : "Open Source",
@@ -291,6 +292,7 @@ export function createPostDraft(input: Partial<Post>): Post {
     title: input.title || "Untitled",
     body: input.body || "",
     type: (input.type as any) || "Looking for Team",
+    projectName: input.projectName,
     domain: input.domain,
     tech: input.tech || [],
     projectType: input.projectType,

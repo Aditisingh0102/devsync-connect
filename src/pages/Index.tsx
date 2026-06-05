@@ -8,13 +8,20 @@ import {
 import { projects } from "@/data/mock";
 import ProjectCard from "@/components/ProjectCard";
 import { useApp } from "@/lib/store";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const Hero3D = lazy(() => import("@/components/Hero3D"));
 
 const stats = [
   { label: "Active Projects", value: "1,240", change: "+12%", icon: Compass, color: "text-primary bg-primary-soft" },
-  { label: "Students", value: "8.6K", change: "+24%", icon: Users2, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
-  { label: "Teams Formed", value: "320", change: "+8%", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
+  { label: "Working Projects", value: "5", change: "+24%", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
+  { label: "My Team", value: "1", change: "Active", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
   { label: "Match Score", value: "92%", change: "+3%", icon: TrendingUp, color: "text-success bg-success-bg" },
 ];
 
@@ -119,19 +126,31 @@ export default function Index() {
       </section>
 
       {/* RECOMMENDED PROJECTS */}
-      <section className="container py-20">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <span className="ds-chip-primary mb-2">Recommended for you</span>
-            <h2 className="ds-section-title mt-2">Projects matching your skills</h2>
+      <section className="container py-20 overflow-hidden">
+        <Carousel opts={{ align: "start" }} className="w-full">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <span className="ds-chip-primary mb-2">Recommended for you</span>
+              <h2 className="ds-section-title mt-2">Projects matching your skills</h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link to="/find-projects" className="hidden md:inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-primary text-white font-semibold shadow-glow hover:bg-primary-hover transition-all">
+                View all <ArrowRight className="size-4" />
+              </Link>
+              <div className="flex items-center gap-1.5 md:ml-4">
+                <CarouselPrevious className="static translate-y-0 h-10 w-10 border-border bg-card hover:bg-secondary text-foreground" />
+                <CarouselNext className="static translate-y-0 h-10 w-10 border-border bg-card hover:bg-secondary text-foreground" />
+              </div>
+            </div>
           </div>
-          <Link to="/find-projects" className="hidden md:inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-primary text-white font-semibold shadow-glow hover:bg-primary-hover transition-all">
-            View all <ArrowRight className="size-4" />
-          </Link>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {projects.slice(0, 3).map((p) => <ProjectCard key={p.id} project={p} />)}
-        </div>
+          <CarouselContent className="-ml-5">
+            {projects.map((p) => (
+              <CarouselItem key={p.id} className="pl-5 md:basis-1/2 lg:basis-1/3">
+                <ProjectCard project={p} />
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       </section>
 
       {/* KEY FEATURES */}

@@ -21,7 +21,10 @@ export default function Feed() {
 
   const filtered = useMemo(() => {
     return allPosts.filter((p) => {
-      if (domain && p.domain && p.domain.toLowerCase() !== domain.toLowerCase()) return false;
+      if (domain && p.domain) {
+        const postDomains = Array.isArray(p.domain) ? p.domain : [p.domain];
+        if (!postDomains.map(d => d.toLowerCase()).includes(domain.toLowerCase())) return false;
+      }
       if (projectType && p.projectType && p.projectType !== projectType) return false;
       if (role && role.length && p.lookingFor && !(Array.isArray(p.lookingFor) ? p.lookingFor : [p.lookingFor]).map((r:string)=>r.toLowerCase()).includes(role.toLowerCase())) return false;
       if (tech.length) {

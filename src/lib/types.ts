@@ -42,10 +42,11 @@ export type Post = {
   title: string;
   body: string;
   type: PostType;
-  domain?: string;
+  domain?: string | string[];
   tech?: string[];
   projectType?: string;
-  lookingFor?: string;
+  projectName?: string;
+  lookingFor?: string | string[];
   imageUrl?: string;
   referenceLink?: string;
   createdAt: string;
