@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users, ArrowRight } from "lucide-react";
 import { Project } from "@/data/mock";
+import { useEffect, useRef } from "react";
 
 const statusStyles: Record<Project["status"], string> = {
   Recruiting: "bg-success-bg text-success",
@@ -9,6 +10,14 @@ const statusStyles: Record<Project["status"], string> = {
 };
 
 export default function ProjectCard({ project }: { project: Project }) {
+  const progressRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (progressRef.current) {
+      progressRef.current.style.width = `${project.progress}%`;
+    }
+  }, [project.progress]);
+
   return (
     <div className="ds-card ds-card-hover p-5 flex flex-col gap-4 group">
       <div className="flex items-start justify-between gap-2">
@@ -35,7 +44,7 @@ export default function ProjectCard({ project }: { project: Project }) {
           <span>Progress</span><span>{project.progress}%</span>
         </div>
         <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-primary rounded-full transition-all" style={{ width: `${project.progress}%` }} />
+          <div ref={progressRef} className="h-full bg-gradient-primary rounded-full transition-all" />
         </div>
       </div>
 
