@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Users, ArrowRight } from "lucide-react";
-import { Project } from "@/data/mock";
+import { Project } from "@/lib/types";
 import { useEffect, useRef } from "react";
 
 const statusStyles: Record<Project["status"], string> = {

@@ -52,7 +52,25 @@ export type Post = {
   referenceLink?: string;
   createdAt: string;
   status?: "open" | "closed" | "filled";
+  visibility?: "public" | "private" | "friends";
   responses?: ID[];
+};
+
+export type Project = {
+  id: ID;
+  title: string;
+  owner: string;
+  ownerId?: ID;
+  team: string;
+  description: string;
+  tech: string[];
+  roles: string[];
+  members: number;
+  maxMembers: number;
+  progress: number;
+  status: "Recruiting" | "In Progress" | "Completed";
+  category: string;
+  bookmarked?: boolean;
 };
 
 export type Response = {
@@ -99,6 +117,7 @@ export type AppState = {
   currentUser?: User;
   users: Record<ID, User>;
   posts: Record<ID, Post>;
+  projects: Record<ID, Project>;
   responses: Record<ID, Response>;
   reviews: Record<ID, Review>;
   requests: Record<ID, Request>;
@@ -118,6 +137,9 @@ export type AppAction =
   | { type: "addNotification"; payload: AppNotification }
   | { type: "markNotificationRead"; payload: { id: ID } }
   | { type: "markAllNotificationsRead" }
-  | { type: "toggleSavePost"; payload: { postId: ID } };
+  | { type: "toggleSavePost"; payload: { postId: ID } }
+  | { type: "deletePost"; payload: { postId: ID } }
+  | { type: "createProject"; payload: Project }
+  | { type: "deleteProject"; payload: { projectId: ID } };
 
 export {};

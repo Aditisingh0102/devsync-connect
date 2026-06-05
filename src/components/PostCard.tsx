@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Post } from "@/lib/types";
 import { useApp } from "@/lib/store";
-import { Bookmark, MessageSquare, Send } from "lucide-react";
+import { Bookmark, MessageSquare, Send, Trash2 } from "lucide-react";
 
 export default function PostCard({ post, onRespond }: { post: Post; onRespond?: (post: Post) => void }) {
   const { state, dispatch } = useApp();
@@ -22,6 +22,11 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
               <div className="text-xs text-muted-foreground">@{author?.username || "user"} · {new Date(post.createdAt).toLocaleDateString()}</div>
             </div>
             <div className="flex items-center gap-2">
+              {post.visibility && post.visibility !== "public" && (
+                <span className="px-2 py-0.5 rounded text-[9px] font-semibold bg-danger/10 text-danger border border-danger/20 uppercase tracking-wider">
+                  {post.visibility === "friends" ? "Friend-only" : "Private"}
+                </span>
+              )}
               <span className="ds-chip-primary">{post.type}</span>
               {author && state.currentUser && author.id !== state.currentUser.id && (
                 <button
@@ -112,7 +117,21 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
           )}
 
           <div className="flex items-center gap-2 mt-4 flex-wrap">
-            <button onClick={() => onRespond && onRespond(post)} className="h-9 px-3 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover"><Send className="size-3.5" /> Apply</button>
+            {(!state.currentUser || post.authorId !== state.currentUser.id) && (
+              <button onClick={() => onRespond && onRespond(post)} className="h-9 px-3 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover"><Send className="size-3.5" /> Apply</button>
+            )}
+            {state.currentUser && post.authorId === state.currentUser.id && (
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete this post?")) {
+                    dispatch({ type: "deletePost", payload: { postId: post.id } });
+                  }
+                }}
+                className="h-9 px-3 rounded-xl bg-danger/10 text-danger border border-danger/20 text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-danger hover:text-white transition-all"
+              >
+                <Trash2 className="size-3.5" /> Delete
+              </button>
+            )}
             <Link to={`/post/${post.id}`} className="h-9 px-3 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 hover:bg-secondary"><MessageSquare className="size-3.5" /> View</Link>
             <button
               onClick={() => {

@@ -3,7 +3,7 @@ import { useApp, createPostDraft } from "@/lib/store";
 import { PostType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { X, Link as LinkIcon, Image as ImageIcon } from "lucide-react";
+import { X, Link as LinkIcon, Image as ImageIcon, Globe, Lock, Users } from "lucide-react";
 
 const DOMAINS = [
   "Frontend",
@@ -74,6 +74,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [referenceLink, setReferenceLink] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "private" | "friends">("public");
 
   const handleSelectDomain = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -149,6 +150,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
       lookingFor: selectedRoles.length > 0 ? selectedRoles : undefined,
       referenceLink: referenceLink.trim() || undefined,
       imageUrl: imageUrl || undefined,
+      visibility,
     });
 
     dispatch({ type: "createPost", payload: p });
@@ -169,6 +171,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
     setSelectedRoles([]);
     setReferenceLink("");
     setImageUrl("");
+    setVisibility("public");
 
     onClose();
     navigate("/feed");
@@ -190,10 +193,29 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
           <X className="size-5" />
         </button>
 
-        <h3 className="text-xl font-bold text-foreground mb-1">Post a New Project</h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Find student builders, partners, or hackathon teammates by creating a collaboration post.
-        </p>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6 pr-10">
+          <div>
+            <h3 className="text-xl font-bold text-foreground mb-1">Post a New Project</h3>
+            <p className="text-sm text-muted-foreground">
+              Find student builders, partners, or hackathon teammates by creating a collaboration post.
+            </p>
+          </div>
+          <div className="shrink-0 flex items-center gap-1.5 px-3 h-10 rounded-xl bg-secondary border border-border text-xs font-semibold text-muted-foreground self-start md:self-auto">
+            {visibility === "public" && <Globe className="size-3.5 text-primary" />}
+            {visibility === "private" && <Lock className="size-3.5 text-danger" />}
+            {visibility === "friends" && <Users className="size-3.5 text-success" />}
+            <select
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value as any)}
+              className="bg-transparent border-none outline-none cursor-pointer text-foreground font-semibold pr-1"
+              aria-label="Select Visibility"
+            >
+              <option value="public" className="bg-background text-foreground">Public</option>
+              <option value="private" className="bg-background text-foreground">Private</option>
+              <option value="friends" className="bg-background text-foreground">Friend</option>
+            </select>
+          </div>
+        </div>
 
         {!state.currentUser ? (
           <div className="text-center py-8">

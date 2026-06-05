@@ -1,22 +1,74 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
+import { useSearchParams } from "react-router-dom";
 
 export default function DiscoverBuilders() {
   const { state, dispatch } = useApp();
-  const [q, setQ] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [q, setQ] = useState(searchParams.get("q") || "");
   const [filterSkill, setFilterSkill] = useState("");
 
+  useEffect(() => {
+    setQ(searchParams.get("q") || "");
+  }, [searchParams]);
+
+  const handleSearchChange = (val: string) => {
+    setQ(val);
+    const newParams = new URLSearchParams(searchParams);
+    if (val) {
+      newParams.set("q", val);
+    } else {
+      newParams.delete("q");
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
   const users = useMemo(() => Object.values(state.users || {}), [state.users]);
-  const results = useMemo(() => users.filter(u => {
-    if (!u) return false;
-    if (!q) return true;
-    const s = q.toLowerCase();
-    if ((u.name || "").toLowerCase().includes(s)) return true;
-    if ((u.username || "").toLowerCase().includes(s)) return true;
-    if ((u.handle || "").toLowerCase().includes(s)) return true;
-    if ((u.skills || []).join(" ").toLowerCase().includes(s)) return true;
-    return false;
-  }).filter(u => !filterSkill || (u.skills || []).map(x=>x.toLowerCase()).includes(filterSkill.toLowerCase())), [users, q, filterSkill]);
+  const results = useMemo(() => {
+    let filtered = users.filter((u) => {
+      if (!u) return false;
+      if (!q) return true;
+      const s = q.toLowerCase();
+      if ((u.name || "").toLowerCase().includes(s)) return true;
+      if ((u.username || "").toLowerCase().includes(s)) return true;
+      if ((u.handle || "").toLowerCase().includes(s)) return true;
+      if ((u.skills || []).join(" ").toLowerCase().includes(s)) return true;
+      if ((u.domains || []).join(" ").toLowerCase().includes(s)) return true;
+      return false;
+    }).filter((u) => !filterSkill || (u.skills || []).map((x) => x.toLowerCase()).includes(filterSkill.toLowerCase()));
+
+    if (q) {
+      filtered = [...filtered].sort((a, b) => {
+        const getRelevance = (u: typeof a) => {
+          const query = q.toLowerCase();
+          const name = (u.name || "").toLowerCase();
+          const username = (u.username || "").toLowerCase();
+          const handle = (u.handle || "").toLowerCase();
+          let score = 0;
+
+          if (name === query || username === query || handle === query) score += 100;
+          else if (name.startsWith(query) || username.startsWith(query) || handle.startsWith(query)) score += 60;
+          else if (name.includes(query) || username.includes(query) || handle.includes(query)) score += 30;
+
+          (u.skills || []).forEach((skill) => {
+            const skillLower = skill.toLowerCase();
+            if (skillLower === query) score += 40;
+            else if (skillLower.includes(query)) score += 15;
+          });
+
+          (u.domains || []).forEach((domain) => {
+            const domainLower = domain.toLowerCase();
+            if (domainLower === query) score += 20;
+            else if (domainLower.includes(query)) score += 10;
+          });
+
+          return score;
+        };
+        return getRelevance(b) - getRelevance(a);
+      });
+    }
+    return filtered;
+  }, [users, q, filterSkill]);
 
   const follow = (toId: string) => {
     if (!state.currentUser) return;
@@ -39,7 +91,7 @@ export default function DiscoverBuilders() {
         <h1 className="text-2xl font-semibold">Discover Builders</h1>
         <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain.</p>
         <div className="mt-4 flex gap-2">
-          <input placeholder="Search builders..." value={q} onChange={(e)=>setQ(e.target.value)} className="ds-input" />
+          <input placeholder="Search builders..." value={q} onChange={(e)=>handleSearchChange(e.target.value)} className="ds-input" />
           <input placeholder="Filter skill (optional)" value={filterSkill} onChange={(e)=>setFilterSkill(e.target.value)} className="ds-input w-48" />
         </div>
       </div>

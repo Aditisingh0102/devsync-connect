@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { projects } from "@/data/mock";
+import { useApp } from "@/lib/store";
 import ProjectCard from "@/components/ProjectCard";
 import CreatePostModal from "@/components/CreatePostModal";
 
@@ -10,24 +10,117 @@ const statuses = ["All", "Recruiting", "In Progress", "Completed"];
 const sorts = ["Recommended", "Newest", "Most Members", "Highest Progress"];
 
 export default function FindProjects() {
-  const [q, setQ] = useState("");
+  const { state } = useApp();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [q, setQ] = useState(searchParams.get("q") || "");
+
+  useEffect(() => {
+    setQ(searchParams.get("q") || "");
+  }, [searchParams]);
+
+  const handleSearchChange = (val: string) => {
+    setQ(val);
+    setPage(1);
+    const newParams = new URLSearchParams(searchParams);
+    if (val) {
+      newParams.set("q", val);
+    } else {
+      newParams.delete("q");
+    }
+    setSearchParams(newParams, { replace: true });
+  };
   const [cat, setCat] = useState("All");
   const [status, setStatus] = useState("All");
   const [sort, setSort] = useState("Recommended");
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const perPage = 6;
+  const perPage = 12;
+
+  useEffect(() => {
+    if (location.state && (location.state as any).openCreateModal) {
+      setCreateModalOpen(true);
+      // Clear navigation state so that refreshing doesn't reopen the modal
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
 
   const filtered = useMemo(() => {
     let r = projects.filter((p) =>
       (cat === "All" || p.category === cat) &&
       (status === "All" || p.status === status) &&
-      (q === "" || p.title.toLowerCase().includes(q.toLowerCase()) || p.tech.some((t) => t.toLowerCase().includes(q.toLowerCase())))
+      (q === "" || 
+        p.title.toLowerCase().includes(q.toLowerCase()) || 
+        p.description.toLowerCase().includes(q.toLowerCase()) ||
+        p.tech.some((t) => t.toLowerCase().includes(q.toLowerCase())) ||
+        p.roles.some((role) => role.toLowerCase().includes(q.toLowerCase()))
+      )
     );
-    if (sort === "Most Members") r = [...r].sort((a, b) => b.members - a.members);
-    if (sort === "Highest Progress") r = [...r].sort((a, b) => b.progress - a.progress);
+
+    if (sort === "Most Members") {
+      r = [...r].sort((a, b) => b.members - a.members);
+    } else if (sort === "Highest Progress") {
+      r = [...r].sort((a, b) => b.progress - a.progress);
+    } else if (sort === "Newest") {
+      const parseIdTime = (id: string) => {
+        if (id.startsWith("proj_")) {
+          const ts = parseInt(id.replace("proj_", ""));
+          return isNaN(ts) ? 0 : ts;
+        }
+        if (id.startsWith("p")) {
+          const num = parseInt(id.replace("p", ""));
+          return isNaN(num) ? 0 : num;
+        }
+        return 0;
+      };
+      r = [...r].sort((a, b) => parseIdTime(b.id) - parseIdTime(a.id));
+    } else if (sort === "Recommended") {
+      if (q) {
+        // Sort by search relevance
+        r = [...r].sort((a, b) => {
+          const getRelevance = (p: typeof a) => {
+            const query = q.toLowerCase();
+            const title = p.title.toLowerCase();
+            const desc = p.description.toLowerCase();
+            let score = 0;
+            
+            if (title === query) score += 100;
+            else if (title.startsWith(query)) score += 60;
+            else if (title.includes(query)) score += 30;
+            
+            p.tech.forEach((t) => {
+              const techLower = t.toLowerCase();
+              if (techLower === query) score += 40;
+              else if (techLower.includes(query)) score += 15;
+            });
+
+            p.roles.forEach((role) => {
+              const roleLower = role.toLowerCase();
+              if (roleLower === query) score += 20;
+              else if (roleLower.includes(query)) score += 10;
+            });
+            
+            if (desc.includes(query)) score += 5;
+            return score;
+          };
+          return getRelevance(b) - getRelevance(a);
+        });
+      } else {
+        // Sort by profile skills match
+        const myTech = (state.currentUser?.skills || []).map((s) => s.toLowerCase());
+        if (myTech.length > 0) {
+          r = [...r].sort((a, b) => {
+            const getMatchCount = (p: typeof a) => 
+              p.tech.filter((t) => myTech.includes(t.toLowerCase())).length;
+            return getMatchCount(b) - getMatchCount(a);
+          });
+        }
+      }
+    }
     return r;
-  }, [q, cat, status, sort]);
+  }, [q, cat, status, sort, projects, state.currentUser?.skills]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const slice = filtered.slice((page - 1) * perPage, page * perPage);
@@ -56,7 +149,7 @@ export default function FindProjects() {
       <div className="ds-card p-4 mb-6 flex flex-col lg:flex-row gap-3">
         <div className="flex-1 flex items-center gap-2 px-3 h-11 rounded-xl bg-secondary border border-border">
           <Search className="size-4 text-muted-foreground" />
-          <input value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }} placeholder="Search by title or tech…" className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground" />
+          <input value={q} onChange={(e) => handleSearchChange(e.target.value)} placeholder="Search by title or tech…" className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground" />
         </div>
         <Select value={cat} onChange={(v) => { setCat(v); setPage(1); }} options={categories} label="Category" />
         <Select value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={statuses} label="Status" />

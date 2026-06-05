@@ -1,10 +1,9 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Bell, Search, Menu, X, Moon, Sun, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useApp } from "@/lib/store";
-import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -12,7 +11,7 @@ import {
 const links = [
   { to: "/", label: "Home" },
   { to: "/discover-builders", label: "Discover Builders" },
-  { to: "/my-team", label: "My Team" },
+  { to: "/my-projects", label: "My Projects" },
   { to: "/find-projects", label: "Find Projects" },
   { to: "/profile", label: "Profile" },
 ];
@@ -27,6 +26,33 @@ export default function Navbar() {
   const avatar = currentUser?.avatar || "AC";
   const isImageAvatar = !!currentUser?.avatar && /^(data:|https?:\/\/)/.test(currentUser.avatar);
   const isDark = resolvedTheme === "dark";
+
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setSearchQuery(q);
+  }, [searchParams]);
+
+  const handleInputChange = (val: string) => {
+    setSearchQuery(val);
+    const cleanVal = val.trim();
+    const newParams = new URLSearchParams(searchParams);
+    if (cleanVal) {
+      newParams.set("q", cleanVal);
+    } else {
+      newParams.delete("q");
+    }
+
+    if (loc.pathname === "/discover-builders" || loc.pathname === "/find-builders" || loc.pathname === "/find-projects") {
+      navigate(`${loc.pathname}?${newParams.toString()}`, { replace: true });
+    } else {
+      if (cleanVal) {
+        navigate(`/find-projects?${newParams.toString()}`);
+      }
+    }
+  };
 
   useEffect(() => { setOpen(false); }, [loc.pathname]);
 
@@ -59,9 +85,11 @@ export default function Navbar() {
 
         <div className="flex-1" />
 
-        <div className="hidden lg:flex items-center gap-2 px-3 h-10 w-72 rounded-xl bg-secondary border border-border">
+        <div className="hidden lg:flex items-center gap-2 px-3 h-10 w-72 rounded-xl bg-secondary border border-border focus-within:border-primary/50 transition-colors">
           <Search className="size-4 text-muted-foreground" />
           <input
+            value={searchQuery}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Search projects, skills, teams…"
             className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground"
           />
@@ -92,11 +120,15 @@ export default function Navbar() {
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>{currentUser?.name || "Guest"}</DropdownMenuLabel>
+            <DropdownMenuLabel>Hello! {currentUser?.name || "Guest"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/feed">Collaboration Feed</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/my-projects">My Projects</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/profile?tab=Saved">Saved</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/profile?tab=Network">Following</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/onboarding/profile-setup">Onboarding</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

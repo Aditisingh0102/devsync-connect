@@ -1,9 +1,9 @@
-import { useState, lazy, Suspense, useMemo } from "react";
+import { useState, lazy, Suspense, useMemo, useEffect } from "react";
 import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
 const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import PostCard from "@/components/PostCard";
 
@@ -14,9 +14,35 @@ const chartData = [
   { m: "May", c: 28 }, { m: "Jun", c: 34 }, { m: "Jul", c: 26 }, { m: "Aug", c: 38 },
 ];
 
+const getMonthLabel = (weekIndex: number) => {
+  const labels: Record<number, string> = {
+    1: "Jun",
+    5: "Jul",
+    10: "Aug",
+    14: "Sep",
+    18: "Oct",
+    22: "Nov",
+    27: "Dec",
+    31: "Jan",
+    35: "Feb",
+    40: "Mar",
+    44: "Apr",
+    48: "May"
+  };
+  return labels[weekIndex] || "";
+};
+
 export default function Profile() {
+  const [searchParams] = useSearchParams();
+  const queryTab = searchParams.get("tab");
   const [tab, setTab] = useState("Overview");
   const completion = 78;
+
+  useEffect(() => {
+    if (queryTab) {
+      setTab(queryTab);
+    }
+  }, [queryTab]);
   const { state } = useApp();
   const params = useParams();
   const profileId = params.id || state.currentUser?.id;
@@ -24,6 +50,38 @@ export default function Profile() {
   const user = (profileId && state.users[profileId]) || state.currentUser || null;
   const isLoggedIn = !!state.currentUser;
   const profile = (user ?? {}) as any;
+
+  const contributions = useMemo(() => {
+    const seed = profile?.name || "default";
+    let seedNum = 0;
+    for (let i = 0; i < seed.length; i++) {
+      seedNum += seed.charCodeAt(i);
+    }
+    
+    const rng = () => {
+      const x = Math.sin(seedNum++) * 10000;
+      return x - Math.floor(x);
+    };
+
+    const data = [];
+    for (let i = 0; i < 53 * 7; i++) {
+      const dayOfWeek = i % 7;
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const r = rng();
+      let lvl = 0;
+      if (isWeekend) {
+        if (r > 0.96) lvl = 2;
+        else if (r > 0.88) lvl = 1;
+      } else {
+        if (r > 0.97) lvl = 4;
+        else if (r > 0.90) lvl = 3;
+        else if (r > 0.76) lvl = 2;
+        else if (r > 0.52) lvl = 1;
+      }
+      data.push(lvl);
+    }
+    return data;
+  }, [profile?.id, profile?.name]);
 
   const profileTabs = useMemo(() => {
     if (state.currentUser && profileId === state.currentUser.id) {
@@ -105,8 +163,14 @@ export default function Profile() {
             <div className="flex flex-wrap gap-1.5 mt-3">{(profile?.skills || []).map((s:any) => <span key={s} className="ds-chip-primary">{s}</span>)}</div>
           </div>
           <div className="flex gap-2">
-            <AvatarUpload userId={profile?.id || ""} />
-            <button className="h-10 px-4 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2"><Edit3 className="size-4" /> Edit</button>
+            {state.currentUser && profile?.id === state.currentUser.id && (
+              <>
+                <AvatarUpload userId={profile?.id || ""} />
+                <Link to="/settings" className="h-10 px-4 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2">
+                  <Edit3 className="size-4" /> Edit Profile
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -143,12 +207,86 @@ export default function Profile() {
             </div>
             <div className="mt-6">
               <h4 className="font-semibold text-sm mb-3">Activity Heatmap</h4>
-              <div className="grid grid-cols-[repeat(26,1fr)] gap-1">
-                {Array.from({ length: 26 * 7 }).map((_, i) => {
-                  const lvl = Math.floor(Math.random() * 5);
-                  const colors = ["bg-secondary", "bg-primary/20", "bg-primary/40", "bg-primary/70", "bg-primary"];
-                  return <div key={i} className={`aspect-square rounded-sm ${colors[lvl]}`} />;
-                })}
+              <div className="p-4 rounded-xl border border-border bg-card dark:bg-[#0d1117] dark:border-[#30363d] overflow-x-auto">
+                <div className="min-w-[720px] pr-2">
+                  <div className="flex gap-2 text-[10px] select-none font-mono">
+                    {/* Left column: Day labels */}
+                    <div className="grid grid-rows-7 gap-[3px] h-[88px] text-[#8b949e] pr-1">
+                      <span className="leading-none flex items-center h-[10px]"></span>
+                      <span className="leading-none flex items-center h-[10px] text-[#8b949e]">Mon</span>
+                      <span className="leading-none flex items-center h-[10px]"></span>
+                      <span className="leading-none flex items-center h-[10px] text-[#8b949e]">Wed</span>
+                      <span className="leading-none flex items-center h-[10px]"></span>
+                      <span className="leading-none flex items-center h-[10px] text-[#8b949e]">Fri</span>
+                      <span className="leading-none flex items-center h-[10px]"></span>
+                    </div>
+                    
+                    {/* Right column: Month Labels + Squares Grid */}
+                    <div className="flex-1">
+                      {/* Month Labels */}
+                      <div className="grid gap-[3px] mb-1.5 h-4" style={{ gridTemplateColumns: 'repeat(53, 10px)' }}>
+                        {Array.from({ length: 53 }).map((_, colIdx) => {
+                          const month = getMonthLabel(colIdx);
+                          return (
+                            <div key={colIdx} className="relative h-full">
+                              {month && (
+                                <span className="absolute left-0 bottom-0 text-[10px] leading-none whitespace-nowrap text-[#8b949e]">
+                                  {month}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Squares Grid */}
+                      <div 
+                        className="grid grid-flow-col gap-[3px]" 
+                        style={{ 
+                          gridTemplateColumns: 'repeat(53, 10px)', 
+                          gridTemplateRows: 'repeat(7, 10px)' 
+                        }}
+                      >
+                        {contributions.map((lvl, i) => {
+                          const colors = [
+                            "bg-[#ebedf0] dark:bg-[#161b22]",
+                            "bg-[#9be9a8] dark:bg-[#0e4429]",
+                            "bg-[#40c463] dark:bg-[#006d32]",
+                            "bg-[#30a14e] dark:bg-[#26a641]",
+                            "bg-[#216e39] dark:bg-[#39d353]",
+                          ];
+                          return (
+                            <div
+                              key={i}
+                              className={`w-[10px] h-[10px] rounded-[2px] ${colors[lvl]} transition-all hover:scale-125 duration-100`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className="flex justify-between items-center mt-3 text-[11px] text-[#8b949e] select-none font-mono">
+                    <a
+                      href="https://docs.github.com/articles/why-are-my-contributions-not-showing-up-on-my-profile"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline hover:text-primary transition-colors text-[#8b949e]"
+                    >
+                      Learn how we count contributions
+                    </a>
+                    <div className="flex items-center gap-1.5">
+                      <span>Less</span>
+                      <div className="w-[10px] h-[10px] rounded-[2px] bg-[#ebedf0] dark:bg-[#161b22]" />
+                      <div className="w-[10px] h-[10px] rounded-[2px] bg-[#9be9a8] dark:bg-[#0e4429]" />
+                      <div className="w-[10px] h-[10px] rounded-[2px] bg-[#40c463] dark:bg-[#006d32]" />
+                      <div className="w-[10px] h-[10px] rounded-[2px] bg-[#30a14e] dark:bg-[#26a641]" />
+                      <div className="w-[10px] h-[10px] rounded-[2px] bg-[#216e39] dark:bg-[#39d353]" />
+                      <span>More</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -187,25 +325,7 @@ export default function Profile() {
           </div>
 
           {profilePosts.length ? profilePosts.map((post) => (
-            <div key={post.id} className="ds-card p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="font-semibold">{post.title}</h4>
-                    <span className="ds-chip-primary text-[10px] py-1">{post.type}</span>
-                    {post.projectType && <span className="ds-chip text-[10px] py-1">{post.projectType}</span>}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{post.domain || "General"} · {new Date(post.createdAt).toLocaleString()}</p>
-                </div>
-                <span className={`ds-chip ${post.status === "open" ? "bg-success-bg text-success" : "bg-secondary text-muted-foreground"}`}>{post.status || "open"}</span>
-              </div>
-              <p className="text-sm text-foreground mt-3">{post.body}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(post.tech || []).map((tech) => <span key={tech} className="ds-chip text-[10px] py-1">{tech}</span>)}
-                {post.lookingFor?.length ? <span className="ds-chip-primary text-[10px] py-1">Looking for {post.lookingFor.join(", ")}</span> : null}
-              </div>
-              {post.imageUrl && <img src={post.imageUrl} alt={post.title} className="mt-3 rounded-xl border border-border max-h-72 w-full object-cover" />}
-            </div>
+            <PostCard key={post.id} post={post} />
           )) : (
             <div className="ds-card p-16 text-center">
               <h3 className="font-semibold text-lg">No posts yet</h3>

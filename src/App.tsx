@@ -7,6 +7,7 @@ import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import DiscoverBuilders from "./pages/DiscoverBuilders";
 import FindProjects from "./pages/FindProjects";
+import MyProjects from "./pages/MyProjects";
 import MyTeam from "./pages/MyTeam";
 import Profile from "./pages/Profile";
 import ProjectDetail from "./pages/ProjectDetail";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/feed" element={<FeedPage />} />
             <Route path="/discover-builders" element={<DiscoverBuilders />} />
             <Route path="/find-projects" element={<FindProjects />} />
+            <Route path="/my-projects" element={<MyProjects />} />
             <Route path="/find-builders" element={<DiscoverBuilders />} />
             <Route path="/my-team" element={<MyTeam />} />
             <Route path="/profile" element={<Profile />} />

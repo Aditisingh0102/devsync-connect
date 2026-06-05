@@ -1,13 +1,84 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import type { AppState, AppAction, AppNotification, User, Post, Response, Review, Request } from "./types";
+import type { AppState, AppAction, AppNotification, User, Post, Response, Review, Request, Project } from "./types";
+import { projects as mockProjects } from "../data/mock";
 
 // Persistence helpers
-const STORAGE_KEY = "devsync_app_state_v2";
+const STORAGE_KEY = "devsync_app_state_v3";
 
 function loadState(): AppState {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      const defaults = getInitialState();
+      const mergedState = {
+        ...defaults,
+        ...parsed,
+        projects: parsed.projects && Object.keys(parsed.projects).length > 0 ? parsed.projects : defaults.projects,
+      };
+
+      // Auto-migrate: Scan existing posts to auto-initialize project workspaces if missing
+      if (mergedState.posts) {
+        Object.values(mergedState.posts).forEach((p) => {
+          try {
+            if (p && p.id && p.projectName) {
+              const projId = `proj_${p.id.replace(/^p_/, "")}`;
+              if (mergedState.projects && !mergedState.projects[projId]) {
+                const author = (mergedState.users && p.authorId && mergedState.users[p.authorId]) || mergedState.currentUser;
+                mergedState.projects[projId] = {
+                  id: projId,
+                  title: p.projectName,
+                  owner: author?.name || "Unknown User",
+                  ownerId: p.authorId,
+                  team: `${author?.name || "Unknown User"}'s Core Team`,
+                  description: p.body || "",
+                  tech: p.tech || [],
+                  roles: Array.isArray(p.lookingFor) ? p.lookingFor : [],
+                  members: 1,
+                  maxMembers: 4,
+                  progress: 0,
+                  status: "Recruiting",
+                  category: p.projectType || "Web",
+                };
+              }
+            }
+          } catch (e) {
+            console.error("Error migrating post to project workspace during loadState:", p, e);
+          }
+        });
+      }
+
+      // Robust migration: Ensure all projects have an ownerId
+      if (mergedState.projects) {
+        Object.keys(mergedState.projects).forEach((id) => {
+          try {
+            const proj = mergedState.projects[id];
+            if (proj && !proj.ownerId) {
+              // Try matching by post author first if it was generated from a post
+              const possiblePostId = `p_${id.replace(/^proj_/, "")}`;
+              const post = mergedState.posts && mergedState.posts[possiblePostId];
+              if (post && post.authorId) {
+                proj.ownerId = post.authorId;
+              } else if (proj.owner) {
+                // Otherwise try matching by owner name in users list
+                const matchedUser = Object.values(mergedState.users || {}).find(
+                  (u) => u && u.name && proj.owner && u.name.toLowerCase() === proj.owner.toLowerCase()
+                );
+                if (matchedUser) {
+                  proj.ownerId = matchedUser.id;
+                } else if (mergedState.currentUser && mergedState.currentUser.name && proj.owner && mergedState.currentUser.name.toLowerCase() === proj.owner.toLowerCase()) {
+                  proj.ownerId = mergedState.currentUser.id;
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Error migrating ownerId for project ID during loadState:", id, e);
+          }
+        });
+      }
+
+      return mergedState;
+    }
   } catch (error) {
     console.error("Failed to load state from localStorage:", error);
   }
@@ -74,10 +145,27 @@ function getInitialState(): AppState {
     } as Post;
   });
 
+  const demoProjects: Record<string, Project> = {};
+  const ownerNameToId: Record<string, string> = {
+    "Priya Mehta": "u_1",
+    "Rohan Verma": "u_2",
+    "Alex Carter": "u_3",
+    "Sarah Khan": "u_4",
+    "Jordan Lee": "u_5",
+  };
+  mockProjects.forEach((p) => {
+    demoProjects[p.id] = {
+      ...p,
+      ownerId: ownerNameToId[p.owner],
+      status: p.status as any,
+    };
+  });
+
   return {
     currentUser: undefined,
     users: demoUsers,
     posts: demoPosts,
+    projects: demoProjects,
     responses: {},
     reviews: {},
     requests: {},
@@ -106,9 +194,31 @@ function reducer(state: AppState, action: AppAction): AppState {
     case "createPost": {
       const p = action.payload as Post;
       const author = state.users[p.authorId] || state.currentUser;
+
+      const newProjects = { ...state.projects };
+      if (p.projectName) {
+        const projId = `proj_${p.id.replace(/^p_/, "")}`;
+        newProjects[projId] = {
+          id: projId,
+          title: p.projectName,
+          owner: author?.name || "Unknown User",
+          ownerId: author?.id || p.authorId,
+          team: `${author?.name || "Unknown User"}'s Core Team`,
+          description: p.body,
+          tech: p.tech || [],
+          roles: Array.isArray(p.lookingFor) ? p.lookingFor : [],
+          members: 1,
+          maxMembers: 4,
+          progress: 0,
+          status: "Recruiting",
+          category: p.projectType || "Web",
+        };
+      }
+
       return {
         ...state,
         posts: { ...state.posts, [p.id]: p },
+        projects: newProjects,
         users: author ? {
           ...state.users,
           [author.id]: { ...author, profileCompleted: true },
@@ -137,6 +247,8 @@ function reducer(state: AppState, action: AppAction): AppState {
       const from = state.users[fromId];
       const to = state.users[toId];
       if (!from || !to) return state;
+      const updatedFrom = { ...from, following: Array.from(new Set([...(from.following || []), toId])) };
+      const updatedTo = { ...to, followers: Array.from(new Set([...(to.followers || []), fromId])) };
       return {
         ...state,
         notifications: {
@@ -148,10 +260,11 @@ function reducer(state: AppState, action: AppAction): AppState {
             href: `/profile/${toId}`,
           }),
         },
+        currentUser: state.currentUser && state.currentUser.id === fromId ? updatedFrom : state.currentUser,
         users: {
           ...state.users,
-          [fromId]: { ...from, following: Array.from(new Set([...(from.following || []), toId])) },
-          [toId]: { ...to, followers: Array.from(new Set([...(to.followers || []), fromId])) },
+          [fromId]: updatedFrom,
+          [toId]: updatedTo,
         },
       };
     }
@@ -160,17 +273,27 @@ function reducer(state: AppState, action: AppAction): AppState {
       const from = state.users[fromId];
       const to = state.users[toId];
       if (!from || !to) return state;
+      const updatedFrom = { ...from, following: (from.following || []).filter((x) => x !== toId) };
+      const updatedTo = { ...to, followers: (to.followers || []).filter((x) => x !== fromId) };
       return {
         ...state,
+        currentUser: state.currentUser && state.currentUser.id === fromId ? updatedFrom : state.currentUser,
         users: {
           ...state.users,
-          [fromId]: { ...from, following: (from.following || []).filter((x) => x !== toId) },
-          [toId]: { ...to, followers: (to.followers || []).filter((x) => x !== fromId) },
+          [fromId]: updatedFrom,
+          [toId]: updatedTo,
         },
       };
     }
     case "sendRequest": {
       const req = action.payload;
+      const fromUser = state.users[req.fromId];
+      const toUser = state.users[req.toId];
+      if (!fromUser || !toUser) return state;
+
+      const updatedFrom = { ...fromUser, sentRequests: Array.from(new Set([...(fromUser.sentRequests || []), req.id])) };
+      const updatedTo = { ...toUser, pendingRequests: Array.from(new Set([...(toUser.pendingRequests || []), req.id])) };
+
       return {
         ...state,
         requests: { ...state.requests, [req.id]: req },
@@ -179,14 +302,15 @@ function reducer(state: AppState, action: AppAction): AppState {
           [`n_req_${req.id}`]: createNotification({
             type: "request",
             title: "Collaboration request sent",
-            body: `Your collaboration request was sent to ${state.users[req.toId]?.name || "a builder"}.`,
+            body: `Your collaboration request was sent to ${toUser.name || "a builder"}.`,
             href: "/requests",
           }),
         },
+        currentUser: state.currentUser && state.currentUser.id === req.fromId ? updatedFrom : (state.currentUser && state.currentUser.id === req.toId ? updatedTo : state.currentUser),
         users: {
           ...state.users,
-          [req.toId]: { ...state.users[req.toId], pendingRequests: [...((state.users[req.toId] && state.users[req.toId].pendingRequests) || []), req.id] },
-          [req.fromId]: { ...state.users[req.fromId], sentRequests: [...((state.users[req.fromId] && state.users[req.fromId].sentRequests) || []), req.id] },
+          [req.fromId]: updatedFrom,
+          [req.toId]: updatedTo,
         },
       };
     }
@@ -198,8 +322,12 @@ function reducer(state: AppState, action: AppAction): AppState {
       const users = { ...state.users };
       // remove from pending/sent arrays if accepted/declined
       if (status !== "pending") {
-        users[req.toId] = { ...users[req.toId], pendingRequests: (users[req.toId].pendingRequests || []).filter((x) => x !== id) };
-        users[req.fromId] = { ...users[req.fromId], sentRequests: (users[req.fromId].sentRequests || []).filter((x) => x !== id) };
+        if (users[req.toId]) {
+          users[req.toId] = { ...users[req.toId], pendingRequests: (users[req.toId].pendingRequests || []).filter((x) => x !== id) };
+        }
+        if (users[req.fromId]) {
+          users[req.fromId] = { ...users[req.fromId], sentRequests: (users[req.fromId].sentRequests || []).filter((x) => x !== id) };
+        }
       }
       if (status === "accepted") {
         const from = users[req.fromId];
@@ -209,10 +337,16 @@ function reducer(state: AppState, action: AppAction): AppState {
           users[req.toId] = { ...to, followers: Array.from(new Set([...(to.followers || []), req.fromId])) };
         }
       }
+
+      const updatedCurrentUser = state.currentUser
+        ? (users[state.currentUser.id] || state.currentUser)
+        : state.currentUser;
+
       return {
         ...state,
         requests: { ...state.requests, [id]: updated },
         users,
+        currentUser: updatedCurrentUser,
         notifications: {
           ...state.notifications,
           [`n_req_update_${id}`]: createNotification({
@@ -274,6 +408,91 @@ function reducer(state: AppState, action: AppAction): AppState {
         users: { ...state.users, [updatedUser.id]: updatedUser },
       };
     }
+    case "deletePost": {
+      const { postId } = action.payload;
+      const newPosts = { ...state.posts };
+      delete newPosts[postId];
+
+      // Also delete the associated project workspace if it was auto-created from this post
+      const newProjects = { ...state.projects };
+      const projId = postId && typeof postId === "string" ? `proj_${postId.replace(/^p_/, "")}` : "";
+      if (projId && newProjects[projId]) {
+        delete newProjects[projId];
+      }
+
+      // Remove from savedPosts list of all users
+      const updatedUsers = { ...state.users };
+      Object.keys(updatedUsers).forEach((userId) => {
+        const user = updatedUsers[userId];
+        if (user.savedPosts?.includes(postId)) {
+          updatedUsers[userId] = {
+            ...user,
+            savedPosts: user.savedPosts.filter((id) => id !== postId),
+          };
+        }
+      });
+
+      const updatedCurrentUser = state.currentUser
+        ? {
+            ...state.currentUser,
+            savedPosts: (state.currentUser.savedPosts || []).filter((id) => id !== postId),
+          }
+        : state.currentUser;
+
+      return {
+        ...state,
+        posts: newPosts,
+        projects: newProjects,
+        users: updatedUsers,
+        currentUser: updatedCurrentUser,
+      };
+    }
+    case "createProject": {
+      const p = action.payload;
+      return {
+        ...state,
+        projects: { ...state.projects, [p.id]: p },
+      };
+    }
+    case "deleteProject": {
+      const { projectId } = action.payload;
+      const newProjects = { ...state.projects };
+      delete newProjects[projectId];
+
+      // Cascade delete: if this project was created from a post, delete that post as well
+      const newPosts = { ...state.posts };
+      const postId = projectId && typeof projectId === "string" ? `p_${projectId.replace(/^proj_/, "")}` : "";
+      delete newPosts[postId];
+
+      // Clean up savedPosts list of all users for the deleted post
+      const updatedUsers = { ...state.users };
+      if (postId) {
+        Object.keys(updatedUsers).forEach((userId) => {
+          const user = updatedUsers[userId];
+          if (user.savedPosts?.includes(postId)) {
+            updatedUsers[userId] = {
+              ...user,
+              savedPosts: user.savedPosts.filter((id) => id !== postId),
+            };
+          }
+        });
+      }
+
+      const updatedCurrentUser = state.currentUser && postId
+        ? {
+            ...state.currentUser,
+            savedPosts: (state.currentUser.savedPosts || []).filter((id) => id !== postId),
+          }
+        : state.currentUser;
+
+      return {
+        ...state,
+        projects: newProjects,
+        posts: newPosts,
+        users: updatedUsers,
+        currentUser: updatedCurrentUser,
+      };
+    }
     default:
       return state;
   }
@@ -313,6 +532,7 @@ export function createPostDraft(input: Partial<Post>): Post {
     lookingFor: input.lookingFor,
     createdAt: new Date().toISOString(),
     status: input.status || "open",
+    visibility: input.visibility || "public",
     responses: [],
   };
 }

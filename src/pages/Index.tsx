@@ -1,11 +1,10 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight, Sparkles, Users2, Compass, LayoutDashboard, Activity, Brain,
   Shield, UserPlus, Search as SearchIcon, Hammer, Github, Rocket, Trophy,
   Briefcase, Zap, Globe, MessageSquare, TrendingUp, Star, CheckCircle2
 } from "lucide-react";
-import { projects } from "@/data/mock";
 import ProjectCard from "@/components/ProjectCard";
 import { useApp } from "@/lib/store";
 import {
@@ -55,6 +54,8 @@ export default function Index() {
   const { state } = useApp();
   const isLoggedIn = !!state.currentUser;
   const isProfileComplete = !!state.currentUser?.profileCompleted;
+
+  const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
 
   return (
     <div>

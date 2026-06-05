@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from "react";
-import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
 import RespondModal from "./RespondModal";
 import { useApp, createResponseDraft } from "@/lib/store";
@@ -21,6 +20,18 @@ export default function Feed() {
 
   const filtered = useMemo(() => {
     return allPosts.filter((p) => {
+      // Visibility filtering
+      if (p.visibility && p.visibility !== "public") {
+        if (!state.currentUser) return false;
+        if (p.authorId !== state.currentUser.id) {
+          if (p.visibility === "private") return false;
+          if (p.visibility === "friends") {
+            const isFollowing = (state.currentUser.following || []).includes(p.authorId);
+            if (!isFollowing) return false;
+          }
+        }
+      }
+
       if (domain && p.domain) {
         const postDomains = Array.isArray(p.domain) ? p.domain : [p.domain];
         if (!postDomains.map(d => d.toLowerCase()).includes(domain.toLowerCase())) return false;
@@ -51,7 +62,6 @@ export default function Feed() {
 
   return (
     <div>
-      <CreatePost />
 
       <div className="ds-card p-4 mb-4">
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">

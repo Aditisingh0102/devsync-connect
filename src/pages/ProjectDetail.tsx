@@ -1,10 +1,22 @@
 import { useParams, Link } from "react-router-dom";
-import { projects } from "@/data/mock";
+import { useApp } from "@/lib/store";
 import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Target, Users } from "lucide-react";
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const p = projects.find((x) => x.id === id) ?? projects[0];
+  const { state } = useApp();
+  const projectsList = Object.values(state.projects || {});
+  const p = projectsList.find((x) => x.id === id);
+
+  if (!p) {
+    return (
+      <div className="container py-10 text-center">
+        <h2 className="text-xl font-bold">Project Not Found</h2>
+        <p className="text-muted-foreground mt-2">The requested project is not available.</p>
+        <Link to="/find-projects" className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline">Back to projects</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-10 space-y-6">
