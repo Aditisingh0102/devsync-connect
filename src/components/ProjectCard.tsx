@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { Bookmark, Users, ArrowRight } from "lucide-react";
+import { Users, ArrowRight } from "lucide-react";
 import { Project } from "@/data/mock";
-import { useState } from "react";
 
 const statusStyles: Record<Project["status"], string> = {
   Recruiting: "bg-success-bg text-success",
@@ -10,18 +9,10 @@ const statusStyles: Record<Project["status"], string> = {
 };
 
 export default function ProjectCard({ project }: { project: Project }) {
-  const [saved, setSaved] = useState(!!project.bookmarked);
   return (
     <div className="ds-card ds-card-hover p-5 flex flex-col gap-4 group">
       <div className="flex items-start justify-between gap-2">
         <span className={`ds-chip ${statusStyles[project.status]}`}>{project.status}</span>
-        <button
-          onClick={(e) => { e.preventDefault(); setSaved(!saved); }}
-          className={`size-8 rounded-lg flex items-center justify-center transition-colors ${saved ? "bg-primary-soft text-primary" : "bg-secondary text-muted-foreground hover:text-primary"}`}
-          aria-label="Bookmark"
-        >
-          <Bookmark className="size-4" fill={saved ? "currentColor" : "none"} />
-        </button>
       </div>
 
       <Link to={`/project/${project.id}`} className="block">
