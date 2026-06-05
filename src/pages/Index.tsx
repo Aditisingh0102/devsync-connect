@@ -5,7 +5,7 @@ import {
   Shield, UserPlus, Search as SearchIcon, Hammer, Github, Rocket, Trophy,
   Briefcase, Zap, Globe, MessageSquare, TrendingUp, Star, CheckCircle2
 } from "lucide-react";
-import { activities, projects, skills } from "@/data/mock";
+import { projects } from "@/data/mock";
 import ProjectCard from "@/components/ProjectCard";
 import { useApp } from "@/lib/store";
 
@@ -131,42 +131,6 @@ export default function Index() {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {projects.slice(0, 3).map((p) => <ProjectCard key={p.id} project={p} />)}
-        </div>
-      </section>
-
-      {/* ACTIVITY + SKILL MATCH */}
-      <section className="container grid lg:grid-cols-3 gap-5 pb-20">
-        <div className="ds-card p-6 lg:col-span-2">
-          <h3 className="font-semibold text-lg mb-5">Recent Activity</h3>
-          <div className="relative pl-6 space-y-5">
-            <div className="absolute left-2 top-2 bottom-2 w-px bg-border" />
-            {activities.map((a) => (
-              <div key={a.id} className="relative">
-                <div className="absolute -left-[18px] top-1.5 size-3 rounded-full bg-gradient-primary ring-4 ring-background" />
-                <p className="text-sm text-foreground">{a.text}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{a.time}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="ds-card p-6">
-          <h3 className="font-semibold text-lg mb-5">Your Skill Match</h3>
-          <div className="space-y-4">
-            {skills.slice(0, 5).map((s, i) => {
-              const v = [92, 78, 64, 55, 48][i];
-              return (
-                <div key={s}>
-                  <div className="flex justify-between text-sm mb-1.5"><span className="font-medium">{s}</span><span className="text-muted-foreground">{v}%</span></div>
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: 20 }).map((_, idx) => {
-                      const activeSegments = Math.max(1, Math.round((v / 100) * 20));
-                      return <div key={idx} className={`flex-1 h-1 rounded-full ${idx < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </section>
 
