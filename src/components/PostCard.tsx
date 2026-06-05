@@ -8,6 +8,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
   const author = state.users[post.authorId];
   const isImageAvatar = !!author?.avatar && /^(data:|https?:\/\/)/.test(author.avatar);
   const isFollowing = !!state.currentUser && (state.currentUser.following || []).includes(author?.id || "");
+  const isSaved = !!state.currentUser && (state.currentUser.savedPosts || []).includes(post.id);
   const initials = (author?.name || "U").split(" ").map((s) => s[0]).slice(0, 2).join("");
 
   return (
@@ -113,7 +114,21 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
           <div className="flex items-center gap-2 mt-4 flex-wrap">
             <button onClick={() => onRespond && onRespond(post)} className="h-9 px-3 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover"><Send className="size-3.5" /> Apply</button>
             <Link to={`/post/${post.id}`} className="h-9 px-3 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 hover:bg-secondary"><MessageSquare className="size-3.5" /> View</Link>
-            <button className="h-9 px-3 rounded-xl bg-secondary text-sm font-medium inline-flex items-center gap-1.5 hover:bg-accent"><Bookmark className="size-3.5" /> Save</button>
+            <button
+              onClick={() => {
+                if (!state.currentUser) return;
+                dispatch({ type: "toggleSavePost", payload: { postId: post.id } });
+              }}
+              disabled={!state.currentUser}
+              className={`h-9 px-3 rounded-xl text-sm font-medium inline-flex items-center gap-1.5 transition-all ${
+                isSaved
+                  ? "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
+                  : "bg-secondary text-muted-foreground hover:bg-accent disabled:opacity-50"
+              }`}
+            >
+              <Bookmark className={`size-3.5 ${isSaved ? "fill-primary" : ""}`} />
+              {isSaved ? "Saved" : "Save"}
+            </button>
             <span className="text-xs text-muted-foreground ml-auto">{(post.responses || []).length} responses</span>
           </div>
         </div>

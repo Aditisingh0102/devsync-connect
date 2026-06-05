@@ -5,6 +5,7 @@ const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Link, useParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
+import PostCard from "@/components/PostCard";
 
 const tabs = ["Overview", "Posts", "Projects", "Activity", "Network", "Requests"];
 
@@ -23,7 +24,23 @@ export default function Profile() {
   const user = (profileId && state.users[profileId]) || state.currentUser || null;
   const isLoggedIn = !!state.currentUser;
   const profile = (user ?? {}) as any;
+
+  const profileTabs = useMemo(() => {
+    if (state.currentUser && profileId === state.currentUser.id) {
+      return ["Overview", "Posts", "Saved", "Projects", "Activity", "Network", "Requests"];
+    }
+    return ["Overview", "Posts", "Projects", "Activity", "Network", "Requests"];
+  }, [state.currentUser, profileId]);
+
   const profilePosts = useMemo(() => Object.values(state.posts).filter((post) => post.authorId === profile?.id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts, profile?.id]);
+
+  const savedPosts = useMemo(() => {
+    const savedIds = profile?.savedPosts || [];
+    return Object.values(state.posts)
+      .filter((post) => savedIds.includes(post.id))
+      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  }, [state.posts, profile?.savedPosts]);
+
   const profileStats = {
     posts: profilePosts.length,
     followers: profile?.followers?.length ?? 0,
@@ -104,7 +121,7 @@ export default function Profile() {
       </div>
 
       <div className="ds-card p-2 inline-flex flex-wrap gap-1">
-        {tabs.map((t) => (
+        {profileTabs.map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${tab === t ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>{t}</button>
         ))}
       </div>
@@ -194,6 +211,27 @@ export default function Profile() {
               <h3 className="font-semibold text-lg">No posts yet</h3>
               <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">Share your first collaboration request to connect with builders.</p>
               <Link to="/feed" className="mt-6 h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Create Post</Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "Saved" && (
+        <div className="space-y-4">
+          <div className="ds-card p-6">
+            <h3 className="font-semibold text-lg">Saved Posts</h3>
+            <p className="text-sm text-muted-foreground">Collaboration posts you have bookmarked for quick access.</p>
+          </div>
+
+          {savedPosts.length ? (
+            savedPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          ) : (
+            <div className="ds-card p-16 text-center">
+              <h3 className="font-semibold text-lg">No saved posts</h3>
+              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">Browse the collaboration feed and click the "Save" button on posts you'd like to revisit.</p>
+              <Link to="/feed" className="mt-6 h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Browse Feed</Link>
             </div>
           )}
         </div>

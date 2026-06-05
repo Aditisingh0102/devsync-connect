@@ -18,6 +18,7 @@ export type User = {
   pendingRequests?: ID[]; // incoming request ids
   sentRequests?: ID[]; // sent request ids
   profileCompleted?: boolean;
+  savedPosts?: ID[];
   preferences?: {
     profileVisibility?: "public" | "team-only";
     emailNotifications?: boolean;
@@ -116,6 +117,7 @@ export type AppAction =
   | { type: "addReview"; payload: Review }
   | { type: "addNotification"; payload: AppNotification }
   | { type: "markNotificationRead"; payload: { id: ID } }
-  | { type: "markAllNotificationsRead" };
+  | { type: "markAllNotificationsRead" }
+  | { type: "toggleSavePost"; payload: { postId: ID } };
 
 export {};

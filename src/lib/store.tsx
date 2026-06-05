@@ -260,6 +260,20 @@ function reducer(state: AppState, action: AppAction): AppState {
         notifications: Object.fromEntries(Object.entries(state.notifications).map(([key, value]) => [key, { ...value, read: true }])) as Record<string, AppNotification>,
       };
     }
+    case "toggleSavePost": {
+      if (!state.currentUser) return state;
+      const { postId } = action.payload;
+      const saved = state.currentUser.savedPosts || [];
+      const updatedSaved = saved.includes(postId)
+        ? saved.filter((id) => id !== postId)
+        : [...saved, postId];
+      const updatedUser = { ...state.currentUser, savedPosts: updatedSaved };
+      return {
+        ...state,
+        currentUser: updatedUser,
+        users: { ...state.users, [updatedUser.id]: updatedUser },
+      };
+    }
     default:
       return state;
   }
