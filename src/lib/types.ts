@@ -5,6 +5,7 @@ export type User = {
   name: string;
   username?: string;
   email?: string;
+  password?: string;
   handle?: string;
   avatar?: string;
   bio?: string;
@@ -20,6 +21,8 @@ export type User = {
   profileCompleted?: boolean;
   savedPosts?: ID[];
   savedBuilders?: ID[];
+  accountStatus?: "active" | "pending_deletion";
+  deactivatedAt?: string; // ISO timestamp when deletion was scheduled
   preferences?: {
     profileVisibility?: "public" | "team-only";
     emailNotifications?: boolean;
@@ -140,6 +143,8 @@ export type AppAction =
   | { type: "updateRequest"; payload: { id: ID; status: "pending" | "accepted" | "declined" } }
   | { type: "updateUser"; payload: User }
   | { type: "deleteUser"; payload: { id: ID } }
+  | { type: "scheduleDeleteUser"; payload: { id: ID } }
+  | { type: "cancelDeleteUser"; payload: { id: ID } }
   | { type: "addReview"; payload: Review }
   | { type: "addNotification"; payload: AppNotification }
   | { type: "markNotificationRead"; payload: { id: ID } }

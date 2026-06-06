@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/lib/store";
-import { Bell, Globe, ShieldCheck, UserRoundCog } from "lucide-react";
+import { Bell, Globe, ShieldCheck, UserRoundCog, AlertTriangle, Clock } from "lucide-react";
 
 function toCsv(values?: string[]) {
   return (values || []).join(", ");
@@ -9,6 +9,15 @@ function toCsv(values?: string[]) {
 
 function fromCsv(value: string) {
   return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return "0h 0m 0s";
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${hours}h ${minutes}m ${seconds}s`;
 }
 
 export default function SettingsPage() {
@@ -30,6 +39,34 @@ export default function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [collaborationAlerts, setCollaborationAlerts] = useState(true);
   const [discoverable, setDiscoverable] = useState(true);
+  const [countdown, setCountdown] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+
+  const isPendingDeletion = currentUser?.accountStatus === "pending_deletion";
+  const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+
+  // Countdown timer for pending deletion
+  useEffect(() => {
+    if (!isPendingDeletion || !currentUser?.deactivatedAt) {
+      setCountdown(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const deactivatedTime = new Date(currentUser.deactivatedAt!).getTime();
+      const remaining = SEVENTY_TWO_HOURS - (Date.now() - deactivatedTime);
+      if (remaining <= 0) {
+        setCountdown("0h 0m 0s");
+      } else {
+        setCountdown(formatCountdown(remaining));
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [isPendingDeletion, currentUser?.deactivatedAt]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -78,17 +115,46 @@ export default function SettingsPage() {
     });
   };
 
-  const deleteAccount = () => {
-    if (!currentUser) return;
-    const confirmed = window.confirm("Permanently delete your DevSync account? This cannot be undone.");
-    if (!confirmed) return;
+  const scheduleDelete = () => {
+    if (confirmText !== "DELETE") return;
+    dispatch({ type: "scheduleDeleteUser", payload: { id: currentUser.id } });
+    setShowDeleteConfirm(false);
+    setConfirmText("");
+  };
 
-    dispatch({ type: "deleteUser", payload: { id: currentUser.id } });
-    navigate("/");
+  const cancelDelete = () => {
+    dispatch({ type: "cancelDeleteUser", payload: { id: currentUser.id } });
   };
 
   return (
     <div className="container py-10 space-y-6">
+      {/* Pending deletion banner */}
+      {isPendingDeletion && countdown && (
+        <div className="rounded-2xl border-2 border-red-500/40 bg-red-500/10 p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="size-10 rounded-xl bg-red-600 flex items-center justify-center">
+              <AlertTriangle className="size-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-bold text-red-400">Account Deletion Scheduled</h3>
+              <p className="text-sm text-muted-foreground">Your account and all associated data will be permanently deleted.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 ml-auto">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600/20 border border-red-500/30">
+              <Clock className="size-4 text-red-400" />
+              <span className="font-mono font-bold text-red-300 text-sm">{countdown}</span>
+            </div>
+            <button
+              onClick={cancelDelete}
+              className="h-10 px-5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-colors"
+            >
+              Cancel Deletion
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="ds-card p-7 bg-gradient-hero flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <span className="ds-chip-primary">Settings</span>
@@ -208,9 +274,81 @@ export default function SettingsPage() {
             <h2 className="font-semibold text-lg inline-flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Account actions</h2>
             <p className="text-sm text-muted-foreground">Profile data is stored locally in the frontend store and updates instantly across the app.</p>
             <div className="text-xs text-muted-foreground">Need to edit your avatar? Use the profile page photo editor.</div>
-            <button onClick={deleteAccount} className="h-11 w-full rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
-              Permanently delete account
-            </button>
+
+            {isPendingDeletion ? (
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 space-y-2">
+                  <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
+                    <AlertTriangle className="size-4" />
+                    Deletion in progress
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Your account is scheduled for permanent deletion. All your posts, projects, and data will be removed after the countdown ends.
+                  </p>
+                  {countdown && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Clock className="size-3.5 text-red-400" />
+                      <span className="font-mono text-sm text-red-300 font-bold">{countdown} remaining</span>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={cancelDelete}
+                  className="h-11 w-full rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors"
+                >
+                  Cancel deletion &amp; reactivate account
+                </button>
+              </div>
+            ) : (
+              <>
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="h-11 w-full rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
+                  >
+                    Permanently delete account
+                  </button>
+                ) : (
+                  <div className="space-y-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-2 text-red-400 font-semibold text-sm">
+                      <AlertTriangle className="size-4" />
+                      Are you sure?
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Your account will be deactivated immediately and <strong>permanently deleted after 72 hours</strong>.
+                      You can cancel the deletion at any time before the deadline from this page.
+                    </p>
+                    <label className="space-y-1 block">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Type <strong className="text-red-400">DELETE</strong> to confirm
+                      </span>
+                      <input
+                        value={confirmText}
+                        onChange={(e) => setConfirmText(e.target.value)}
+                        placeholder="DELETE"
+                        className="ds-input font-mono text-sm"
+                        autoFocus
+                      />
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setShowDeleteConfirm(false); setConfirmText(""); }}
+                        className="h-10 flex-1 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={scheduleDelete}
+                        disabled={confirmText !== "DELETE"}
+                        className="h-10 flex-1 rounded-xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Schedule deletion (72h)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

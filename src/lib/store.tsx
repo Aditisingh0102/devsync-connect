@@ -446,6 +446,58 @@ function reducer(state: AppState, action: AppAction): AppState {
         reviews: newReviews,
       };
     }
+    case "scheduleDeleteUser": {
+      const { id: userId } = action.payload;
+      const user = state.currentUser?.id === userId ? state.currentUser : state.users[userId];
+      if (!user) return state;
+
+      const updatedUser: User = {
+        ...user,
+        accountStatus: "pending_deletion",
+        deactivatedAt: new Date().toISOString(),
+      };
+
+      return {
+        ...state,
+        currentUser: state.currentUser?.id === userId ? updatedUser : state.currentUser,
+        users: { ...state.users, [userId]: updatedUser },
+        notifications: {
+          ...state.notifications,
+          [`n_deactivate_${Date.now()}`]: createNotification({
+            type: "system",
+            title: "Account scheduled for deletion",
+            body: "Your account will be permanently deleted in 72 hours. You can cancel this from Settings before the deadline.",
+            href: "/settings",
+          }),
+        },
+      };
+    }
+    case "cancelDeleteUser": {
+      const { id: userId } = action.payload;
+      const user = state.currentUser?.id === userId ? state.currentUser : state.users[userId];
+      if (!user) return state;
+
+      const updatedUser: User = {
+        ...user,
+        accountStatus: "active",
+        deactivatedAt: undefined,
+      };
+
+      return {
+        ...state,
+        currentUser: state.currentUser?.id === userId ? updatedUser : state.currentUser,
+        users: { ...state.users, [userId]: updatedUser },
+        notifications: {
+          ...state.notifications,
+          [`n_reactivate_${Date.now()}`]: createNotification({
+            type: "system",
+            title: "Account deletion cancelled",
+            body: "Your account has been reactivated. Welcome back!",
+            href: "/settings",
+          }),
+        },
+      };
+    }
     case "addReview": {
       const r = action.payload as Review;
       return {
@@ -616,6 +668,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     saveState(state);
   }, [state]);
+
+  // Auto-delete accounts that have exceeded the 72-hour grace period
+  useEffect(() => {
+    if (state.currentUser?.accountStatus === "pending_deletion" && state.currentUser.deactivatedAt) {
+      const deactivatedTime = new Date(state.currentUser.deactivatedAt).getTime();
+      const now = Date.now();
+      const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+      const remaining = SEVENTY_TWO_HOURS - (now - deactivatedTime);
+
+      if (remaining <= 0) {
+        // 72 hours have passed – permanently delete
+        dispatch({ type: "deleteUser", payload: { id: state.currentUser.id } });
+      } else {
+        // Schedule deletion for when time runs out
+        const timer = setTimeout(() => {
+          dispatch({ type: "deleteUser", payload: { id: state.currentUser!.id } });
+        }, remaining);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [state.currentUser?.accountStatus, state.currentUser?.deactivatedAt]);
 
   return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 };

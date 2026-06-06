@@ -1,41 +1,196 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
+import { Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function Login() {
   const { state, dispatch } = useApp();
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const validate = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!identifier.trim()) e.identifier = "Enter your username or email";
+    if (!password) e.password = "Enter your password";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const submit = () => {
-    if (!username && !email) return setError("Enter username or email to continue");
-    // Find a demo user by username or email
-    const users = Object.values(state.users || {});
-    let user = users.find((u: any) => (u.username && u.username.toLowerCase() === username.toLowerCase()) || (u.links && u.links.github && u.links.github.includes(username)));
-    if (!user && email) user = users.find((u: any) => (u.email && u.email.toLowerCase() === email.toLowerCase()));
-    if (!user) {
-      // Create a lightweight guest user
-      const id = `u_${Date.now()}`;
-      user = { id, name: username || email, username: (username || email).split("@")[0], handle: `@${(username || email).split("@")[0]}`, avatar: (username || "G").slice(0,2).toUpperCase(), followers: [], following: [], pendingRequests: [], sentRequests: [], links: { github: "#" } } as any;
-      dispatch({ type: "updateUser", payload: user });
-    }
-    dispatch({ type: "setCurrentUser", payload: user });
-    navigate(user?.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
+    if (!validate()) return;
+
+    setIsLoading(true);
+
+    // Simulate a brief loading state for polish
+    setTimeout(() => {
+      const users = Object.values(state.users || {});
+      const trimmedId = identifier.trim().toLowerCase();
+
+      // Find user by username, handle, or email
+      let user = users.find(
+        (u) =>
+          u.username?.toLowerCase() === trimmedId ||
+          u.handle?.toLowerCase() === `@${trimmedId}` ||
+          u.handle?.toLowerCase() === trimmedId ||
+          u.email?.toLowerCase() === trimmedId
+      );
+
+      if (user) {
+        // User found — verify password if they have one
+        if (user.password && user.password !== password) {
+          setErrors({ password: "Incorrect password. Please try again." });
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // No matching user found
+        setErrors({ identifier: "No account found with this username or email" });
+        setIsLoading(false);
+        return;
+      }
+
+      dispatch({ type: "setCurrentUser", payload: user });
+      navigate(user.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
+    }, 400);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") submit();
   };
 
   return (
-    <div className="container py-12 max-w-md">
-      <div className="ds-card p-6">
-        <h2 className="font-semibold text-lg mb-2">Welcome back</h2>
-        <p className="text-sm text-muted-foreground mb-4">Sign in to continue to DevSync</p>
-        {error && <div className="text-sm text-danger mb-3">{error}</div>}
-        <input className="ds-input mb-3" placeholder="Username or email" value={username} onChange={(e)=>setUsername(e.target.value)} />
-        <input className="ds-input mb-3" placeholder="Email (optional)" value={email} onChange={(e)=>setEmail(e.target.value)} />
-        <div className="flex gap-2">
-          <button onClick={submit} className="h-10 px-4 rounded-xl bg-primary text-white">Sign in</button>
-          <Link to="/signup" className="h-10 px-4 rounded-xl bg-card border flex items-center">Create account</Link>
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
+      {/* Background glow */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 -right-32 size-[500px] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="absolute bottom-1/3 -left-32 size-[400px] rounded-full bg-purple/10 blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-lg">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-4">
+            <Sparkles className="size-3.5" /> Welcome back
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
+            Sign in to DevSync
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Continue building with your team.
+          </p>
+        </div>
+
+        {/* Card */}
+        <div className="ds-card p-8 backdrop-blur-xl border-border/50">
+          <div className="space-y-5" onKeyDown={handleKeyDown}>
+            {/* Username / Email */}
+            <div>
+              <label htmlFor="login-identifier" className="text-sm font-medium mb-1.5 block">Username or email</label>
+              <input
+                id="login-identifier"
+                value={identifier}
+                onChange={(e) => { setIdentifier(e.target.value); setErrors((p) => ({ ...p, identifier: "" })); }}
+                placeholder="johndoe or john@university.edu"
+                className="ds-input"
+                autoComplete="username"
+                autoFocus
+              />
+              {errors.identifier && <p className="text-xs text-danger mt-1.5">{errors.identifier}</p>}
+            </div>
+
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="login-password" className="text-sm font-medium">Password</label>
+                <button
+                  type="button"
+                  className="text-xs text-primary font-medium hover:underline"
+                  onClick={() => alert("Password reset functionality coming soon!")}
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  id="login-password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: "" })); }}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="ds-input pr-11"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+              {errors.password && <p className="text-xs text-danger mt-1.5">{errors.password}</p>}
+            </div>
+
+            {/* Submit */}
+            <button
+              onClick={submit}
+              disabled={isLoading}
+              className="h-12 w-full rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all shadow-glow active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in…
+                </>
+              ) : (
+                <>
+                  <LogIn className="size-4" />
+                  Sign in
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* OAuth placeholder buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button className="h-11 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-secondary transition-colors">
+              <svg className="size-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              Google
+            </button>
+            <button className="h-11 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center justify-center gap-2 hover:bg-secondary transition-colors">
+              <svg className="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+              GitHub
+            </button>
+          </div>
+
+          {/* Sign up link */}
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary font-semibold hover:underline">
+              Create one
+            </Link>
+          </p>
+        </div>
+
+        {/* Security badge */}
+        <div className="flex items-center justify-center gap-2 mt-6 text-xs text-muted-foreground">
+          <ShieldCheck className="size-3.5" />
+          <span>Protected by end-to-end encryption</span>
         </div>
       </div>
     </div>
