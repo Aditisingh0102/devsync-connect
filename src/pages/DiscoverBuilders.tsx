@@ -23,52 +23,60 @@ export default function DiscoverBuilders() {
     setSearchParams(newParams, { replace: true });
   };
 
+  // Parse comma-separated search terms
   const users = useMemo(() => Object.values(state.users || {}), [state.users]);
+  const searchTerms = useMemo(() =>
+    q.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+  , [q]);
+
   const results = useMemo(() => {
     let filtered = users.filter((u) => {
       if (!u) return false;
       if (!q) return true;
-      const s = q.toLowerCase();
-      if ((u.name || "").toLowerCase().includes(s)) return true;
-      if ((u.username || "").toLowerCase().includes(s)) return true;
-      if ((u.handle || "").toLowerCase().includes(s)) return true;
-      if ((u.skills || []).join(" ").toLowerCase().includes(s)) return true;
-      if ((u.domains || []).join(" ").toLowerCase().includes(s)) return true;
-      return false;
+
+      // Builder matches if ANY search term matches any field
+      return searchTerms.some((term) => {
+        if ((u.name || "").toLowerCase().includes(term)) return true;
+        if ((u.username || "").toLowerCase().includes(term)) return true;
+        if ((u.handle || "").toLowerCase().includes(term)) return true;
+        if ((u.skills || []).some((s) => s.toLowerCase().includes(term))) return true;
+        if ((u.domains || []).some((d) => d.toLowerCase().includes(term))) return true;
+        return false;
+      });
     }).filter((u) => !filterSkill || (u.skills || []).map((x) => x.toLowerCase()).includes(filterSkill.toLowerCase()));
 
-    if (q) {
+    if (searchTerms.length > 0) {
       filtered = [...filtered].sort((a, b) => {
         const getRelevance = (u: typeof a) => {
-          const query = q.toLowerCase();
-          const name = (u.name || "").toLowerCase();
-          const username = (u.username || "").toLowerCase();
-          const handle = (u.handle || "").toLowerCase();
           let score = 0;
+          for (const term of searchTerms) {
+            const name = (u.name || "").toLowerCase();
+            const username = (u.username || "").toLowerCase();
+            const handle = (u.handle || "").toLowerCase();
 
-          if (name === query || username === query || handle === query) score += 100;
-          else if (name.startsWith(query) || username.startsWith(query) || handle.startsWith(query)) score += 60;
-          else if (name.includes(query) || username.includes(query) || handle.includes(query)) score += 30;
+            if (name === term || username === term || handle === term) score += 100;
+            else if (name.startsWith(term) || username.startsWith(term) || handle.startsWith(term)) score += 60;
+            else if (name.includes(term) || username.includes(term) || handle.includes(term)) score += 30;
 
-          (u.skills || []).forEach((skill) => {
-            const skillLower = skill.toLowerCase();
-            if (skillLower === query) score += 40;
-            else if (skillLower.includes(query)) score += 15;
-          });
+            (u.skills || []).forEach((skill) => {
+              const skillLower = skill.toLowerCase();
+              if (skillLower === term) score += 40;
+              else if (skillLower.includes(term)) score += 15;
+            });
 
-          (u.domains || []).forEach((domain) => {
-            const domainLower = domain.toLowerCase();
-            if (domainLower === query) score += 20;
-            else if (domainLower.includes(query)) score += 10;
-          });
-
+            (u.domains || []).forEach((domain) => {
+              const domainLower = domain.toLowerCase();
+              if (domainLower === term) score += 20;
+              else if (domainLower.includes(term)) score += 10;
+            });
+          }
           return score;
         };
         return getRelevance(b) - getRelevance(a);
       });
     }
     return filtered;
-  }, [users, q, filterSkill]);
+  }, [users, searchTerms, filterSkill]);
 
   const follow = (toId: string) => {
     if (!state.currentUser) return;

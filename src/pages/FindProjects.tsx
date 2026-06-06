@@ -47,17 +47,26 @@ export default function FindProjects() {
 
   const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
 
+  // Parse comma-separated search terms
+  const searchTerms = useMemo(() => 
+    q.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+  , [q]);
+
   const filtered = useMemo(() => {
-    let r = projects.filter((p) =>
-      (cat === "All" || p.category === cat) &&
-      (status === "All" || p.status === status) &&
-      (q === "" || 
-        p.title.toLowerCase().includes(q.toLowerCase()) || 
-        p.description.toLowerCase().includes(q.toLowerCase()) ||
-        p.tech.some((t) => t.toLowerCase().includes(q.toLowerCase())) ||
-        p.roles.some((role) => role.toLowerCase().includes(q.toLowerCase()))
-      )
-    );
+    let r = projects.filter((p) => {
+      if (cat !== "All" && p.category !== cat) return false;
+      if (status !== "All" && p.status !== status) return false;
+      if (searchTerms.length === 0) return true;
+
+      // Project matches if ANY search term matches any field
+      return searchTerms.some((term) =>
+        p.title.toLowerCase().includes(term) ||
+        p.description.toLowerCase().includes(term) ||
+        p.tech.some((t) => t.toLowerCase().includes(term)) ||
+        p.roles.some((role) => role.toLowerCase().includes(term)) ||
+        p.category.toLowerCase().includes(term)
+      );
+    });
 
     if (sort === "Most Members") {
       r = [...r].sort((a, b) => b.members - a.members);
@@ -77,32 +86,33 @@ export default function FindProjects() {
       };
       r = [...r].sort((a, b) => parseIdTime(b.id) - parseIdTime(a.id));
     } else if (sort === "Recommended") {
-      if (q) {
-        // Sort by search relevance
+      if (searchTerms.length > 0) {
+        // Sort by search relevance across all terms
         r = [...r].sort((a, b) => {
           const getRelevance = (p: typeof a) => {
-            const query = q.toLowerCase();
-            const title = p.title.toLowerCase();
-            const desc = p.description.toLowerCase();
             let score = 0;
-            
-            if (title === query) score += 100;
-            else if (title.startsWith(query)) score += 60;
-            else if (title.includes(query)) score += 30;
-            
-            p.tech.forEach((t) => {
-              const techLower = t.toLowerCase();
-              if (techLower === query) score += 40;
-              else if (techLower.includes(query)) score += 15;
-            });
+            for (const term of searchTerms) {
+              const title = p.title.toLowerCase();
+              const desc = p.description.toLowerCase();
 
-            p.roles.forEach((role) => {
-              const roleLower = role.toLowerCase();
-              if (roleLower === query) score += 20;
-              else if (roleLower.includes(query)) score += 10;
-            });
-            
-            if (desc.includes(query)) score += 5;
+              if (title === term) score += 100;
+              else if (title.startsWith(term)) score += 60;
+              else if (title.includes(term)) score += 30;
+
+              p.tech.forEach((t) => {
+                const techLower = t.toLowerCase();
+                if (techLower === term) score += 40;
+                else if (techLower.includes(term)) score += 15;
+              });
+
+              p.roles.forEach((role) => {
+                const roleLower = role.toLowerCase();
+                if (roleLower === term) score += 20;
+                else if (roleLower.includes(term)) score += 10;
+              });
+
+              if (desc.includes(term)) score += 5;
+            }
             return score;
           };
           return getRelevance(b) - getRelevance(a);
@@ -112,7 +122,7 @@ export default function FindProjects() {
         const myTech = (state.currentUser?.skills || []).map((s) => s.toLowerCase());
         if (myTech.length > 0) {
           r = [...r].sort((a, b) => {
-            const getMatchCount = (p: typeof a) => 
+            const getMatchCount = (p: typeof a) =>
               p.tech.filter((t) => myTech.includes(t.toLowerCase())).length;
             return getMatchCount(b) - getMatchCount(a);
           });
@@ -120,7 +130,7 @@ export default function FindProjects() {
       }
     }
     return r;
-  }, [q, cat, status, sort, projects, state.currentUser?.skills]);
+  }, [searchTerms, cat, status, sort, projects, state.currentUser?.skills]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const slice = filtered.slice((page - 1) * perPage, page * perPage);
@@ -149,7 +159,7 @@ export default function FindProjects() {
       <div className="ds-card p-4 mb-6 flex flex-col lg:flex-row gap-3">
         <div className="flex-1 flex items-center gap-2 px-3 h-11 rounded-xl bg-secondary border border-border">
           <Search className="size-4 text-muted-foreground" />
-          <input value={q} onChange={(e) => handleSearchChange(e.target.value)} placeholder="Search by title or tech…" className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground" />
+          <input value={q} onChange={(e) => handleSearchChange(e.target.value)} placeholder="Search by title, tech, or skills (use , for multiple)…" className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground" />
         </div>
         <Select value={cat} onChange={(v) => { setCat(v); setPage(1); }} options={categories} label="Category" />
         <Select value={status} onChange={(v) => { setStatus(v); setPage(1); }} options={statuses} label="Status" />

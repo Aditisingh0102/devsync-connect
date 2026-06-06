@@ -90,7 +90,7 @@ export default function Navbar() {
           <input
             value={searchQuery}
             onChange={(e) => handleInputChange(e.target.value)}
-            placeholder="Search projects, skills, teams…"
+            placeholder="Search skills, tech (use , for multiple)…"
             className="bg-transparent outline-none text-sm flex-1 placeholder:text-muted-foreground"
           />
         </div>
