@@ -378,6 +378,74 @@ function reducer(state: AppState, action: AppAction): AppState {
       const u = action.payload;
       return { ...state, users: { ...state.users, [u.id]: u }, currentUser: state.currentUser && state.currentUser.id === u.id ? u : state.currentUser };
     }
+    case "deleteUser": {
+      const { id: userId } = action.payload;
+      const newUsers = { ...state.users };
+      delete newUsers[userId];
+
+      const deletedPostIds = Object.values(state.posts)
+        .filter((post) => post.authorId === userId)
+        .map((post) => post.id);
+
+      const newPosts = { ...state.posts };
+      deletedPostIds.forEach((postId) => delete newPosts[postId]);
+
+      const deletedProjectIds = Object.values(state.projects)
+        .filter((project) => project.ownerId === userId)
+        .map((project) => project.id);
+      const newProjects = { ...state.projects };
+      deletedProjectIds.forEach((projectId) => {
+        delete newProjects[projectId];
+        const postId = `p_${projectId.replace(/^proj_/, "")}`;
+        if (newPosts[postId]) delete newPosts[postId];
+      });
+
+      const deletedRequestIds = Object.entries(state.requests)
+        .filter(([, req]) => req.fromId === userId || req.toId === userId)
+        .map(([id]) => id);
+      const newRequests = { ...state.requests };
+      deletedRequestIds.forEach((requestId) => delete newRequests[requestId]);
+
+      const newResponses = { ...state.responses };
+      Object.entries(state.responses).forEach(([id, response]) => {
+        if (response.fromId === userId || response.toId === userId) {
+          delete newResponses[id];
+        }
+      });
+
+      const newReviews = { ...state.reviews };
+      Object.entries(state.reviews).forEach(([id, review]) => {
+        if (review.authorId === userId || review.subjectId === userId) {
+          delete newReviews[id];
+        }
+      });
+
+      const cleanedUsers = Object.fromEntries(
+        Object.entries(newUsers).map(([otherId, user]) => [
+          otherId,
+          {
+            ...user,
+            following: (user.following || []).filter((id) => id !== userId),
+            followers: (user.followers || []).filter((id) => id !== userId),
+            savedPosts: (user.savedPosts || []).filter((id) => !deletedPostIds.includes(id)),
+            savedBuilders: (user.savedBuilders || []).filter((id) => id !== userId),
+            pendingRequests: (user.pendingRequests || []).filter((id) => !deletedRequestIds.includes(id)),
+            sentRequests: (user.sentRequests || []).filter((id) => !deletedRequestIds.includes(id)),
+          },
+        ]),
+      ) as Record<string, User>;
+
+      return {
+        ...state,
+        currentUser: state.currentUser && state.currentUser.id === userId ? undefined : state.currentUser,
+        users: cleanedUsers,
+        posts: newPosts,
+        projects: newProjects,
+        requests: newRequests,
+        responses: newResponses,
+        reviews: newReviews,
+      };
+    }
     case "addReview": {
       const r = action.payload as Review;
       return {

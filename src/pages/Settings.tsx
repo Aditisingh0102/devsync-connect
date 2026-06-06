@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Bell, Globe, ShieldCheck, UserRoundCog } from "lucide-react";
 
@@ -13,6 +13,7 @@ function fromCsv(value: string) {
 
 export default function SettingsPage() {
   const { state, dispatch } = useApp();
+  const navigate = useNavigate();
   const currentUser = state.currentUser;
 
   const [name, setName] = useState("");
@@ -75,6 +76,15 @@ export default function SettingsPage() {
         },
       },
     });
+  };
+
+  const deleteAccount = () => {
+    if (!currentUser) return;
+    const confirmed = window.confirm("Permanently delete your DevSync account? This cannot be undone.");
+    if (!confirmed) return;
+
+    dispatch({ type: "deleteUser", payload: { id: currentUser.id } });
+    navigate("/");
   };
 
   return (
@@ -194,10 +204,13 @@ export default function SettingsPage() {
             </label>
           </div>
 
-          <div className="ds-card p-6 space-y-2">
+          <div className="ds-card p-6 space-y-4">
             <h2 className="font-semibold text-lg inline-flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Account actions</h2>
             <p className="text-sm text-muted-foreground">Profile data is stored locally in the frontend store and updates instantly across the app.</p>
             <div className="text-xs text-muted-foreground">Need to edit your avatar? Use the profile page photo editor.</div>
+            <button onClick={deleteAccount} className="h-11 w-full rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">
+              Permanently delete account
+            </button>
           </div>
         </div>
       </div>

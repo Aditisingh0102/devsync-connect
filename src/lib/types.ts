@@ -139,6 +139,7 @@ export type AppAction =
   | { type: "sendRequest"; payload: Request }
   | { type: "updateRequest"; payload: { id: ID; status: "pending" | "accepted" | "declined" } }
   | { type: "updateUser"; payload: User }
+  | { type: "deleteUser"; payload: { id: ID } }
   | { type: "addReview"; payload: Review }
   | { type: "addNotification"; payload: AppNotification }
   | { type: "markNotificationRead"; payload: { id: ID } }
