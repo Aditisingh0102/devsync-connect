@@ -304,7 +304,7 @@ export default function SettingsPage() {
                 {!showDeleteConfirm ? (
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="h-11 w-full rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
+                    className="h-11 w-full rounded-2xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors"
                   >
                     Permanently delete account
                   </button>
