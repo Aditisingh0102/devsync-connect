@@ -22,6 +22,15 @@ export default function ProjectCard({ project }: { project: Project }) {
     <div className="ds-card ds-card-hover p-5 flex flex-col gap-4 group">
       <div className="flex items-start justify-between gap-2">
         <span className={`ds-chip ${statusStyles[project.status]}`}>{project.status}</span>
+        <span className={`px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider border ${
+          project.visibility === "private"
+            ? "bg-danger/10 text-danger border-danger/25"
+            : project.visibility === "friends"
+            ? "bg-success-bg text-success border-success/20"
+            : "bg-primary-soft text-primary border-primary/20"
+        }`}>
+          {project.visibility || "public"}
+        </span>
       </div>
 
       <Link to={`/project/${project.id}`} className="block">

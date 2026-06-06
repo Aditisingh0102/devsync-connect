@@ -12,6 +12,7 @@ const links = [
   { to: "/", label: "Home" },
   { to: "/discover-builders", label: "Discover Builders" },
   { to: "/my-projects", label: "My Projects" },
+  { to: "/my-team", label: "My Team" },
   { to: "/find-projects", label: "Find Projects" },
   { to: "/profile", label: "Profile" },
 ];

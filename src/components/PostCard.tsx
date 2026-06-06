@@ -14,7 +14,13 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
   return (
     <div className="ds-card ds-card-hover p-5">
       <div className="flex items-start gap-3">
-        <div className="size-11 rounded-2xl bg-gradient-primary text-white text-sm font-semibold flex items-center justify-center shrink-0">{initials}</div>
+        <div className="size-11 rounded-2xl bg-gradient-primary text-white text-sm font-semibold flex items-center justify-center shrink-0 overflow-hidden">
+          {author?.avatar && /^(data:|https?:\/\/)/.test(author.avatar) ? (
+            <img src={author.avatar} alt={author.name || "Profile"} className="size-full object-cover" />
+          ) : (
+            initials
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">

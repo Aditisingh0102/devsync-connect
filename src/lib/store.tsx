@@ -212,6 +212,7 @@ function reducer(state: AppState, action: AppAction): AppState {
           progress: 0,
           status: "Recruiting",
           category: p.projectType || "Web",
+          visibility: p.visibility || "public",
         };
       }
 
@@ -329,12 +330,26 @@ function reducer(state: AppState, action: AppAction): AppState {
           users[req.fromId] = { ...users[req.fromId], sentRequests: (users[req.fromId].sentRequests || []).filter((x) => x !== id) };
         }
       }
+      let updatedProjects = state.projects;
       if (status === "accepted") {
         const from = users[req.fromId];
         const to = users[req.toId];
         if (from && to) {
           users[req.fromId] = { ...from, following: Array.from(new Set([...(from.following || []), req.toId])) };
           users[req.toId] = { ...to, followers: Array.from(new Set([...(to.followers || []), req.fromId])) };
+        }
+
+        if (req.projectId && state.projects[req.projectId]) {
+          const proj = state.projects[req.projectId];
+          if (proj.members < proj.maxMembers) {
+            updatedProjects = {
+              ...state.projects,
+              [req.projectId]: {
+                ...proj,
+                members: proj.members + 1,
+              },
+            };
+          }
         }
       }
 
@@ -347,6 +362,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         requests: { ...state.requests, [id]: updated },
         users,
         currentUser: updatedCurrentUser,
+        projects: updatedProjects,
         notifications: {
           ...state.notifications,
           [`n_req_update_${id}`]: createNotification({
@@ -408,6 +424,20 @@ function reducer(state: AppState, action: AppAction): AppState {
         users: { ...state.users, [updatedUser.id]: updatedUser },
       };
     }
+    case "toggleSaveBuilder": {
+      if (!state.currentUser) return state;
+      const { builderId } = action.payload;
+      const saved = state.currentUser.savedBuilders || [];
+      const updatedSaved = saved.includes(builderId)
+        ? saved.filter((id) => id !== builderId)
+        : [...saved, builderId];
+      const updatedUser = { ...state.currentUser, savedBuilders: updatedSaved };
+      return {
+        ...state,
+        currentUser: updatedUser,
+        users: { ...state.users, [updatedUser.id]: updatedUser },
+      };
+    }
     case "deletePost": {
       const { postId } = action.payload;
       const newPosts = { ...state.posts };
@@ -448,6 +478,13 @@ function reducer(state: AppState, action: AppAction): AppState {
       };
     }
     case "createProject": {
+      const p = action.payload;
+      return {
+        ...state,
+        projects: { ...state.projects, [p.id]: p },
+      };
+    }
+    case "updateProject": {
       const p = action.payload;
       return {
         ...state,

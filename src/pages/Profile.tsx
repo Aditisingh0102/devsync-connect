@@ -152,7 +152,13 @@ export default function Profile() {
           </div>
         </div>
         <div className="relative flex flex-col md:flex-row gap-6 items-start md:items-center">
-          <div className="size-24 rounded-2xl bg-gradient-primary text-white text-3xl font-display font-bold flex items-center justify-center shadow-glow">{(profile?.name || "GB").split(" ").map((s:any)=>s[0]).slice(0,2).join("")}</div>
+          <div className="size-24 rounded-2xl bg-gradient-primary text-white text-3xl font-display font-bold flex items-center justify-center shadow-glow overflow-hidden">
+            {profile?.avatar && /^(data:|https?:\/\/)/.test(profile.avatar) ? (
+              <img src={profile.avatar} alt={profile.name || "Profile"} className="size-full object-cover" />
+            ) : (
+              (profile?.name || "GB").split(" ").map((s:any)=>s[0]).slice(0,2).join("")
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <h1 className="ds-page-title">{profile?.name || "Guest Builder"}</h1>
             <p className="text-muted-foreground">{profile?.handle || "@guest"} · {profile?.role || "Student"}</p>

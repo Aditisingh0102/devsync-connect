@@ -1,10 +1,14 @@
 import { useParams, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Target, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import ApplyRoleModal from "@/components/ApplyRoleModal";
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
+  const { toast } = useToast();
   const projectsList = Object.values(state.projects || {});
   const p = projectsList.find((x) => x.id === id);
 
@@ -18,6 +22,65 @@ export default function ProjectDetail() {
     );
   }
 
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("");
+
+  const handleToggleSave = () => {
+    const updated = {
+      ...p,
+      bookmarked: !p.bookmarked
+    };
+    dispatch({ type: "updateProject", payload: updated });
+    toast({
+      title: updated.bookmarked ? "Project Saved" : "Project Removed",
+      description: updated.bookmarked ? `"${p.title}" has been saved.` : `"${p.title}" has been removed from saved list.`
+    });
+  };
+
+  const handleApplyClick = (role: string) => {
+    if (!state.currentUser) {
+      toast({ title: "Authentication Required", description: "Please log in to apply.", variant: "destructive" });
+      return;
+    }
+    if (p.ownerId === state.currentUser.id) {
+      toast({ title: "Project Owner", description: "You are the owner of this project." });
+      return;
+    }
+    if (p.members >= p.maxMembers) {
+      toast({ title: "Project Full", description: "This project has already reached its maximum member capacity.", variant: "destructive" });
+      return;
+    }
+    setSelectedRole(role);
+    setIsApplyModalOpen(true);
+  };
+
+  const handleApplySubmit = (data: { message: string; skills: string[]; resume: string; resumeName: string }) => {
+    if (!state.currentUser || !p.ownerId) return;
+
+    const req = {
+      id: `req_${Date.now()}`,
+      fromId: state.currentUser.id,
+      toId: p.ownerId,
+      projectId: p.id,
+      message: data.message,
+      role: selectedRole,
+      resume: data.resume,
+      resumeName: data.resumeName,
+      skills: data.skills,
+      status: "pending",
+      createdAt: new Date().toISOString()
+    } as any;
+
+    dispatch({ type: "sendRequest", payload: req });
+    setIsApplyModalOpen(false);
+    setSelectedRole("");
+
+    toast({
+      title: "Application Submitted!",
+      description: `Your application to join "${p.title}" as a "${selectedRole}" has been sent.`,
+    });
+  };
+
   return (
     <div className="container py-10 space-y-6">
       <Link to="/find-projects" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="size-4" /> Back to projects</Link>
@@ -30,8 +93,10 @@ export default function ProjectDetail() {
             <p className="text-muted-foreground mt-1">by {p.owner} · {p.team}</p>
           </div>
           <div className="flex gap-2">
-            <button className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-semibold inline-flex items-center gap-2 hover:bg-secondary"><Bookmark className="size-4" /> Save</button>
-            <button className="h-11 px-5 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 hover:bg-primary-hover">Join Project</button>
+            <button onClick={handleToggleSave} className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-semibold inline-flex items-center gap-2 hover:bg-secondary">
+              <Bookmark className={`size-4 ${p.bookmarked ? "fill-primary text-primary" : ""}`} /> {p.bookmarked ? "Saved" : "Save"}
+            </button>
+            <button onClick={() => handleApplyClick("General Collaborator")} className="h-11 px-5 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 hover:bg-primary-hover">Join Project</button>
           </div>
         </div>
         <div className="grid sm:grid-cols-3 gap-4 mt-6">
@@ -99,7 +164,8 @@ export default function ProjectDetail() {
             <div className="space-y-2">
               {p.roles.map((r) => (
                 <div key={r} className="p-3 rounded-xl bg-surface-alt border border-border flex items-center justify-between">
-                  <span className="text-sm font-medium">{r}</span><button className="text-xs font-semibold text-primary">Apply</button>
+                  <span className="text-sm font-medium">{r}</span>
+                  <button onClick={() => handleApplyClick(r)} className="text-xs font-semibold text-primary hover:text-primary-hover">Apply</button>
                 </div>
               ))}
             </div>
@@ -122,6 +188,17 @@ export default function ProjectDetail() {
           </a>
         </div>
       </div>
+
+      <ApplyRoleModal
+        open={isApplyModalOpen}
+        onClose={() => {
+          setIsApplyModalOpen(false);
+          setSelectedRole("");
+        }}
+        projectName={p.title}
+        role={selectedRole}
+        onSubmit={handleApplySubmit}
+      />
     </div>
   );
 }

@@ -1,14 +1,36 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
-import { Plus, Trash2, ExternalLink, Layers, Users, FolderKanban, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, ExternalLink, Layers, Users, FolderKanban, ShieldCheck, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import EditProjectModal from "@/components/EditProjectModal";
+import { Project } from "@/lib/types";
 
 export default function MyProjects() {
   const { state, dispatch } = useApp();
   const { toast } = useToast();
   const me = state.currentUser;
   const navigate = useNavigate();
+
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const handleEdit = (p: Project) => {
+    setEditingProject(p);
+    setIsEditModalOpen(true);
+  };
+
+  const handleToggleVisibility = (p: Project, newVis: "public" | "friends" | "private") => {
+    const updated = {
+      ...p,
+      visibility: newVis,
+    };
+    dispatch({ type: "updateProject", payload: updated });
+    toast({
+      title: "Visibility Updated",
+      description: `"${p.title}" is now ${newVis.toUpperCase()}.`,
+    });
+  };
 
   const myProjects = useMemo(() => {
     if (!me) return [];
@@ -103,7 +125,25 @@ export default function MyProjects() {
                 <div key={p.id} className="ds-card p-5 flex flex-col justify-between hover:border-primary/40 transition-all group">
                   <div>
                     <div className="flex justify-between items-start gap-2 mb-2">
-                      <span className="ds-chip text-[10px] uppercase tracking-wider">{p.category}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="ds-chip text-[10px] uppercase tracking-wider">{p.category}</span>
+                        <select
+                          value={p.visibility || "public"}
+                          onChange={(e) => handleToggleVisibility(p, e.target.value as any)}
+                          className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
+                            p.visibility === "private"
+                              ? "bg-danger/10 text-danger border-danger/20"
+                              : p.visibility === "friends"
+                              ? "bg-success-bg text-success border-success/15"
+                              : "bg-primary-soft text-primary border-primary/15"
+                          }`}
+                          title="Change visibility"
+                        >
+                          <option value="public" className="bg-card text-foreground">Public</option>
+                          <option value="friends" className="bg-card text-foreground">Friends</option>
+                          <option value="private" className="bg-card text-foreground">Private</option>
+                        </select>
+                      </div>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-success-bg text-success font-semibold border border-success/15">
                         {p.status}
                       </span>
@@ -154,13 +194,22 @@ export default function MyProjects() {
                     >
                       Workspace <ExternalLink className="size-3" />
                     </a>
-                    <button
-                      onClick={() => handleDelete(p.id, p.title)}
-                      className="size-8 rounded-lg bg-danger/10 text-danger border border-danger/10 flex items-center justify-center hover:bg-danger hover:text-white transition-all"
-                      aria-label="Delete project"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(p)}
+                        className="size-8 rounded-lg bg-primary/10 text-primary border border-primary/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all"
+                        aria-label="Edit project"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p.id, p.title)}
+                        className="size-8 rounded-lg bg-danger/10 text-danger border border-danger/10 flex items-center justify-center hover:bg-danger hover:text-white transition-all"
+                        aria-label="Delete project"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -197,6 +246,15 @@ export default function MyProjects() {
           </div>
         </div>
       </div>
+
+      <EditProjectModal
+        open={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingProject(null);
+        }}
+        project={editingProject}
+      />
     </div>
   );
 }

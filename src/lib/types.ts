@@ -19,6 +19,7 @@ export type User = {
   sentRequests?: ID[]; // sent request ids
   profileCompleted?: boolean;
   savedPosts?: ID[];
+  savedBuilders?: ID[];
   preferences?: {
     profileVisibility?: "public" | "team-only";
     emailNotifications?: boolean;
@@ -101,6 +102,11 @@ export type Request = {
   message?: string;
   status: "pending" | "accepted" | "declined";
   createdAt: string;
+  role?: string;
+  resume?: string;
+  resumeName?: string;
+  skills?: string[];
+  projectId?: ID;
 };
 
 export type AppNotification = {
@@ -140,6 +146,8 @@ export type AppAction =
   | { type: "toggleSavePost"; payload: { postId: ID } }
   | { type: "deletePost"; payload: { postId: ID } }
   | { type: "createProject"; payload: Project }
-  | { type: "deleteProject"; payload: { projectId: ID } };
+  | { type: "updateProject"; payload: Project }
+  | { type: "deleteProject"; payload: { projectId: ID } }
+  | { type: "toggleSaveBuilder"; payload: { builderId: ID } };
 
 export {};

@@ -1,95 +1,253 @@
-# DevSync
+# DevSync — Enterprise Architecture & Product Overview
 
-DevSync is a frontend-first student collaboration platform for discovering projects, forming teams, sharing progress, and building a stronger portfolio for internships and real-world work.
+DevSync is a high-fidelity, client-centric student collaboration and team-matching ecosystem. It is engineered to empower technical builders to form balanced teams, display real-time contribution heatmaps, manage projects, and apply to roles with custom resume uploads.
 
-The current codebase is designed to feel production-ready on the UI side while staying easy to connect to a backend later. It includes a polished responsive interface, theme support, profile onboarding, team and project views, notifications, and several collaboration flows.
+---
 
-## Key Features
+## 1. Executive Summary & Value Proposition
 
-- Modern landing page with animated hero and 3D visual surface
-- Dark and light theme support with persistent user preference
-- Onboarding flow for profile setup
-- Project discovery, team pages, profile pages, and dashboard views
-- Feed, follow, requests, reviews, and notifications flows
-- Responsive UI built with reusable design tokens and components
-- Frontend state management ready for future API integration
+In academic and developer communities, team formation and showcasing project progression is highly fragmented. DevSync addresses this with:
+- **Smart Team Matching**: Bridges developer profiles (Skills, Roles) with active project vacancies.
+- **Dynamic Portfolios**: Integrates contribution heatmaps, project workspaces, and connected builder lists.
+- **Unified State Framework**: Provides a cohesive, local-first state system, simulating backend data cascades on the client side.
 
-## Tech Stack
+---
 
-- React 18
-- TypeScript
-- Vite
-- Tailwind CSS
-- shadcn/ui style components
-- React Router
-- TanStack Query
-- next-themes
-- Three.js
-- Recharts
+## 2. Product Capabilities & User Flows
 
-## Getting Started
+### A. Dynamic 3D WebGL Networks
+- **Visual Visualizer**: Renders interactive theme-aware network node structures (representing builder connections) on both the Landing Page ([Hero3D.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/components/Hero3D.tsx)) and the Profile Page ([ProfileHero3D.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/components/ProfileHero3D.tsx)).
+- **Theme Adaptation**: Nodes and wireframe meshes dynamically adjust colors and light properties. In dark mode, nodes show a vibrant red glow (`#dc2626`) and white wireframe meshes (`#ffffff` at `0.36` opacity). In light mode, they transition to a deep blue glow (`#1e40af`) and dark wireframe meshes (`#000000` at `0.22` opacity) to ensure maximum contrast and premium aesthetics.
 
-### Prerequisites
+### B. Wizard Onboarding Flow ([Onboarding.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/Onboarding.tsx))
+- **Step-by-Step Profile Creation**: Guides users through basic details, matching interests, and college affiliations.
+- **Smart Skills Selector**: Features popular recommended skills clickable tags and supports custom tag creation, complete with inputs validation.
+- **Bio Validation**: Requires a comprehensive bio statement to ensure complete and realistic profiles, binding validation errors directly to the input fields.
 
-- Node.js 18 or newer
-- npm or another compatible package manager
+### C. Builder Directory ([DiscoverBuilders.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/DiscoverBuilders.tsx))
+- **Priority-Relevance Search**: Renders a list of builders sorted dynamically. When search terms are active, it calculates query-relevance scores based on prefix, exact matches, and domain keywords (Name matches = +100, Prefix = +60, Substring = +30, Skill match = +15 to +40, Domain match = +10 to +20).
+- **Interactive Profiles**: Clicking a builder’s avatar/details navigates directly to their profile.
+- **Instant Search Syncing**: Typing in the global search bar instantly filters results and updates URL parameters without losing input focus.
 
-### Install dependencies
+### D. Projects & Workspace Directory ([FindProjects.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/FindProjects.tsx))
+- **Recommended Sorting**: Projects are ranked dynamically based on tech-stack alignment with the logged-in user's profile skills.
+- **My Projects Management ([MyProjects.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/MyProjects.tsx))**:
+  - Displays user-owned projects, member tracking metrics, and development progress sliders (0–100%).
+  - **Inline Visibility Dropdown**: Owners can change project visibility (Public, Friends, Private) via an inline dropdown directly on the project card.
+  - **Edit Project Details ([EditProjectModal.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/components/EditProjectModal.tsx))**: An overlay form allowing owners to edit title, description, team, progress, status, and members limit.
+  - **Project Workspaces**: Links to detail pages ([ProjectDetail.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/ProjectDetail.tsx)) that show milestones, project summaries, and discussion feeds.
 
-```bash
-npm install
+### E. Role Application & Resume Pipeline
+- **Apply to Roles ([ApplyRoleModal.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/components/ApplyRoleModal.tsx))**: When users click "Apply" on required roles, the system opens a dialog modal.
+  - Requires a cover letter note and relevant skills list.
+  - Requires a resume document upload (PDF, Word, or Images under 2MB limit), parsed dynamically as a base64 Data URI.
+- **Inbox Review Dashboard ([Requests.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/Requests.tsx))**: Project owners receive applications in their Inbox tab.
+  - Displays cover note, listed skills, and a clickable **"View Resume"** link to download or view the file.
+  - **Auto-Join on Acceptance**: Accepting the application request immediately adds the user to the project and increments the member counts in the global store.
+
+### F. Contribution Graph ([Profile.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/pages/Profile.tsx))
+- **Activity Heatmap**: Renders a complete 53x7 GitHub-style activity contribution graph representing the user's progress.
+- **Theme-Aware Themes**: Heatmap colors dynamically adjust using official GitHub palettes for dark and light modes.
+- **Seeded Generator**: Deterministically generates stable contribution history based on the builder's profile name.
+
+---
+
+## 3. Codebase Architecture & Directory Map
+
+The DevSync workspace is structured to facilitate scalable, component-based frontend engineering:
+
+```
+devsync-connect/
+├── public/                 # Static asset folders
+├── src/
+│   ├── components/         # Reusable presentation blocks
+│   │   ├── ui/             # Radix & Shadcn tailwind building primitives
+│   │   ├── ApplyRoleModal.tsx   # Modal for role cover letters & resume uploads
+│   │   ├── AvatarUpload.tsx     # Base64 photo upload encoder
+│   │   ├── CreatePostModal.tsx  # Add custom collaboration recruitment posts
+│   │   ├── EditProjectModal.tsx # Project description & progress updates modal
+│   │   ├── ErrorBoundary.tsx    # Catch UI render crashes gracefully
+│   │   ├── Feed.tsx             # List and filters for recruitment posts
+│   │   ├── Hero3D.tsx           # Home WebGL 3D network animation
+│   │   ├── Layout.tsx           # App grid structure shell (Navbar, Footer, Outlet)
+│   │   └── ProfileHero3D.tsx    # Profile page WebGL 3D network animation
+│   ├── data/
+│   │   └── mock.ts         # Seed datasets for users and teams
+│   ├── hooks/
+│   │   ├── use-mobile.tsx  # Mobile view state query hook
+│   │   └── use-toast.ts    # Notification alerts trigger hook
+│   ├── lib/
+│   │   ├── store.tsx       # State Provider, Reducers, Actions, local storage sync
+│   │   ├── types.ts        # Fully documented type definitions
+│   │   └── utils.ts        # Tailwind merging and class string construction
+│   ├── pages/              # Primary routing layout blocks
+│   │   ├── Dashboard.tsx        # Overview analytics dashboard
+│   │   ├── DiscoverBuilders.tsx # Search and filter builders index
+│   │   ├── FindProjects.tsx     # Find projects matching user skills
+│   │   ├── Index.tsx            # Main Landing Home Page
+│   │   ├── Login.tsx            # Account credential authorization
+│   │   ├── MyProjects.tsx       # Owned projects edit dashboard
+│   │   ├── Onboarding.tsx       # Onboarding questionnaire wizard
+│   │   ├── Profile.tsx          # Portfolios, contributions heatmap, details
+│   │   ├── ProjectDetail.tsx    # Goals, milestones, roles, discussions
+│   │   ├── Requests.tsx         # Inbox requests, accept actions, resume downloads
+│   │   └── Settings.tsx         # Manage profile and preferences
+│   ├── App.tsx             # Route registry and Providers container
+│   ├── index.css           # Global theme variables, animations, custom selectors
+│   └── main.tsx            # Entrypoint compiler script
+├── package.json            # Scripts and dependency versions
+├── tailwind.config.ts      # CSS color variable bindings
+└── vite.config.ts          # Build bundle setup config
 ```
 
-### Start the development server
+---
 
-```bash
-npm run dev
+## 4. Client-Side State Management ([store.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/lib/store.tsx))
+
+The frontend mimics a relational database server using standard React Context (`AppProvider`) and a root `reducer` switch:
+
+```mermaid
+graph TD
+    UI[React Components & Pages] -->|Dispatches Action| Store[Reducer Store.tsx]
+    Store -->|Updates State| AppState[AppState Context]
+    AppState -->|Re-renders| UI
+    Store -->|Persists Data| LS[Browser Local Storage]
+    LS -->|Initial Load| Store
 ```
 
-### Build for production
+### Action Types & Logic
+1. **`setCurrentUser`**: Updates the logged-in session user and caches their profile in the user dictionary.
+2. **`createPost`**: Adds a new recruit post and spawns an associated Project Workspace tracking members and progress metrics.
+3. **`follow` / `unfollow`**: Appends or removes builder IDs in following/followers vectors.
+4. **`sendRequest`**: Submits collaboration requests, attaching base64 resumes, cover notes, and custom skills tag arrays.
+5. **`updateRequest`**: Accepts or declines requests. On acceptance:
+   - Sets follower connections between the builders.
+   - Automatically increments the project's member counts in real-time.
+6. **`deleteProject`**: Deletes a project workspace and triggers a cascade deletion to wipe the associated recruitment feed posts.
+7. **`updateProject`**: Commits title, status, description, visibility, and progress updates.
 
-```bash
-npm run build
+---
+
+## 5. Styling Tokens & Custom Classes ([index.css](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/index.css))
+
+DevSync utilizes HSL variables mapped dynamically by `next-themes` to support smooth transitions:
+
+```css
+/* Core Styling Variables Example */
+--primary: 221 83% 53%;         /* Sleek Indigo Primary */
+--success: 142 71% 38%;         /* Emerald Success */
+--gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(262 83% 58%));
 ```
 
-### Preview the production build
+### Custom Utility Class Definitions
+- **`.ds-card`**: Sleek card containers with radius boundaries, subtle shadow elevations, and accent styling.
+- **`.glass-panel`**: Semitransparent background paneling incorporating `backdrop-filter: blur(12px)`.
+- **`.ds-input`**: Standard input textareas styling, tracking focus ring transitions.
+- **`.ds-chip-primary`**: Accent pill tags styling matching skill sets.
 
-```bash
-npm run preview
+---
+
+## 6. Build, Test, & Execution Guide
+
+### Commands
+- **Install Dependencies**: `npm install`
+- **Start Development Server**: `npm run dev`
+- **Build Production Bundle**: `npm run build`
+- **Preview Production Build**: `npm run preview`
+- **Run Unit Tests**: `npm run test`
+- **Run ESLint Linter**: `npm run lint`
+
+---
+
+## 7. Enterprise Production Backend Roadmap
+
+To shift DevSync from client-side state persistence to a robust cloud infrastructure, the following architectural steps are recommended:
+
+### A. Database Design (PostgreSQL Schema)
+
+```sql
+-- Users Table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    username VARCHAR(50) UNIQUE,
+    handle VARCHAR(50),
+    avatar_url TEXT,
+    bio TEXT,
+    college VARCHAR(150),
+    skills TEXT[] DEFAULT '{}',
+    roles TEXT[] DEFAULT '{}',
+    domains TEXT[] DEFAULT '{}',
+    github_link TEXT,
+    linkedin_link TEXT,
+    portfolio_link TEXT,
+    followers_ids UUID[] DEFAULT '{}',
+    following_ids UUID[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Projects Table
+CREATE TABLE projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    team_name VARCHAR(150),
+    tech TEXT[] DEFAULT '{}',
+    roles TEXT[] DEFAULT '{}',
+    members INT DEFAULT 1,
+    max_members INT DEFAULT 4,
+    progress INT DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'Recruiting',
+    category VARCHAR(50) DEFAULT 'Web',
+    visibility VARCHAR(20) DEFAULT 'public',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Posts / Feed Table
+CREATE TABLE posts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(150) NOT NULL,
+    body TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    project_name VARCHAR(150),
+    domain TEXT[],
+    tech TEXT[],
+    project_type VARCHAR(50),
+    looking_for TEXT[],
+    image_url TEXT,
+    visibility VARCHAR(20) DEFAULT 'public',
+    status VARCHAR(20) DEFAULT 'open',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Collaboration Requests Table
+CREATE TABLE requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    from_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    to_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    message TEXT,
+    role VARCHAR(100),
+    resume_url TEXT NOT NULL,
+    resume_name VARCHAR(255),
+    skills TEXT[] DEFAULT '{}',
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
-## Available Scripts
+### B. Media & Document Upload Pipeline
+1. **Frontend**: Request pre-signed S3 upload URLs from API Gateway.
+2. **Object Storage**: Direct client upload of files/PDFs to secure AWS S3 bucket.
+3. **Database Registry**: Frontend submits metadata (Cover note, skills list, S3 URL link) to the backend API endpoint.
 
-- `npm run dev` - start the Vite development server
-- `npm run build` - create a production build
-- `npm run build:dev` - build using the development mode configuration
-- `npm run preview` - preview the production build locally
-- `npm run lint` - run ESLint across the project
-- `npm run test` - run the test suite once
-- `npm run test:watch` - run tests in watch mode
-
-## Project Structure
-
-```text
-src/
-	components/     reusable UI components and layout pieces
-	data/           mock content and seed data used by the frontend
-	hooks/          shared React hooks
-	lib/            app utilities, state, and helpers
-	pages/          routed screens for the app
-	test/           test setup and example tests
-```
-
-## Notes
-
-- The app currently runs as a frontend-only product and is structured so a backend can be connected later without redesigning the UI.
-- Theme state is handled globally, so dark mode applies consistently across the app.
-- Some data is still mocked locally to support the current demo flows.
-
-## Build Status
-
-The project builds successfully with `npm run build`.
-
-## License
-
-No license has been specified yet.
+### C. REST API Hooks
+Replace local context dispatches in [store.tsx](file:///Users/anshgupta/Documents/GitHub/devsync-connect/src/lib/store.tsx) with React Query/TanStack Query mutation functions pointing to:
+- `POST /api/auth/login` (Credential check returning JWT tokens)
+- `POST /api/requests` (Create new member requests)
+- `PATCH /api/requests/:id` (Accept/decline application; handles atomic member increments in transactions)
+- `DELETE /api/projects/:id` (Trigger cascade project deletion logs)

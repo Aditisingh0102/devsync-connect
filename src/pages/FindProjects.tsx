@@ -54,6 +54,18 @@ export default function FindProjects() {
 
   const filtered = useMemo(() => {
     let r = projects.filter((p) => {
+      // Visibility filtering
+      if (p.visibility && p.visibility !== "public") {
+        if (!state.currentUser) return false;
+        if (p.ownerId !== state.currentUser.id) {
+          if (p.visibility === "private") return false;
+          if (p.visibility === "friends") {
+            const isFollowing = (state.currentUser.following || []).includes(p.ownerId || "");
+            if (!isFollowing) return false;
+          }
+        }
+      }
+
       if (cat !== "All" && p.category !== cat) return false;
       if (status !== "All" && p.status !== status) return false;
       if (searchTerms.length === 0) return true;

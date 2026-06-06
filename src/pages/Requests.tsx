@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
-import { Check, X, Inbox, Send, Users } from "lucide-react";
+import { Check, X, Inbox, Send, Users, FileText } from "lucide-react";
 
 const tabs = ["Incoming", "Sent", "Accepted", "Declined"] as const;
 
@@ -76,6 +76,31 @@ export default function RequestsPage() {
                     </span>
                   </div>
                   <div className="text-sm text-muted-foreground">{request.message || "No message provided."}</div>
+                  {request.role && (
+                    <div className="mt-1 text-xs text-primary font-semibold uppercase tracking-wider">
+                      Role Applied: {request.role}
+                    </div>
+                  )}
+                  {request.skills && request.skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {request.skills.map((s: string) => (
+                        <span key={s} className="ds-chip text-[9px] py-0.5">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {request.resume && (
+                    <div className="mt-2.5">
+                      <a
+                        href={request.resume}
+                        download={request.resumeName || "resume.pdf"}
+                        className="h-8 px-3 rounded-lg bg-primary/10 text-primary border border-primary/10 hover:bg-primary hover:text-white transition-all text-xs font-semibold inline-flex items-center gap-1.5"
+                      >
+                        <FileText className="size-3.5" /> View Resume ({request.resumeName || "resume.pdf"})
+                      </a>
+                    </div>
+                  )}
                   <div className="text-xs text-muted-foreground mt-1">{new Date(request.createdAt).toLocaleString()}</div>
                 </div>
               </div>

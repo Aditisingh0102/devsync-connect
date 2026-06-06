@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 
 export default function DiscoverBuilders() {
   const { state, dispatch } = useApp();
@@ -107,8 +107,14 @@ export default function DiscoverBuilders() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {results.length ? results.map(u => (
           <div key={u.id} className="ds-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center">{(u.name||"U").split(" ").map((s:any)=>s[0]).slice(0,2).join("")}</div>
+            <Link to={`/profile/${u.id}`} className="flex items-center gap-3 hover:opacity-85 transition-opacity text-foreground no-underline">
+              <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center shrink-0 overflow-hidden">
+                {u.avatar && /^(data:|https?:\/\/)/.test(u.avatar) ? (
+                  <img src={u.avatar} alt={u.name || "Profile"} className="size-full object-cover" />
+                ) : (
+                  (u.name||"U").split(" ").map((s:any)=>s[0]).slice(0,2).join("")
+                )}
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between"><div>
                   <div className="font-semibold">{u.name}</div>
@@ -117,7 +123,7 @@ export default function DiscoverBuilders() {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">{(u.skills||[]).slice(0,5).map(s=> <span key={s} className="ds-chip-primary">{s}</span>)}</div>
               </div>
-            </div>
+            </Link>
             <div className="mt-3 flex items-center gap-2">
               {state.currentUser && (state.currentUser.following || []).includes(u.id) ? (
                 <button onClick={()=>unfollow(u.id)} className="h-9 px-3 rounded-xl bg-card border">Unfollow</button>
@@ -125,7 +131,6 @@ export default function DiscoverBuilders() {
                 <button onClick={()=>follow(u.id)} className="h-9 px-3 rounded-xl bg-primary text-white">Follow</button>
               )}
               <button onClick={()=>sendRequest(u.id)} className="h-9 px-3 rounded-xl bg-card border">Request</button>
-              <a href={`/profile/${u.id}`} className="h-9 px-3 rounded-xl bg-card border">View</a>
             </div>
           </div>
         )) : <div className="ds-card p-4 text-sm text-muted-foreground">No builders found. Try different keywords.</div>}
