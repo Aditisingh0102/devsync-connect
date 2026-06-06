@@ -208,7 +208,7 @@ export default function SettingsPage() {
             <h2 className="font-semibold text-lg inline-flex items-center gap-2"><ShieldCheck className="size-4 text-primary" /> Account actions</h2>
             <p className="text-sm text-muted-foreground">Profile data is stored locally in the frontend store and updates instantly across the app.</p>
             <div className="text-xs text-muted-foreground">Need to edit your avatar? Use the profile page photo editor.</div>
-            <button onClick={deleteAccount} className="h-11 w-full rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">
+            <button onClick={deleteAccount} className="h-11 w-full rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
               Permanently delete account
             </button>
           </div>
