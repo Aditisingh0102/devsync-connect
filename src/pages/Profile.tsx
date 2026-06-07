@@ -14,22 +14,27 @@ const chartData = [
   { m: "May", c: 28 }, { m: "Jun", c: 34 }, { m: "Jul", c: 26 }, { m: "Aug", c: 38 },
 ];
 
-const getMonthLabel = (weekIndex: number) => {
-  const labels: Record<number, string> = {
-    1: "Jun",
-    5: "Jul",
-    10: "Aug",
-    14: "Sep",
-    18: "Oct",
-    22: "Nov",
-    27: "Dec",
-    31: "Jan",
-    35: "Feb",
-    40: "Mar",
-    44: "Apr",
-    48: "May"
-  };
-  return labels[weekIndex] || "";
+const getMonthLabels = (): Record<number, string> => {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayDay = today.getDay();
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - (52 * 7 + todayDay));
+
+  const labels: Record<number, string> = {};
+  let lastMonth = -1;
+  for (let col = 0; col < 53; col++) {
+    // First day (Sunday) of each column/week
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + col * 7);
+    const m = d.getMonth();
+    if (m !== lastMonth) {
+      labels[col] = monthNames[m];
+      lastMonth = m;
+    }
+  }
+  return labels;
 };
 
 export default function Profile() {
@@ -52,36 +57,55 @@ export default function Profile() {
   const profile = (user ?? {}) as any;
 
   const contributions = useMemo(() => {
-    const seed = profile?.name || "default";
-    let seedNum = 0;
-    for (let i = 0; i < seed.length; i++) {
-      seedNum += seed.charCodeAt(i);
-    }
-    
-    const rng = () => {
-      const x = Math.sin(seedNum++) * 10000;
-      return x - Math.floor(x);
-    };
+    const history: Record<string, number> = profile?.loginHistory || {};
 
-    const data = [];
-    for (let i = 0; i < 53 * 7; i++) {
-      const dayOfWeek = i % 7;
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      const r = rng();
-      let lvl = 0;
-      if (isWeekend) {
-        if (r > 0.96) lvl = 2;
-        else if (r > 0.88) lvl = 1;
-      } else {
-        if (r > 0.97) lvl = 4;
-        else if (r > 0.90) lvl = 3;
-        else if (r > 0.76) lvl = 2;
-        else if (r > 0.52) lvl = 1;
+    // Build a 53×7 grid (371 cells) ending on today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayDay = today.getDay(); // 0=Sun, 6=Sat
+    // The grid ends at today's position; we need to compute the start date
+    // Grid is column-major: col 0 is the oldest week, col 52 is the current week
+    // Each column has 7 rows (Sun=0 to Sat=6)
+    const totalCells = 53 * 7;
+    // The last cell in the grid corresponds to Saturday of the current week column
+    // Today is at position: (52 * 7) + todayDay
+    // So the grid starts at: today - ((52*7) + todayDay) days
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - (52 * 7 + todayDay));
+
+    // Find the max login count for scaling
+    const values = Object.values(history);
+    const maxCount = values.length > 0 ? Math.max(...values, 1) : 1;
+
+    const data: number[] = [];
+    for (let i = 0; i < totalCells; i++) {
+      const cellDate = new Date(startDate);
+      cellDate.setDate(startDate.getDate() + i);
+      const dateKey = cellDate.toISOString().slice(0, 10);
+
+      // If the cell is in the future, show level 0
+      if (cellDate > today) {
+        data.push(0);
+        continue;
       }
-      data.push(lvl);
+
+      const count = history[dateKey] || 0;
+      if (count === 0) {
+        data.push(0);
+      } else if (maxCount <= 4) {
+        // For low activity users, map count directly to levels (capped at 4)
+        data.push(Math.min(count, 4));
+      } else {
+        // Scale relative to the user's max activity
+        const ratio = count / maxCount;
+        if (ratio > 0.75) data.push(4);
+        else if (ratio > 0.5) data.push(3);
+        else if (ratio > 0.25) data.push(2);
+        else data.push(1);
+      }
     }
     return data;
-  }, [profile?.id, profile?.name]);
+  }, [profile?.id, profile?.name, profile?.loginHistory]);
 
   const profileTabs = useMemo(() => {
     if (state.currentUser && profileId === state.currentUser.id) {
@@ -223,7 +247,14 @@ export default function Profile() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">Activity Heatmap</h3>
-                  <p className="text-sm text-muted-foreground mt-1">Recent daily activity visualized across the last year.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {(() => {
+                      const totalDays = Object.keys(profile?.loginHistory || {}).length;
+                      return totalDays > 0
+                        ? `${totalDays} active day${totalDays > 1 ? "s" : ""} in the last year.`
+                        : "Login daily to build your activity streak.";
+                    })()}
+                  </p>
                 </div>
               </div>
               <div className="mt-6 overflow-x-auto">
@@ -244,18 +275,21 @@ export default function Profile() {
                     <div className="flex-1">
                       {/* Month Labels */}
                       <div className="grid gap-[3px] mb-1.5 h-4" style={{ gridTemplateColumns: 'repeat(53, 10px)' }}>
-                        {Array.from({ length: 53 }).map((_, colIdx) => {
-                          const month = getMonthLabel(colIdx);
-                          return (
-                            <div key={colIdx} className="relative h-full">
-                              {month && (
-                                <span className="absolute left-0 bottom-0 text-[10px] leading-none whitespace-nowrap text-[#8b949e]">
-                                  {month}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })}
+                        {(() => {
+                          const monthLabels = getMonthLabels();
+                          return Array.from({ length: 53 }).map((_, colIdx) => {
+                            const month = monthLabels[colIdx] || "";
+                            return (
+                              <div key={colIdx} className="relative h-full">
+                                {month && (
+                                  <span className="absolute left-0 bottom-0 text-[10px] leading-none whitespace-nowrap text-[#8b949e]">
+                                    {month}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          });
+                        })()}
                       </div>
                       
                       {/* Squares Grid */}
@@ -274,10 +308,26 @@ export default function Profile() {
                             "bg-[#30a14e] dark:bg-[#26a641]",
                             "bg-[#216e39] dark:bg-[#39d353]",
                           ];
+                          // Compute the date for this cell for the tooltip
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const todayDay = today.getDay();
+                          const startDate = new Date(today);
+                          startDate.setDate(startDate.getDate() - (52 * 7 + todayDay));
+                          const cellDate = new Date(startDate);
+                          cellDate.setDate(startDate.getDate() + i);
+                          const dateStr = cellDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+                          const history = profile?.loginHistory || {};
+                          const dateKey = cellDate.toISOString().slice(0, 10);
+                          const count = history[dateKey] || 0;
+                          const tooltipText = count > 0
+                            ? `${count} login${count > 1 ? "s" : ""} on ${dateStr}`
+                            : `No logins on ${dateStr}`;
                           return (
                             <div
                               key={i}
-                              className={`w-[10px] h-[10px] rounded-[2px] ${colors[lvl]} transition-all hover:scale-125 duration-100`}
+                              title={tooltipText}
+                              className={`w-[10px] h-[10px] rounded-[2px] ${colors[lvl]} transition-all hover:scale-125 duration-100 cursor-pointer`}
                             />
                           );
                         })}
@@ -287,14 +337,9 @@ export default function Profile() {
                   
                   {/* Footer */}
                   <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mt-6 text-[11px] text-[#8b949e] select-none font-mono">
-                    <a
-                      href="https://docs.github.com/articles/why-are-my-contributions-not-showing-up-on-my-profile"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline hover:text-primary transition-colors text-[#8b949e]"
-                    >
-                      Learn how we count contributions
-                    </a>
+                    <span className="text-[#8b949e]">
+                      Each square represents a day · darker = more logins
+                    </span>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span>Less</span>
                       <div className="w-[10px] h-[10px] rounded-[2px] bg-[#ebedf0] dark:bg-[#161b22]" />

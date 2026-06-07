@@ -23,6 +23,7 @@ export type User = {
   savedBuilders?: ID[];
   accountStatus?: "active" | "pending_deletion";
   deactivatedAt?: string; // ISO timestamp when deletion was scheduled
+  loginHistory?: Record<string, number>; // { "YYYY-MM-DD": loginCount }
   preferences?: {
     profileVisibility?: "public" | "team-only";
     emailNotifications?: boolean;
@@ -154,6 +155,7 @@ export type AppAction =
   | { type: "createProject"; payload: Project }
   | { type: "updateProject"; payload: Project }
   | { type: "deleteProject"; payload: { projectId: ID } }
-  | { type: "toggleSaveBuilder"; payload: { builderId: ID } };
+  | { type: "toggleSaveBuilder"; payload: { builderId: ID } }
+  | { type: "recordLogin"; payload: { userId: ID } };
 
 export {};

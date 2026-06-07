@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useRef } from "react";
 import type { AppState, AppAction, AppNotification, User, Post, Response, Review, Request, Project } from "./types";
 import { projects as mockProjects } from "../data/mock";
 
@@ -650,6 +650,20 @@ function reducer(state: AppState, action: AppAction): AppState {
         currentUser: updatedCurrentUser,
       };
     }
+    case "recordLogin": {
+      const { userId } = action.payload;
+      const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const user = state.currentUser?.id === userId ? state.currentUser : state.users[userId];
+      if (!user) return state;
+      const history = { ...(user.loginHistory || {}) };
+      history[today] = (history[today] || 0) + 1;
+      const updatedUser = { ...user, loginHistory: history };
+      return {
+        ...state,
+        currentUser: state.currentUser?.id === userId ? updatedUser : state.currentUser,
+        users: { ...state.users, [userId]: updatedUser },
+      };
+    }
     default:
       return state;
   }
@@ -689,6 +703,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
   }, [state.currentUser?.accountStatus, state.currentUser?.deactivatedAt]);
+
+  // Record a daily login for the current user (once per calendar day per session)
+  const loginRecordedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (state.currentUser?.id) {
+      const today = new Date().toISOString().slice(0, 10);
+      const key = `${state.currentUser.id}_${today}`;
+      if (loginRecordedRef.current !== key) {
+        loginRecordedRef.current = key;
+        dispatch({ type: "recordLogin", payload: { userId: state.currentUser.id } });
+      }
+    }
+  }, [state.currentUser?.id]);
 
   return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
 };
