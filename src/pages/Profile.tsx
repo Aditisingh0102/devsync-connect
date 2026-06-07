@@ -198,23 +198,36 @@ export default function Profile() {
 
       {tab === "Overview" && (
         <div className="grid lg:grid-cols-3 gap-5">
-          <div className="ds-card p-6 lg:col-span-2">
-            <h3 className="font-semibold text-lg mb-4">Contributions</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="m" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
-                  <Bar dataKey="c" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          <div className="lg:col-span-2 space-y-5">
+            <div className="ds-card p-6 min-h-[340px]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">Contributions</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Monthly contribution activity with an expanded chart layout.</p>
+                </div>
+              </div>
+              <div className="mt-6 w-full">
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={chartData} margin={{ top: 12, right: 0, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="m" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
+                    <Bar dataKey="c" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="mt-6">
-              <h4 className="font-semibold text-sm mb-3">Activity Heatmap</h4>
-              <div className="p-4 rounded-xl border border-border bg-card dark:bg-[#0d1117] dark:border-[#30363d] overflow-x-auto">
-                <div className="min-w-[720px] pr-2">
+
+            <div className="ds-card p-6 min-h-[440px]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">Activity Heatmap</h3>
+                  <p className="text-sm text-muted-foreground mt-1">Recent daily activity visualized across the last year.</p>
+                </div>
+              </div>
+              <div className="mt-6 overflow-x-auto">
+                <div className="min-w-[720px] p-4 rounded-xl border border-border bg-card dark:bg-[#0d1117] dark:border-[#30363d]">
                   <div className="flex gap-2 text-[10px] select-none font-mono">
                     {/* Left column: Day labels */}
                     <div className="grid grid-rows-7 gap-[3px] h-[88px] text-[#8b949e] pr-1">
@@ -273,7 +286,7 @@ export default function Profile() {
                   </div>
                   
                   {/* Footer */}
-                  <div className="flex justify-between items-center mt-3 text-[11px] text-[#8b949e] select-none font-mono">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mt-6 text-[11px] text-[#8b949e] select-none font-mono">
                     <a
                       href="https://docs.github.com/articles/why-are-my-contributions-not-showing-up-on-my-profile"
                       target="_blank"
@@ -282,7 +295,7 @@ export default function Profile() {
                     >
                       Learn how we count contributions
                     </a>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span>Less</span>
                       <div className="w-[10px] h-[10px] rounded-[2px] bg-[#ebedf0] dark:bg-[#161b22]" />
                       <div className="w-[10px] h-[10px] rounded-[2px] bg-[#9be9a8] dark:bg-[#0e4429]" />

@@ -139,7 +139,7 @@ export default function Navbar() {
                   navigate("/onboarding/profile-setup");
                 }}
               >
-                Sign out
+                {currentUser ? "Sign out" : "Sign in"}
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>
