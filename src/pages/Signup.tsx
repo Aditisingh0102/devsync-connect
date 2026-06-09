@@ -128,6 +128,10 @@ export default function Signup() {
     navigate("/onboarding/profile-setup");
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !loginMessage) submit();
+  };
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
       {/* Background glow */}
@@ -152,7 +156,7 @@ export default function Signup() {
 
         {/* Card */}
         <div className="ds-card p-8 backdrop-blur-xl border-border/50">
-          <div className="space-y-5">
+          <div className="space-y-5" onKeyDown={handleKeyDown}>
             {/* Name */}
             <div>
               <label htmlFor="signup-name" className="text-sm font-medium mb-1.5 block">Full name</label>
