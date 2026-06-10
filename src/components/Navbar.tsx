@@ -135,8 +135,12 @@ export default function Navbar() {
             <DropdownMenuItem asChild>
               <button
                 onClick={() => {
-                  dispatch({ type: "setCurrentUser" });
-                  navigate("/onboarding/profile-setup");
+                  if (currentUser) {
+                    dispatch({ type: "setCurrentUser" });
+                    navigate("/");
+                  } else {
+                    navigate("/login");
+                  }
                 }}
               >
                 {currentUser ? "Sign out" : "Sign in"}
