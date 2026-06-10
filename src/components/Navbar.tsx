@@ -98,7 +98,14 @@ export default function Navbar() {
 
         <Link to="/notifications" className="relative size-10 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-colors">
           <Bell className="size-4.5" />
-          {(state.notifications ? Object.values(state.notifications).some((n) => !n.read) : false) && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-danger" />}
+          {(() => {
+            const unreadCount = state.notifications ? Object.values(state.notifications).filter((n) => !n.read).length : 0;
+            return (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
+                {unreadCount}
+              </span>
+            );
+          })()}
         </Link>
 
         <button onClick={() => setTheme(isDark ? "light" : "dark")} className="size-10 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-colors" aria-label="Toggle theme">
