@@ -1,12 +1,48 @@
 import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { useSearchParams, Link } from "react-router-dom";
+import { ChevronDown, X } from "lucide-react";
+
+const AVAILABLE_SKILLS = [
+  "React",
+  "TypeScript",
+  "JavaScript",
+  "Python",
+  "Node.js",
+  "UI/UX",
+  "ML/AI",
+  "DevOps",
+  "Next.js",
+  "FastAPI",
+  "Tailwind CSS",
+  "Cloud / AWS",
+  "Supabase",
+  "PostgreSQL",
+  "MongoDB",
+  "Figma",
+  "Docker",
+  "Git / GitHub",
+  "ReactNative",
+  "Vue",
+  "Django",
+  "Firebase",
+  "Flutter",
+  "Angular"
+];
 
 export default function DiscoverBuilders() {
   const { state, dispatch } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [filterSkill, setFilterSkill] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const filteredSkillsOptions = useMemo(() => {
+    if (!filterSkill) return AVAILABLE_SKILLS;
+    return AVAILABLE_SKILLS.filter((s) =>
+      s.toLowerCase().includes(filterSkill.toLowerCase())
+    );
+  }, [filterSkill]);
 
   useEffect(() => {
     setQ(searchParams.get("q") || "");
@@ -100,7 +136,72 @@ export default function DiscoverBuilders() {
         <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain.</p>
         <div className="mt-4 flex gap-2">
           <input placeholder="Search builders..." value={q} onChange={(e)=>handleSearchChange(e.target.value)} className="ds-input" />
-          <input placeholder="Filter skill (optional)" value={filterSkill} onChange={(e)=>setFilterSkill(e.target.value)} className="ds-input w-48" />
+          
+          {/* Custom Searchable Select Dropdown */}
+          <div className="relative w-56 shrink-0">
+            <div className="relative">
+              <input 
+                placeholder="Filter skill (optional)" 
+                value={filterSkill} 
+                onChange={(e) => {
+                  setFilterSkill(e.target.value);
+                  setIsOpen(true);
+                }}
+                onFocus={() => setIsOpen(true)}
+                className="ds-input w-full pr-14" 
+              />
+              {filterSkill && (
+                <button
+                  type="button"
+                  onClick={() => setFilterSkill("")}
+                  className="absolute right-8 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronDown className="size-4" />
+              </button>
+            </div>
+
+            {isOpen && (
+              <>
+                {/* Backdrop to close dropdown on click outside */}
+                <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+                
+                {/* Dropdown Options List */}
+                <div className="absolute top-12 left-0 right-0 z-50 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto p-1 divide-y divide-border/50 animate-in fade-in slide-in-from-top-1 duration-100">
+                  {filteredSkillsOptions.length > 0 ? (
+                    filteredSkillsOptions.map((skill) => (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => {
+                          setFilterSkill(skill);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
+                          filterSkill.toLowerCase() === skill.toLowerCase()
+                            ? "bg-[#ede9fe] dark:bg-primary-soft text-[#4338ca] dark:text-primary font-semibold"
+                            : "text-foreground hover:bg-secondary hover:text-primary"
+                        }`}
+                      >
+                        {skill}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                      No skills found
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

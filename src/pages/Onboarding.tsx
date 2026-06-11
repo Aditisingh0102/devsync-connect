@@ -19,6 +19,7 @@ type OnboardingFormData = {
   email: string;
   name: string;
   year: string;
+  college: string;
   bio: string;
   skills: string[];
   roles: string[];
@@ -30,7 +31,7 @@ export default function Onboarding() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<OnboardingFormData>({ email: "", name: "", year: "", bio: "", skills: [], roles: [], domains: [] });
+  const [data, setData] = useState<OnboardingFormData>({ email: "", name: "", year: "", college: "", bio: "", skills: [], roles: [], domains: [] });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function Onboarding() {
         ...prev,
         email: prev.email || state.currentUser?.email || "",
         name: prev.name || state.currentUser?.name || "",
+        college: prev.college || state.currentUser?.college || "",
       }));
     }
   }, [state.currentUser]);
@@ -91,6 +93,7 @@ export default function Onboarding() {
     }
     if (step === 1 && data.skills.length < 3) e.skills = "Pick at least 3 skills";
     if (step === 2) {
+      if (!data.college.trim()) e.college = "Enter your college/university name";
       if (!data.year) e.year = "Select your year";
       if (!data.bio.trim()) e.bio = "Enter your short bio";
     }
@@ -112,7 +115,8 @@ export default function Onboarding() {
         avatar: existingUser?.avatar || (data.name ? data.name.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase() : "AC"),
         email: data.email,
         bio: data.bio,
-        college: data.year ? `Year ${data.year}` : existingUser?.college,
+        college: data.college.trim(),
+        year: data.year ? `Year ${data.year}` : existingUser?.year,
         skills: data.skills,
         roles: data.roles,
         domains: data.domains,
@@ -228,6 +232,9 @@ export default function Onboarding() {
 
         {step === 2 && (
           <div className="space-y-4">
+            <Field label="College / University" error={errors.college}>
+              <input value={data.college} onChange={(e) => setData({ ...data, college: e.target.value })} placeholder="e.g. State University" className="ds-input" autoComplete="off" />
+            </Field>
             <Field label="Academic Year" error={errors.year}>
               <select aria-label="Academic Year" value={data.year} onChange={(e) => setData({ ...data, year: e.target.value })} className="ds-input">
                 <option value="">Select year</option>{["1", "2", "3", "4"].map((y) => <option key={y} value={y}>Year {y}</option>)}
@@ -242,7 +249,7 @@ export default function Onboarding() {
         {step === 3 && (
           <div className="space-y-3">
             {[
-              ["Email", data.email || "—"], ["Name", data.name || "—"], ["Year", data.year ? `Year ${data.year}` : "—"],
+              ["Email", data.email || "—"], ["Name", data.name || "—"], ["College", data.college || "—"], ["Year", data.year ? `Year ${data.year}` : "—"],
               ["Skills", data.skills.join(", ") || "—"],
             ].map(([k, v]) => (
               <div key={k as string} className="flex items-start justify-between p-3 rounded-xl bg-surface-alt border border-border gap-4">

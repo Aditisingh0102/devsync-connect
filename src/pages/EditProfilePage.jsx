@@ -187,14 +187,19 @@ export default function EditProfilePage() {
       domains,
       roles,
       links: {
-        github: github.trim(),
-        linkedin: linkedin.trim(),
-        portfolio: portfolio.trim(),
+        github: (github || "").trim(),
+        linkedin: (linkedin || "").trim(),
+        portfolio: (portfolio || "").trim(),
       },
     };
 
     dispatch({
       type: "updateUser",
+      payload: updatedUser,
+    });
+
+    dispatch({
+      type: "setCurrentUser",
       payload: updatedUser,
     });
 

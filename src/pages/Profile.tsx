@@ -212,12 +212,36 @@ export default function Profile() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="ds-page-title">{profile?.name || "Guest Builder"}</h1>
-            <p className="text-muted-foreground">{profile?.handle || "@guest"} · {profile?.role || "Student"}</p>
-            <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" /> {profile?.college || "—"}</span>
-              <span className="inline-flex items-center gap-1"><Mail className="size-3.5" /> {profile?.links?.github ? profile.links.github.replace(/^https?:\/\//, "") : "—"}</span>
+            <p className="text-muted-foreground">
+              {profile?.handle || "@guest"} · {profile?.role || "Student"}
+              {profile?.year ? ` · ${profile.year}` : ""}
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-3">{(profile?.skills || []).map((s:any) => <span key={s} className="ds-chip-primary">{s}</span>)}</div>
+            {(profile?.college || profile?.email) && (
+              <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
+                {profile?.college && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="size-3.5" /> {profile.college}
+                  </span>
+                )}
+                {profile?.email && (
+                  <span className="inline-flex items-center gap-1">
+                    <Mail className="size-3.5" /> {profile.email}
+                  </span>
+                )}
+              </p>
+            )}
+            {profile?.bio && (
+              <p className="text-sm text-muted-foreground mt-2 max-w-xl">
+                {profile.bio}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {(profile?.skills || []).map((s: any) => (
+                <span key={s} className="ds-chip-primary">
+                  {s}
+                </span>
+              ))}
+            </div>
           </div>
           <div className="flex gap-2">
             {state.currentUser && profile?.id === state.currentUser.id && (
