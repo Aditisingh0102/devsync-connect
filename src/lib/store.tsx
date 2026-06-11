@@ -361,7 +361,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         const to = users[req.toId];
         if (from && to) {
           users[req.fromId] = { ...from, following: Array.from(new Set([...(from.following || []), req.toId])) };
-          users[req.toId] = { ...to, followers: Array.from(new Set([...(to.followers || []), fromId])) };
+          users[req.toId] = { ...to, followers: Array.from(new Set([...(to.followers || []), req.fromId])) };
         }
 
         if (req.projectId && state.projects[req.projectId]) {
