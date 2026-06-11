@@ -267,6 +267,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             title: `You followed ${to.name}`,
             body: `You're now following ${to.name} to keep up with their collaborations.`,
             href: `/profile/${toId}`,
+            userId: toId,
           }),
         },
         currentUser: state.currentUser && state.currentUser.id === fromId ? updatedFrom : state.currentUser,
@@ -313,6 +314,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             title: "Collaboration request sent",
             body: `Your collaboration request was sent to ${toUser.name || "a builder"}.`,
             href: "/requests",
+            userId: req.toId,
           }),
         },
         currentUser: state.currentUser && state.currentUser.id === req.fromId ? updatedFrom : (state.currentUser && state.currentUser.id === req.toId ? updatedTo : state.currentUser),
@@ -383,6 +385,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             title: status === "accepted" ? "Request accepted" : "Request declined",
             body: status === "accepted" ? `${state.users[req.fromId]?.name || "A builder"} joined "${state.projects[req.projectId]?.title || "your project"}"!` : `${state.users[req.toId]?.name || "A builder"} declined the collaboration request.`,
             href: "/requests",
+            userId: status === "accepted" ? req.fromId : req.toId,
           }),
         },
       };
@@ -541,6 +544,15 @@ function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         notifications: Object.fromEntries(Object.entries(state.notifications).map(([key, value]) => [key, { ...value, read: true }])) as Record<string, AppNotification>,
+      };
+    }
+    case "deleteNotification": {
+      const { id } = action.payload;
+      const newNotifications = { ...state.notifications };
+      delete newNotifications[id];
+      return {
+        ...state,
+        notifications: newNotifications,
       };
     }
     case "toggleSavePost": {

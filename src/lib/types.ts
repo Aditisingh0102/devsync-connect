@@ -125,6 +125,7 @@ export type AppNotification = {
   createdAt: string;
   read: boolean;
   href?: string;
+  userId?: ID;
 };
 
 export type AppState = {
@@ -154,6 +155,7 @@ export type AppAction =
   | { type: "addNotification"; payload: AppNotification }
   | { type: "markNotificationRead"; payload: { id: ID } }
   | { type: "markAllNotificationsRead" }
+  | { type: "deleteNotification"; payload: { id: ID } }
   | { type: "toggleSavePost"; payload: { postId: ID } }
   | { type: "deletePost"; payload: { postId: ID } }
   | { type: "createProject"; payload: Project }
