@@ -86,7 +86,11 @@ export default function Notifications() {
 
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
-  const items = useMemo(() => Object.values(state.notifications).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.notifications]);
+  const items = useMemo(() => {
+    return Object.values(state.notifications)
+      .filter((n) => !n.userId || (state.currentUser && n.userId === state.currentUser.id))
+      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  }, [state.notifications, state.currentUser]);
   const unread = items.filter((item) => !item.read).length;
   const shown = items.filter((item) => filter === "all" || !item.read);
 

@@ -43,6 +43,38 @@ const ROLES = [
   "Researcher"
 ];
 
+const AVAILABLE_TECH = [
+  "React",
+  "TypeScript",
+  "JavaScript",
+  "Python",
+  "Node.js",
+  "UI/UX",
+  "ML/AI",
+  "DevOps",
+  "Next.js",
+  "FastAPI",
+  "Tailwind CSS",
+  "Cloud / AWS",
+  "Supabase",
+  "PostgreSQL",
+  "MongoDB",
+  "Figma",
+  "Docker",
+  "Git / GitHub",
+  "ReactNative",
+  "Vue",
+  "Django",
+  "Firebase",
+  "Flutter",
+  "Angular",
+  "HTML",
+  "CSS",
+  "Express",
+  "Go",
+  "Rust"
+];
+
 const POST_TYPES: PostType[] = [
   "Looking for Team",
   "Seeking Contributor",
@@ -69,7 +101,11 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
   const [type, setType] = useState<PostType>("Looking for Team");
   const [projectName, setProjectName] = useState("");
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
-  const [tech, setTech] = useState("");
+  const [customDomain, setCustomDomain] = useState("");
+  const [showCustomDomainInput, setShowCustomDomainInput] = useState(false);
+  const [selectedTech, setSelectedTech] = useState<string[]>([]);
+  const [customTech, setCustomTech] = useState("");
+  const [showCustomTechInput, setShowCustomTechInput] = useState(false);
   const [projectType, setProjectType] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [referenceLink, setReferenceLink] = useState("");
@@ -78,6 +114,11 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
 
   const handleSelectDomain = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
+    if (val === "custom") {
+      setShowCustomDomainInput(true);
+      e.target.value = "";
+      return;
+    }
     if (val && !selectedDomains.includes(val)) {
       setSelectedDomains([...selectedDomains, val]);
     }
@@ -86,6 +127,23 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
 
   const removeDomain = (d: string) => {
     setSelectedDomains(selectedDomains.filter((x) => x !== d));
+  };
+
+  const handleSelectTech = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === "custom") {
+      setShowCustomTechInput(true);
+      e.target.value = "";
+      return;
+    }
+    if (val && !selectedTech.includes(val)) {
+      setSelectedTech([...selectedTech, val]);
+    }
+    e.target.value = "";
+  };
+
+  const removeTech = (t: string) => {
+    setSelectedTech(selectedTech.filter((x) => x !== t));
   };
 
   const handleSelectRole = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -145,7 +203,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
       type,
       projectName: projectName.trim() || undefined,
       domain: selectedDomains.length > 0 ? selectedDomains : undefined,
-      tech: tech.split(",").map((s) => s.trim()).filter(Boolean),
+      tech: selectedTech,
       projectType: projectType || undefined,
       lookingFor: selectedRoles.length > 0 ? selectedRoles : undefined,
       referenceLink: referenceLink.trim() || undefined,
@@ -166,7 +224,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
     setType("Looking for Team");
     setProjectName("");
     setSelectedDomains([]);
-    setTech("");
+    setSelectedTech([]);
     setProjectType("");
     setSelectedRoles([]);
     setReferenceLink("");
@@ -313,7 +371,54 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
                       {d}
                     </option>
                   ))}
+                  <option value="custom" className="text-primary font-semibold">+ Add Custom Domain...</option>
                 </select>
+
+                {showCustomDomainInput && (
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={customDomain}
+                      onChange={(e) => setCustomDomain(e.target.value)}
+                      placeholder="Enter custom domain..."
+                      className="ds-input flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (customDomain.trim() && !selectedDomains.includes(customDomain.trim())) {
+                            setSelectedDomains([...selectedDomains, customDomain.trim()]);
+                          }
+                          setCustomDomain("");
+                          setShowCustomDomainInput(false);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customDomain.trim() && !selectedDomains.includes(customDomain.trim())) {
+                          setSelectedDomains([...selectedDomains, customDomain.trim()]);
+                        }
+                        setCustomDomain("");
+                        setShowCustomDomainInput(false);
+                      }}
+                      className="h-11 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover shadow-glow"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomDomain("");
+                        setShowCustomDomainInput(false);
+                      }}
+                      className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-semibold text-foreground hover:bg-secondary"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
                 {/* Selected domains tags */}
                 {selectedDomains.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
@@ -360,14 +465,89 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                  Tech Stack (comma-separated)
+                  Tech Stack / Skills
                 </label>
-                <input
-                  value={tech}
-                  onChange={(e) => setTech(e.target.value)}
-                  placeholder="e.g. React, Node.js, TailwindCSS"
-                  className="ds-input"
-                />
+                <select
+                  onChange={handleSelectTech}
+                  className="ds-input appearance-none"
+                  aria-label="Select Tech"
+                  defaultValue=""
+                >
+                  <option value="">Select Tech (e.g. React)</option>
+                  {AVAILABLE_TECH.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                  <option value="custom" className="text-primary font-semibold">+ Add Custom Tech...</option>
+                </select>
+
+                {showCustomTechInput && (
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={customTech}
+                      onChange={(e) => setCustomTech(e.target.value)}
+                      placeholder="Enter custom tech..."
+                      className="ds-input flex-1"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (customTech.trim() && !selectedTech.includes(customTech.trim())) {
+                            setSelectedTech([...selectedTech, customTech.trim()]);
+                          }
+                          setCustomTech("");
+                          setShowCustomTechInput(false);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (customTech.trim() && !selectedTech.includes(customTech.trim())) {
+                          setSelectedTech([...selectedTech, customTech.trim()]);
+                        }
+                        setCustomTech("");
+                        setShowCustomTechInput(false);
+                      }}
+                      className="h-11 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover shadow-glow"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomTech("");
+                        setShowCustomTechInput(false);
+                      }}
+                      className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-semibold text-foreground hover:bg-secondary"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {/* Selected tech tags */}
+                {selectedTech.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {selectedTech.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 text-primary border border-primary/20"
+                      >
+                        {t}
+                        <button
+                          type="button"
+                          onClick={() => removeTech(t)}
+                          className="hover:text-primary-hover font-bold text-[11px] ml-0.5"
+                          aria-label={`Remove tech ${t}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

@@ -239,6 +239,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             title: "Post published",
             body: `Your post \"${p.title}\" is now live in the collaboration feed.`,
             href: "/feed",
+            userId: p.authorId,
           }),
         },
       };
@@ -267,6 +268,13 @@ function reducer(state: AppState, action: AppAction): AppState {
             title: `You followed ${to.name}`,
             body: `You're now following ${to.name} to keep up with their collaborations.`,
             href: `/profile/${toId}`,
+            userId: fromId,
+          }),
+          [`n_followed_by_${Date.now()}`]: createNotification({
+            type: "follow",
+            title: "New Follower",
+            body: `${from.name} is now following you.`,
+            href: `/profile/${fromId}`,
             userId: toId,
           }),
         },
@@ -309,10 +317,17 @@ function reducer(state: AppState, action: AppAction): AppState {
         requests: { ...state.requests, [req.id]: req },
         notifications: {
           ...state.notifications,
-          [`n_req_${req.id}`]: createNotification({
+          [`n_req_sent_${req.id}`]: createNotification({
             type: "request",
             title: "Collaboration request sent",
             body: `Your collaboration request was sent to ${toUser.name || "a builder"}.`,
+            href: "/requests",
+            userId: req.fromId,
+          }),
+          [`n_req_received_${req.id}`]: createNotification({
+            type: "request",
+            title: "New Collaboration Request",
+            body: `${fromUser.name || "A builder"} applied to join "${state.projects[req.projectId]?.title || "your project"}" as ${req.role || "Collaborator"}.`,
             href: "/requests",
             userId: req.toId,
           }),
@@ -346,7 +361,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         const to = users[req.toId];
         if (from && to) {
           users[req.fromId] = { ...from, following: Array.from(new Set([...(from.following || []), req.toId])) };
-          users[req.toId] = { ...to, followers: Array.from(new Set([...(to.followers || []), req.fromId])) };
+          users[req.toId] = { ...to, followers: Array.from(new Set([...(to.followers || []), fromId])) };
         }
 
         if (req.projectId && state.projects[req.projectId]) {
@@ -380,12 +395,23 @@ function reducer(state: AppState, action: AppAction): AppState {
         projects: updatedProjects,
         notifications: {
           ...state.notifications,
-          [`n_req_update_${id}`]: createNotification({
+          [`n_req_update_owner_${id}`]: createNotification({
             type: status === "accepted" ? "request" : "system",
-            title: status === "accepted" ? "Request accepted" : "Request declined",
-            body: status === "accepted" ? `${state.users[req.fromId]?.name || "A builder"} joined "${state.projects[req.projectId]?.title || "your project"}"!` : `${state.users[req.toId]?.name || "A builder"} declined the collaboration request.`,
+            title: status === "accepted" ? "Member Enrolled" : "Request Processed",
+            body: status === "accepted"
+              ? `${state.users[req.fromId]?.name || "A builder"} is now a contributor on "${state.projects[req.projectId]?.title || "your project"}".`
+              : `You declined the request from ${state.users[req.fromId]?.name || "a builder"}.`,
             href: "/requests",
-            userId: status === "accepted" ? req.fromId : req.toId,
+            userId: req.toId,
+          }),
+          [`n_req_update_applicant_${id}`]: createNotification({
+            type: status === "accepted" ? "request" : "system",
+            title: status === "accepted" ? "Application Approved!" : "Application Update",
+            body: status === "accepted"
+              ? `Your application to join "${state.projects[req.projectId]?.title || "the project"}" was accepted!`
+              : `Your application to join "${state.projects[req.projectId]?.title || "the project"}" was declined.`,
+            href: "/requests",
+            userId: req.fromId,
           }),
         },
       };

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
 import { Plus, Trash2, ExternalLink, Layers, Users, FolderKanban, ShieldCheck, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import EditProjectModal from "@/components/EditProjectModal";
 import { Project } from "@/lib/types";
 
@@ -59,12 +59,12 @@ export default function MyProjects() {
           <p className="text-muted-foreground text-sm">
             Please log in to manage your student projects, view active collaborations, or start a new building team.
           </p>
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="h-11 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover shadow-glow transition-all"
           >
             Go to Login
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -148,9 +148,11 @@ export default function MyProjects() {
                         {p.status}
                       </span>
                     </div>
-                    <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {p.title}
-                    </h3>
+                    <Link to={`/project/${p.id}`}>
+                      <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1 hover:underline">
+                        {p.title}
+                      </h3>
+                    </Link>
                     <p className="text-xs text-muted-foreground font-medium mt-0.5">{p.team}</p>
                     <p className="text-xs text-muted-foreground mt-2.5 line-clamp-3 leading-relaxed">
                       {p.description}
@@ -188,12 +190,12 @@ export default function MyProjects() {
                   </div>
 
                   <div className="flex items-center justify-between border-t border-border/50 pt-3 mt-4">
-                    <a
-                      href={`/project/${p.id}`}
+                    <Link
+                      to={`/project/${p.id}`}
                       className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
                     >
                       Workspace <ExternalLink className="size-3" />
-                    </a>
+                    </Link>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(p)}
@@ -224,7 +226,7 @@ export default function MyProjects() {
               <ShieldCheck className="size-4.5 text-primary" /> Active Platform Status
             </h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Any projects you create will be added to the global student directory on the <a href="/find-projects" className="text-primary hover:underline font-semibold">Find Projects</a> page, enabling developers to send recruitment requests or collaboration applications.
+              Any projects you create will be added to the global student directory on the <Link to="/find-projects" className="text-primary hover:underline font-semibold">Find Projects</Link> page, enabling developers to send recruitment requests or collaboration applications.
             </p>
           </div>
 

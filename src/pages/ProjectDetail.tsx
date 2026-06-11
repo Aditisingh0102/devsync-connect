@@ -1,8 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
-import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Target, Users } from "lucide-react";
+import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Target, Users, FileText, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import ApplyRoleModal from "@/components/ApplyRoleModal";
 
 export default function ProjectDetail() {
@@ -24,6 +24,12 @@ export default function ProjectDetail() {
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
+
+  const projectRequests = useMemo(() => {
+    return Object.values(state.requests || {}).filter(
+      (r) => r.projectId === p.id && r.status === "pending"
+    );
+  }, [state.requests, p.id]);
 
   const handleToggleSave = () => {
     const updated = {
@@ -108,6 +114,91 @@ export default function ProjectDetail() {
 
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
+          {state.currentUser && p.ownerId === state.currentUser.id && (
+            <div className="ds-card p-6 border-primary/20 bg-primary-soft/10">
+              <h3 className="font-semibold text-lg mb-3 flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Users className="size-5 text-primary animate-pulse" />
+                  Incoming Applications
+                </span>
+                {projectRequests.length > 0 && (
+                  <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full font-bold">
+                    {projectRequests.length} pending
+                  </span>
+                )}
+              </h3>
+              
+              {projectRequests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No pending applications for this project yet. When developers apply for roles, they will show up here.</p>
+              ) : (
+                <div className="space-y-4 mt-4">
+                  {projectRequests.map((r: any) => {
+                    const applicant = state.users[r.fromId];
+                    return (
+                      <div key={r.id} className="p-4 rounded-xl bg-card border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:border-primary/30 transition-all">
+                        <div className="flex items-start gap-3">
+                          <div className="size-10 rounded-xl bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                            {applicant?.avatar || applicant?.name?.slice(0, 2) || "U"}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm text-foreground">
+                              {applicant?.name || "Unknown"} <span className="font-normal text-muted-foreground text-xs">@{applicant?.username}</span>
+                            </p>
+                            {r.role && (
+                              <p className="text-xs text-primary font-bold uppercase tracking-wider mt-0.5">
+                                Applied for: {r.role}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1.5 italic leading-relaxed">
+                              "{r.message || "No message provided."}"
+                            </p>
+                            
+                            {applicant?.skills && applicant.skills.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {applicant.skills.map((s: string) => (
+                                  <span key={s} className="ds-chip text-[9px] py-0.5">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {r.resume && (
+                              <div className="mt-3">
+                                <a
+                                  href={r.resume}
+                                  download={r.resumeName || "resume.pdf"}
+                                  className="h-8 px-3 rounded-lg bg-primary/10 text-primary border border-primary/10 hover:bg-primary hover:text-white transition-all text-xs font-semibold inline-flex items-center gap-1.5"
+                                >
+                                  <FileText className="size-3.5" /> View Resume ({r.resumeName || "resume.pdf"})
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end md:self-center">
+                          <button
+                            onClick={() => dispatch({ type: "updateRequest", payload: { id: r.id, status: "accepted" } })}
+                            className="h-9 px-3.5 rounded-xl bg-primary text-white text-xs font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover shadow-glow"
+                          >
+                            <CheckCircle2 className="size-4" /> Accept
+                          </button>
+                          <button
+                            onClick={() => dispatch({ type: "updateRequest", payload: { id: r.id, status: "declined" } })}
+                            className="h-9 px-3.5 rounded-xl bg-card border border-border text-xs font-semibold text-muted-foreground hover:bg-secondary inline-flex items-center gap-1.5"
+                          >
+                            <X className="size-4" /> Decline
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="ds-card p-6">
             <h3 className="font-semibold text-lg mb-2">Summary</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{p.description} The team is shipping in 2-week sprints with weekly demo sessions and async standups. Mentors review milestones and the project produces a verified portfolio entry on completion.</p>

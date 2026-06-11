@@ -171,8 +171,8 @@ export default function Profile() {
             Your real profile, posts, followers, requests, and collaboration activity will appear here after login.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="/login" className="h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Sign in</a>
-            <a href="/signup" className="h-11 px-5 rounded-xl bg-card border border-border font-semibold inline-flex items-center justify-center hover:bg-secondary">Create account</a>
+            <Link to="/login" className="h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Sign in</Link>
+            <Link to="/signup" className="h-11 px-5 rounded-xl bg-card border border-border font-semibold inline-flex items-center justify-center hover:bg-secondary">Create account</Link>
           </div>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function Profile() {
         <div className="ds-card p-7 text-center">
           <h1 className="ds-page-title">Profile not found</h1>
           <p className="text-muted-foreground mt-2">The requested profile is unavailable.</p>
-          <a href="/discover-builders" className="mt-6 h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Discover builders</a>
+          <Link to="/discover-builders" className="mt-6 h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Discover builders</Link>
         </div>
       </div>
     );
