@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useApp } from "@/lib/store";
-import { Bell, CheckCheck, MessageSquare, UserPlus, Zap, Settings, ArrowRight, Star } from "lucide-react";
+import { Bell, CheckCheck, MessageSquare, UserPlus, Zap, Settings, ArrowRight, Star, LogIn } from "lucide-react";
 
 const icons = {
   invite: UserPlus,
@@ -34,6 +34,56 @@ function bucket(date: string): "Today" | "This Week" | "Earlier" {
 
 export default function Notifications() {
   const { state, dispatch } = useApp();
+
+  if (!state.currentUser) {
+    return (
+      <div className="container py-16 max-w-lg min-h-[calc(100vh-8rem)] flex items-center justify-center">
+        {/* Background glow */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 -right-32 size-[400px] rounded-full bg-primary/10 blur-[100px]" />
+          <div className="absolute bottom-1/3 -left-32 size-[300px] rounded-full bg-purple/10 blur-[100px]" />
+        </div>
+
+        <div className="w-full text-center">
+          <div className="ds-card p-8 backdrop-blur-xl border-border/50 shadow-glow relative overflow-hidden">
+            {/* Header Icon */}
+            <div className="relative size-20 mx-auto mb-6 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg">
+              <Bell className="size-10 text-white animate-bounce" />
+              <div className="absolute -top-1.5 -right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-danger text-[11px] font-bold text-white shadow-sm ring-2 ring-background">
+                !
+              </div>
+            </div>
+
+            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight mb-3">
+              Join DevSync to View Notifications
+            </h1>
+            
+            <p className="text-muted-foreground text-sm leading-relaxed mb-8 max-w-sm mx-auto">
+              Stay updated on collaboration requests, new follows, peer reviews, and activity on your project posts.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                to="/login"
+                className="h-11 px-6 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all active:scale-[0.98] shadow-glow"
+              >
+                <LogIn className="size-4" />
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="h-11 px-6 rounded-xl bg-card border border-border text-foreground font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-secondary transition-colors"
+              >
+                <UserPlus className="size-4" />
+                Create Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
   const items = useMemo(() => Object.values(state.notifications).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.notifications]);

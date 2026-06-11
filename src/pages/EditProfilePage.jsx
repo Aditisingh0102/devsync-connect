@@ -1,8 +1,35 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { X, Plus, ArrowLeft } from "lucide-react";
+
+const AVAILABLE_SKILLS = [
+  "React",
+  "TypeScript",
+  "JavaScript",
+  "Python",
+  "Node.js",
+  "UI/UX",
+  "ML/AI",
+  "DevOps",
+  "Next.js",
+  "FastAPI",
+  "Tailwind CSS",
+  "Cloud / AWS",
+  "Supabase",
+  "PostgreSQL",
+  "MongoDB",
+  "Figma",
+  "Docker",
+  "Git / GitHub",
+  "ReactNative",
+  "Vue",
+  "Django",
+  "Firebase",
+  "Flutter",
+  "Angular"
+];
 
 export default function EditProfilePage() {
   const { state, dispatch } = useApp();
@@ -24,15 +51,13 @@ export default function EditProfilePage() {
 
   // Inputs for tags
   const [skillInput, setSkillInput] = useState("");
-  const [domainInput, setDomainInput] = useState("");
-  const [roleInput, setRoleInput] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const skillsContainerRef = useRef(null);
 
   // Links
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [portfolio, setPortfolio] = useState("");
-
-
 
   // Pre-fill fields on mount
   useEffect(() => {
@@ -50,17 +75,34 @@ export default function EditProfilePage() {
     setPortfolio(currentUser.links?.portfolio || "");
   }, [currentUser]);
 
+  // Click outside dropdown handler
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (skillsContainerRef.current && !skillsContainerRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredSkills = useMemo(() => {
+    const remaining = AVAILABLE_SKILLS.filter(
+      (s) => !skills.some((selected) => selected.toLowerCase() === s.toLowerCase())
+    );
+    if (!skillInput) return remaining;
+    return remaining.filter((s) => s.toLowerCase().includes(skillInput.toLowerCase()));
+  }, [skillInput, skills]);
+
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-[#f1f5f9] py-10 flex items-center justify-center">
-        <div className="bg-white border border-[#e2e8f0] rounded-[12px] p-6 text-center max-w-md shadow-sm">
-          <p className="text-[#64748b]">No active session found. Please log in first.</p>
+      <div className="min-h-screen bg-background py-10 flex items-center justify-center transition-colors">
+        <div className="bg-card border border-border rounded-2xl p-6 text-center max-w-md shadow-sm">
+          <p className="text-muted-foreground">No active session found. Please log in first.</p>
         </div>
       </div>
     );
   }
-
-
 
   const handleUsernameChange = (val) => {
     const sanitized = val
@@ -78,39 +120,12 @@ export default function EditProfilePage() {
         setSkills([...skills, skillInput.trim()]);
       }
       setSkillInput("");
+      setDropdownOpen(false);
     }
   };
 
   const removeSkill = (indexToRemove) => {
     setSkills(skills.filter((_, idx) => idx !== indexToRemove));
-  };
-
-  const addDomain = (e) => {
-    if (e.key === "Enter" && domainInput.trim()) {
-      e.preventDefault();
-      if (!domains.includes(domainInput.trim())) {
-        setDomains([...domains, domainInput.trim()]);
-      }
-      setDomainInput("");
-    }
-  };
-
-  const removeDomain = (indexToRemove) => {
-    setDomains(domains.filter((_, idx) => idx !== indexToRemove));
-  };
-
-  const addRole = (e) => {
-    if (e.key === "Enter" && roleInput.trim()) {
-      e.preventDefault();
-      if (!roles.includes(roleInput.trim())) {
-        setRoles([...roles, roleInput.trim()]);
-      }
-      setRoleInput("");
-    }
-  };
-
-  const removeRole = (indexToRemove) => {
-    setRoles(roles.filter((_, idx) => idx !== indexToRemove));
   };
 
   // URL Validator helper
@@ -212,87 +227,85 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f1f5f9] py-8 text-[#1e293b]">
+    <div className="min-h-screen bg-background py-8 text-foreground transition-colors">
       <div className="container max-w-4xl mx-auto px-4 space-y-6">
         {/* Breadcrumbs & Title */}
         <div className="flex items-center justify-between">
-          <div className="text-xs text-[#64748b] flex items-center gap-1.5">
-            <Link to="/profile" className="hover:text-[#4f46e5]">Profile</Link>
+          <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Link to="/profile" className="hover:text-primary transition-colors">Profile</Link>
             <span>›</span>
-            <span className="font-semibold text-[#1e293b]">Edit Profile</span>
+            <span className="font-semibold text-foreground">Edit Profile</span>
           </div>
-          <Link to="/profile" className="text-sm text-[#64748b] hover:text-[#4f46e5] flex items-center gap-1">
+          <Link to="/profile" className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
             <ArrowLeft className="size-4" /> Back to Profile
           </Link>
         </div>
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1e293b]">Edit Profile</h1>
-          <p className="text-sm text-[#64748b] mt-1">Configure your public-facing student portfolio cards.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Profile</h1>
+          <p className="text-sm text-muted-foreground mt-1">Configure your public-facing student portfolio cards.</p>
         </div>
 
-
-
         {/* Card 2: Basic Info */}
-        <div className="bg-white border border-[#e2e8f0] rounded-[12px] p-[16px_20px] shadow-sm space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#64748b]">Basic Info</h2>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Basic Info</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Full Name</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Full Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 placeholder="Full Name"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Username</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Username</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#64748b]">@</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">@</span>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => handleUsernameChange(e.target.value)}
-                  className="w-full pl-8 pr-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                  className="w-full pl-8 pr-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                   placeholder="username"
                 />
               </div>
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Bio</label>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Bio</label>
             <textarea
               rows={3}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all resize-none"
+              className="w-full p-3.5 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all resize-none"
               placeholder="Tell other builders about yourself..."
             />
           </div>
         </div>
 
         {/* Card 3: Academic Info */}
-        <div className="bg-white border border-[#e2e8f0] rounded-[12px] p-[16px_20px] shadow-sm space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#64748b]">Academic Info</h2>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Academic Info</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">College / University</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">College / University</label>
               <input
                 type="text"
                 value={college}
                 onChange={(e) => setCollege(e.target.value)}
-                className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 placeholder="e.g. State University"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Year of Study</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Year of Study</label>
               <select
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
               >
                 <option value="Year 1">Year 1</option>
                 <option value="Year 2">Year 2</option>
@@ -305,134 +318,105 @@ export default function EditProfilePage() {
         </div>
 
         {/* Card 4: Skills & Interests */}
-        <div className="bg-white border border-[#e2e8f0] rounded-[12px] p-[16px_20px] shadow-sm space-y-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#64748b]">Skills &amp; Interests</h2>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Skills &amp; Interests</h2>
 
-          {/* Group 1: Skills (Indigo tags) */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Skills</label>
-            <div className="flex flex-wrap gap-2 items-center min-h-[38px] p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px]">
+          {/* Group 1: Skills (Indigo tags) with dropdown */}
+          <div className="space-y-2 relative" ref={skillsContainerRef}>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Skills</label>
+            <div className="flex flex-wrap gap-2 items-center min-h-[44px] p-2 bg-secondary border border-border rounded-xl focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
               {skills.map((skill, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#ede9fe] text-[#4338ca] text-xs font-semibold rounded-[6px]"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-soft text-primary text-xs font-semibold rounded-lg"
                 >
                   {skill}
                   <button
                     type="button"
                     onClick={() => removeSkill(index)}
-                    className="hover:bg-[#ddd6fe] rounded p-0.5"
+                    className="hover:bg-primary/20 rounded p-0.5"
                   >
                     <X className="size-3" />
                   </button>
                 </span>
               ))}
-              <input
-                type="text"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={addSkill}
-                placeholder={skills.length === 0 ? "Type skill and press Enter" : "+ Add skill"}
-                className="bg-transparent text-[13px] outline-none ml-2 flex-1 min-w-[120px]"
-              />
+              <div className="flex-1 min-w-[120px] relative">
+                <input
+                  type="text"
+                  value={skillInput}
+                  onChange={(e) => {
+                    setSkillInput(e.target.value);
+                    setDropdownOpen(true);
+                  }}
+                  onFocus={() => setDropdownOpen(true)}
+                  onKeyDown={addSkill}
+                  placeholder={skills.length === 0 ? "Type or select skill..." : "+ Add skill"}
+                  className="w-full bg-transparent text-sm outline-none px-1 py-1 text-foreground"
+                />
+              </div>
             </div>
-            <p className="text-[10px] text-[#64748b]">Press Enter to add, click × to remove.</p>
-          </div>
+            <p className="text-[10px] text-muted-foreground">Select from suggestions, or press Enter to add a custom skill.</p>
 
-          {/* Group 2: Domains (Green tags) */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Preferred Domains</label>
-            <div className="flex flex-wrap gap-2 items-center min-h-[38px] p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px]">
-              {domains.map((dom, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#d1fae5] text-[#065f46] text-xs font-semibold rounded-[6px]"
-                >
-                  {dom}
-                  <button
-                    type="button"
-                    onClick={() => removeDomain(index)}
-                    className="hover:bg-[#a7f3d0] rounded p-0.5"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                value={domainInput}
-                onChange={(e) => setDomainInput(e.target.value)}
-                onKeyDown={addDomain}
-                placeholder={domains.length === 0 ? "Type domain and press Enter" : "+ Add"}
-                className="bg-transparent text-[13px] outline-none ml-2 flex-1 min-w-[120px]"
-              />
-            </div>
-            <p className="text-[10px] text-[#64748b]">Press Enter to add, click × to remove.</p>
-          </div>
-
-          {/* Group 3: Roles (Yellow tags) */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Preferred Roles</label>
-            <div className="flex flex-wrap gap-2 items-center min-h-[38px] p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px]">
-              {roles.map((role, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#fef9c3] text-[#713f12] text-xs font-semibold rounded-[6px]"
-                >
-                  {role}
-                  <button
-                    type="button"
-                    onClick={() => removeRole(index)}
-                    className="hover:bg-[#fef08a] rounded p-0.5"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                value={roleInput}
-                onChange={(e) => setRoleInput(e.target.value)}
-                onKeyDown={addRole}
-                placeholder={roles.length === 0 ? "Type role and press Enter" : "+ Add"}
-                className="bg-transparent text-[13px] outline-none ml-2 flex-1 min-w-[120px]"
-              />
-            </div>
-            <p className="text-[10px] text-[#64748b]">Press Enter to add, click × to remove.</p>
+            {dropdownOpen && (
+              <div className="absolute top-[100%] left-0 right-0 z-50 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto p-1 divide-y divide-border/50 animate-in fade-in slide-in-from-top-1 duration-100">
+                {filteredSkills.length > 0 ? (
+                  filteredSkills.map((skill) => (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => {
+                        if (!skills.includes(skill)) {
+                          setSkills([...skills, skill]);
+                        }
+                        setSkillInput("");
+                        setDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between text-foreground hover:bg-secondary hover:text-primary"
+                    >
+                      {skill}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                    No suggestions. Press Enter to add "{skillInput}"
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Card 5: Links */}
-        <div className="bg-white border border-[#e2e8f0] rounded-[12px] p-[16px_20px] shadow-sm space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#64748b]">Links</h2>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Links</h2>
           <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">GitHub</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">GitHub</label>
               <input
                 type="text"
                 value={github}
                 onChange={(e) => setGithub(e.target.value)}
-                className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 placeholder="github.com/..."
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">LinkedIn</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">LinkedIn</label>
               <input
                 type="text"
                 value={linkedin}
                 onChange={(e) => setLinkedin(e.target.value)}
-                className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 placeholder="linkedin.com/in/..."
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Portfolio</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Portfolio</label>
               <input
                 type="text"
                 value={portfolio}
                 onChange={(e) => setPortfolio(e.target.value)}
-                className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] focus:outline-none focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 placeholder="example.com"
               />
             </div>
@@ -440,28 +424,28 @@ export default function EditProfilePage() {
         </div>
 
         {/* Info Banner */}
-        <div className="bg-[#eff6ff] border border-[#bfdbfe] rounded-[12px] p-4 text-sm text-[#1e40af] flex items-center justify-between">
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 text-sm text-primary flex items-center justify-between shadow-glow">
           <p>
             ℹ Edit Profile saves only public profile info. Account security &amp; notifications are in{" "}
-            <Link to="/settings" className="font-semibold underline hover:text-[#1d4ed8]">
+            <Link to="/settings" className="font-semibold underline hover:text-primary-hover">
               Settings →
             </Link>
           </p>
         </div>
 
         {/* Bottom Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-[#e2e8f0]">
+        <div className="flex justify-end gap-3 pt-4 border-t border-border">
           <button
             type="button"
             onClick={() => navigate("/profile")}
-            className="h-9 px-4 border border-[#e2e8f0] text-[#1e293b] hover:bg-[#f8fafc] rounded-[8px] text-[13px] font-semibold transition-colors"
+            className="h-10 px-5 border border-border text-foreground hover:bg-secondary rounded-xl text-sm font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="h-9 px-4 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-[8px] text-[13px] font-semibold transition-colors shadow-sm"
+            className="h-10 px-5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-colors shadow-glow"
           >
             Save changes
           </button>
