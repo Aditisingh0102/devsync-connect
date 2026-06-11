@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight, Sparkles, Users2, Compass, LayoutDashboard, Activity, Brain,
   Shield, UserPlus, Search as SearchIcon, Hammer, Github, Rocket, Trophy,
@@ -52,6 +52,7 @@ const roadmap = [
 
 export default function Index() {
   const { state } = useApp();
+  const navigate = useNavigate();
   const isLoggedIn = !!state.currentUser;
   const isProfileComplete = !!state.currentUser?.profileCompleted;
 
@@ -112,17 +113,33 @@ export default function Index() {
       {/* STATS */}
       <section className="container -mt-8 md:-mt-12 relative z-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((s) => (
-            <div key={s.label} className="ds-card p-5">
-              <div className={`size-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
-                <s.icon className="size-5" />
+          {stats.map((s) => {
+            const isMyTeam = s.label === "My Team";
+            const handleCardClick = () => {
+              if (isMyTeam) {
+                if (isLoggedIn) {
+                  navigate("/my-team");
+                } else {
+                  navigate("/login");
+                }
+              }
+            };
+            return (
+              <div 
+                key={s.label} 
+                className={`ds-card p-5 ${isMyTeam ? "ds-card-hover cursor-pointer" : ""}`}
+                onClick={handleCardClick}
+              >
+                <div className={`size-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
+                  <s.icon className="size-5" />
+                </div>
+                <div className="text-2xl font-bold">{s.value}</div>
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  {s.label} <span className="text-success text-xs font-semibold">{s.change}</span>
+                </div>
               </div>
-              <div className="text-2xl font-bold">{s.value}</div>
-              <div className="text-sm text-muted-foreground flex items-center gap-2">
-                {s.label} <span className="text-success text-xs font-semibold">{s.change}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

@@ -196,7 +196,7 @@ export default function Profile() {
             {state.currentUser && profile?.id === state.currentUser.id && (
               <>
                 <AvatarUpload userId={profile?.id || ""} />
-                <Link to="/settings" className="h-10 px-4 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2">
+                <Link to="/profile/edit" className="h-10 px-4 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2">
                   <Edit3 className="size-4" /> Edit Profile
                 </Link>
               </>

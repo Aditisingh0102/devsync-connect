@@ -25,10 +25,11 @@ export type User = {
   deactivatedAt?: string; // ISO timestamp when deletion was scheduled
   loginHistory?: Record<string, number>; // { "YYYY-MM-DD": loginCount }
   preferences?: {
-    profileVisibility?: "public" | "team-only";
+    profileVisibility?: "public" | "team-only" | "private";
     emailNotifications?: boolean;
     collaborationAlerts?: boolean;
     discoverable?: boolean;
+    teamInviteNotifications?: boolean;
   };
 };
 

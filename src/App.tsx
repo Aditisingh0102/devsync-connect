@@ -23,6 +23,7 @@ import PostPage from "./pages/PostPage";
 import RequestsPage from "./pages/Requests";
 import ReviewsPage from "./pages/Reviews";
 import SettingsPage from "./pages/Settings";
+import EditProfilePage from "./pages/EditProfilePage";
 import { AppProvider } from "@/lib/store";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/my-team" element={<MyTeam />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/profile/edit" element={<EditProfilePage />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/team/:id" element={<TeamDetail />} />
             <Route path="/post/:id" element={<PostPage />} />
