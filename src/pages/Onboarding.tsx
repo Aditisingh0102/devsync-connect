@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, GraduationCap, Sparkles, User, Briefcase, ListChecks } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { skills } from "@/data/mock";
@@ -26,11 +26,22 @@ type OnboardingFormData = {
 };
 
 export default function Onboarding() {
+  const { state, dispatch } = useApp();
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(0);
   const [data, setData] = useState<OnboardingFormData>({ email: "", name: "", year: "", bio: "", skills: [], roles: [], domains: [] });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const navigate = useNavigate();
-  const { state, dispatch } = useApp();
+
+  useEffect(() => {
+    if (state.currentUser) {
+      setData((prev) => ({
+        ...prev,
+        email: prev.email || state.currentUser?.email || "",
+        name: prev.name || state.currentUser?.name || "",
+      }));
+    }
+  }, [state.currentUser]);
 
   const [localSkills, setLocalSkills] = useState<string[]>(skills);
   const [customSkill, setCustomSkill] = useState("");
@@ -86,28 +97,31 @@ export default function Onboarding() {
     setErrors(e);
     if (Object.keys(e).length) return;
     if (step === steps.length - 1) {
-      // Generate unique username from name
-      const username = data.name
+      const existingUser = state.currentUser;
+      const username = existingUser?.username || (data.name
         ? `${data.name.split(" ")[0].toLowerCase()}_${Date.now().toString().slice(-5)}`
-        : `user_${Date.now()}`;
+        : `user_${Date.now()}`);
+      const handle = existingUser?.handle || (data.name ? `@${data.name.split(" ")[0].toLowerCase()}` : `@${username}`);
 
       const user = {
-        id: username,
+        ...existingUser,
+        id: existingUser?.id || `u_${Date.now()}`,
         name: data.name,
-        handle: data.name ? `@${data.name.split(" ")[0].toLowerCase()}` : undefined,
-        avatar: data.name ? data.name.split(" ").map((s) => s[0]).slice(0, 2).join("") : "AC",
+        username,
+        handle,
+        avatar: existingUser?.avatar || (data.name ? data.name.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase() : "AC"),
         email: data.email,
         bio: data.bio,
-        college: data.year ? `Year ${data.year}` : undefined,
+        college: data.year ? `Year ${data.year}` : existingUser?.college,
         skills: data.skills,
         roles: data.roles,
         domains: data.domains,
-        followers: [],
-        following: [],
-        pendingRequests: [],
-        sentRequests: [],
+        followers: existingUser?.followers || [],
+        following: existingUser?.following || [],
+        pendingRequests: existingUser?.pendingRequests || [],
+        sentRequests: existingUser?.sentRequests || [],
         profileCompleted: true,
-        links: { github: "", linkedin: "", portfolio: "" },
+        links: existingUser?.links || { github: "", linkedin: "", portfolio: "" },
       } as any;
       dispatch({ type: "setCurrentUser", payload: user });
       navigate("/dashboard");

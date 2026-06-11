@@ -49,7 +49,7 @@ export default function Login() {
         }
       } else {
         // No matching user found
-        setErrors({ identifier: "No account found with this username or email" });
+        setErrors({ identifier: "Account does not exist. " });
         setIsLoading(false);
         return;
       }
@@ -100,7 +100,14 @@ export default function Login() {
                 autoComplete="username"
                 autoFocus
               />
-              {errors.identifier && <p className="text-xs text-danger mt-1.5">{errors.identifier}</p>}
+              {errors.identifier && (
+                <p className="text-xs text-danger mt-1.5 flex items-center flex-wrap gap-1">
+                  <span>{errors.identifier}</span>
+                  <Link to="/signup" className="text-primary font-semibold hover:underline">
+                    Sign up to create one &rarr;
+                  </Link>
+                </p>
+              )}
             </div>
 
             {/* Password */}
