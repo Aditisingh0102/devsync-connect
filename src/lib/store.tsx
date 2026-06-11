@@ -19,7 +19,7 @@ function loadState(): AppState {
 
       // Auto-migrate: Scan existing posts to auto-initialize project workspaces if missing
       if (mergedState.posts) {
-        Object.values(mergedState.posts).forEach((p) => {
+        Object.values(mergedState.posts).forEach((p: any) => {
           try {
             if (p && p.id && p.projectName) {
               const projId = `proj_${p.id.replace(/^p_/, "")}`;
@@ -40,7 +40,7 @@ function loadState(): AppState {
                   progress: 0,
                   status: "Recruiting",
                   category: p.projectType || "Web",
-                };
+                } as Project;
               }
             }
           } catch (e) {
@@ -63,8 +63,8 @@ function loadState(): AppState {
               } else if (proj.owner) {
                 // Otherwise try matching by owner name in users list
                 const matchedUser = Object.values(mergedState.users || {}).find(
-                  (u) => u && u.name && proj.owner && u.name.toLowerCase() === proj.owner.toLowerCase()
-                );
+                  (u: any) => u && u.name && proj.owner && u.name.toLowerCase() === proj.owner.toLowerCase()
+                ) as any;
                 if (matchedUser) {
                   proj.ownerId = matchedUser.id;
                 } else if (mergedState.currentUser && mergedState.currentUser.name && proj.owner && mergedState.currentUser.name.toLowerCase() === proj.owner.toLowerCase()) {
@@ -221,8 +221,7 @@ function reducer(state: AppState, action: AppAction): AppState {
           progress: 0,
           status: "Recruiting",
           category: p.projectType || "Web",
-          visibility: p.visibility || "public",
-        };
+        } as Project;
       }
 
       return {

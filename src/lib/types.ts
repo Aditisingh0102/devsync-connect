@@ -83,6 +83,7 @@ export type Response = {
   id: ID;
   postId: ID;
   fromId: ID;
+  toId?: ID;
   message: string;
   skillsSummary?: string[];
   resumeUrl?: string; // mock
@@ -92,7 +93,8 @@ export type Response = {
 
 export type Review = {
   id: ID;
-  reviewerId: ID;
+  reviewerId?: ID;
+  authorId?: ID;
   subjectId: ID;
   projectId?: ID;
   rating: number;
