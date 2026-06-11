@@ -82,7 +82,8 @@ export function OTPVerification({
         setError("Invalid OTP. Please try again.");
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
