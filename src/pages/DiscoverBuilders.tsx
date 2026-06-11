@@ -130,7 +130,6 @@ export default function DiscoverBuilders() {
               ) : (
                 <button onClick={()=>follow(u.id)} className="h-9 px-3 rounded-xl bg-primary text-white">Follow</button>
               )}
-              <button onClick={()=>sendRequest(u.id)} className="h-9 px-3 rounded-xl bg-card border">Request</button>
             </div>
           </div>
         )) : <div className="ds-card p-4 text-sm text-muted-foreground">No builders found. Try different keywords.</div>}

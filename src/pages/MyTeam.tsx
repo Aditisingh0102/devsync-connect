@@ -1,6 +1,18 @@
+import { useState, useMemo } from "react";
 import { team } from "@/data/mock";
 import { Calendar, ExternalLink, MessageSquare, Plus, Users, Activity as ActivityIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const columns = ["Todo", "In Progress", "Review", "Done"];
 const statusColor: Record<string, string> = {
@@ -11,6 +23,66 @@ const statusColor: Record<string, string> = {
 };
 
 export default function MyTeam() {
+  const [tasks, setTasks] = useState(() =>
+    team.tasks.map((t) => {
+      if (t.id === "t1") return { ...t, tech: ["FastAPI", "ML"] };
+      if (t.id === "t2") return { ...t, tech: ["React", "UI/UX"] };
+      if (t.id === "t3") return { ...t, tech: ["Docker", "GitHub"] };
+      if (t.id === "t4") return { ...t, tech: ["React"] };
+      return { ...t, tech: [] as string[] };
+    })
+  );
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [taskTech, setTaskTech] = useState("");
+  const [status, setStatus] = useState("Todo");
+
+  const [draggedOverCol, setDraggedOverCol] = useState<string | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, col: string) => {
+    e.preventDefault();
+    if (draggedOverCol !== col) {
+      setDraggedOverCol(col);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDraggedOverCol(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, col: string) => {
+    e.preventDefault();
+    setDraggedOverCol(null);
+    const id = e.dataTransfer.getData("text/plain");
+    if (id) {
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: col as any } : t)));
+    }
+  };
+
+  const handleAddTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    const newTask = {
+      id: `t_${Date.now()}`,
+      title: title.trim(),
+      assignee: assignee.trim() || "Unassigned",
+      tech: taskTech ? taskTech.split(",").map((s) => s.trim()).filter(Boolean) : [],
+      status: status as any,
+    };
+    setTasks([...tasks, newTask]);
+    setTitle("");
+    setAssignee("");
+    setTaskTech("");
+    setStatus("Todo");
+    setIsOpen(false);
+  };
   return (
     <div className="container py-10 space-y-6">
       <div className="ds-card p-7 bg-gradient-hero flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -89,22 +161,117 @@ export default function MyTeam() {
       <div className="ds-card p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-semibold text-lg">Task Board</h3>
-          <button className="text-sm font-semibold text-primary inline-flex items-center gap-1"><Plus className="size-4" /> New task</button>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <button className="h-10 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover inline-flex items-center gap-1.5 shadow-glow">
+                <Plus className="size-4" /> New task
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Create New Task</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddTask} className="space-y-4 py-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="task-title">Task Title</Label>
+                  <Input
+                    id="task-title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Integrate matching engine API"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="task-assignee">Assignee</Label>
+                  <Input
+                    id="task-assignee"
+                    value={assignee}
+                    onChange={(e) => setAssignee(e.target.value)}
+                    placeholder="e.g. Priya Mehta"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="task-tech">Tech Stack (comma-separated)</Label>
+                  <Input
+                    id="task-tech"
+                    value={taskTech}
+                    onChange={(e) => setTaskTech(e.target.value)}
+                    placeholder="e.g. React, FastAPI, Python"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="task-status">Status</Label>
+                  <select
+                    id="task-status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Create Task</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {columns.map((c) => (
-            <div key={c} className="bg-surface-alt rounded-xl p-3 min-h-[200px]">
-              <div className={`ds-chip ${statusColor[c]} mb-3`}>{c}</div>
-              <div className="space-y-2">
-                {team.tasks.filter((t) => t.status === c).map((t) => (
-                  <div key={t.id} className="bg-card border border-border rounded-lg p-3">
-                    <p className="text-sm font-medium">{t.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t.assignee}</p>
-                  </div>
-                ))}
+          {columns.map((c) => {
+            const isHovered = draggedOverCol === c;
+            const columnTasks = tasks.filter((t) => t.status === c);
+            return (
+              <div
+                key={c}
+                className={`bg-surface-alt rounded-xl p-4 min-h-[260px] border transition-all duration-200 ${
+                  isHovered ? "border-primary bg-primary/5 shadow-inner scale-[1.01]" : "border-transparent"
+                }`}
+                onDragOver={(e) => handleDragOver(e, c)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, c)}
+              >
+                <div className={`ds-chip ${statusColor[c]} mb-4 font-semibold text-xs`}>{c}</div>
+                <div className="space-y-2.5">
+                  {columnTasks.map((t) => (
+                    <div
+                      key={t.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, t.id)}
+                      className="bg-card border border-border rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                    >
+                      <p className="text-sm font-semibold text-foreground leading-snug">{t.title}</p>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <span className="font-medium text-foreground/80">Assignee:</span> {t.assignee}
+                      </p>
+                      {t.tech && t.tech.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-3 pt-2.5 border-t border-border/50">
+                          {t.tech.map((tech) => (
+                            <span key={tech} className="ds-chip text-[10px] py-0.5 px-2 bg-secondary text-secondary-foreground font-medium">
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {columnTasks.length === 0 && (
+                    <div className="h-24 border border-dashed border-border/60 rounded-xl flex items-center justify-center text-xs text-muted-foreground select-none">
+                      Drag tasks here
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGri
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import PostCard from "@/components/PostCard";
+import ProjectCard from "@/components/ProjectCard";
 
 const tabs = ["Overview", "Posts", "Projects", "Activity", "Network", "Requests"];
 
@@ -123,12 +124,38 @@ export default function Profile() {
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
   }, [state.posts, profile?.savedPosts]);
 
+  const savedProjects = useMemo(() => {
+    return Object.values(state.projects || {}).filter((p) => p.bookmarked);
+  }, [state.projects]);
+
+  const matchScore = useMemo(() => {
+    if (!profile || !profile.skills || profile.skills.length === 0) {
+      return 0;
+    }
+    const userSkills = profile.skills.map((s: string) => s.toLowerCase().trim());
+    const projectsList = Object.values(state.projects || {});
+    if (projectsList.length === 0) return 0;
+
+    const scores = projectsList.map((p) => {
+      const tech = p.tech || [];
+      if (tech.length === 0) return 0;
+      const matches = tech.filter((t) => userSkills.includes(t.toLowerCase().trim())).length;
+      return (matches / tech.length) * 100;
+    });
+
+    // Sort descending and take top 3 projects to represent best match compatibility
+    scores.sort((a, b) => b - a);
+    const topScores = scores.slice(0, 3);
+    const avg = topScores.reduce((sum, s) => sum + s, 0) / topScores.length;
+    return Math.round(avg);
+  }, [profile?.skills, state.projects]);
+
   const profileStats = {
     posts: profilePosts.length,
     followers: profile?.followers?.length ?? 0,
     following: profile?.following?.length ?? 0,
     pendingRequests: profile?.pendingRequests?.length ?? 0,
-    matchScore: profile?.stats?.matchScore ?? 92,
+    matchScore: matchScore,
   };
   const linkedProjects = profile?.contributedProjects ?? [];
   const profileAchievements = profile?.achievements ?? [];
@@ -401,23 +428,44 @@ export default function Profile() {
       )}
 
       {tab === "Saved" && (
-        <div className="space-y-4">
-          <div className="ds-card p-6">
-            <h3 className="font-semibold text-lg">Saved Posts</h3>
-            <p className="text-sm text-muted-foreground">Collaboration posts you have bookmarked for quick access.</p>
+        <div className="space-y-8">
+          {/* Saved Projects Section */}
+          <div className="space-y-4">
+            <div className="ds-card p-6">
+              <h3 className="font-semibold text-lg">Saved Projects</h3>
+              <p className="text-sm text-muted-foreground">Student projects you have bookmarked for quick access.</p>
+            </div>
+
+            {savedProjects.length ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {savedProjects.map((p) => (
+                  <ProjectCard key={p.id} project={p} />
+                ))}
+              </div>
+            ) : (
+              <div className="ds-card p-12 text-center text-sm text-muted-foreground border-dashed">
+                No saved projects yet. Browse projects and click "Save" on details page to revisit them.
+              </div>
+            )}
           </div>
 
-          {savedPosts.length ? (
-            savedPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))
-          ) : (
-            <div className="ds-card p-16 text-center">
-              <h3 className="font-semibold text-lg">No saved posts</h3>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">Browse the collaboration feed and click the "Save" button on posts you'd like to revisit.</p>
-              <Link to="/feed" className="mt-6 h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Browse Feed</Link>
+          {/* Saved Posts Section */}
+          <div className="space-y-4">
+            <div className="ds-card p-6">
+              <h3 className="font-semibold text-lg">Saved Posts</h3>
+              <p className="text-sm text-muted-foreground">Collaboration posts you have bookmarked for quick access.</p>
             </div>
-          )}
+
+            {savedPosts.length ? (
+              savedPosts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))
+            ) : (
+              <div className="ds-card p-12 text-center text-sm text-muted-foreground border-dashed">
+                No saved posts. Browse the collaboration feed and save posts to revisit them.
+              </div>
+            )}
+          </div>
         </div>
       )}
 

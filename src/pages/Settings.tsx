@@ -30,8 +30,6 @@ export default function SettingsPage() {
   const [college, setCollege] = useState("");
   const [bio, setBio] = useState("");
   const [skills, setSkills] = useState("");
-  const [domains, setDomains] = useState("");
-  const [roles, setRoles] = useState("");
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [portfolio, setPortfolio] = useState("");
@@ -75,8 +73,7 @@ export default function SettingsPage() {
     setCollege(currentUser.college || "");
     setBio(currentUser.bio || "");
     setSkills(toCsv(currentUser.skills));
-    setDomains(toCsv(currentUser.domains));
-    setRoles(toCsv(currentUser.roles));
+
     setGithub(currentUser.links?.github || "");
     setLinkedin(currentUser.links?.linkedin || "");
     setPortfolio(currentUser.links?.portfolio || "");
@@ -98,8 +95,7 @@ export default function SettingsPage() {
         college,
         bio,
         skills: fromCsv(skills),
-        domains: fromCsv(domains),
-        roles: fromCsv(roles),
+
         links: {
           github,
           linkedin,
@@ -192,20 +188,104 @@ export default function SettingsPage() {
             </label>
           </div>
 
-          <label className="space-y-1 block">
+          <div className="space-y-3">
             <span className="text-sm font-medium">Skills</span>
-            <input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, TypeScript, Node.js" className="ds-input" />
-          </label>
 
-          <label className="space-y-1 block">
-            <span className="text-sm font-medium">Preferred domains</span>
-            <input value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="Frontend, AI/ML, Cloud" className="ds-input" />
-          </label>
+            {/* Current Skills as Tags */}
+            <div className="flex flex-wrap gap-2 mb-2 p-3 bg-secondary/30 border border-border rounded-xl min-h-[50px]">
+              {skills.split(",").map((s) => s.trim()).filter(Boolean).length > 0 ? (
+                skills.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (
+                  <span key={s} className="ds-chip-primary flex items-center gap-1 py-1 px-2.5 text-xs font-semibold">
+                    {s}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                        setSkills(current.filter((x) => x !== s).join(", "));
+                      }}
+                      className="hover:text-danger-hover focus:outline-none ml-1 size-3.5 rounded-full inline-flex items-center justify-center hover:bg-secondary/40 text-muted-foreground text-sm font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground select-none">No skills added yet.</span>
+              )}
+            </div>
 
-          <label className="space-y-1 block">
-            <span className="text-sm font-medium">Preferred roles</span>
-            <input value={roles} onChange={(e) => setRoles(e.target.value)} placeholder="Frontend, Backend, Designer" className="ds-input" />
-          </label>
+            {/* Input to type and add skill */}
+            <div className="flex gap-2">
+              <input
+                id="new-skill-input"
+                placeholder="e.g. Next.js, Rust, Docker"
+                className="ds-input flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const input = e.currentTarget;
+                    const val = input.value.trim();
+                    if (val) {
+                      const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                      if (!current.includes(val)) {
+                        setSkills([...current, val].join(", "));
+                      }
+                      input.value = "";
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const input = document.getElementById("new-skill-input") as HTMLInputElement;
+                  const val = input?.value.trim();
+                  if (val) {
+                    const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                    if (!current.includes(val)) {
+                      setSkills([...current, val].join(", "));
+                    }
+                    input.value = "";
+                  }
+                }}
+                className="h-11 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover shrink-0"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Popular/Recommended Skills list */}
+            <div>
+              <p className="text-[11px] font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">Popular Skills</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["React", "TypeScript", "Python", "Node.js", "UI/UX", "ML", "DevOps", "Mobile", "Data", "Cloud", "Next.js", "Tailwind", "Supabase", "PostgreSQL", "Figma"].map((s) => {
+                  const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                  const isAdded = current.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={isAdded}
+                      onClick={() => {
+                        if (!isAdded) {
+                          setSkills([...current, s].join(", "));
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs border transition-all ${
+                        isAdded
+                          ? "bg-secondary/40 text-muted-foreground border-border cursor-not-allowed opacity-55"
+                          : "bg-secondary hover:bg-card border-border text-foreground hover:border-primary"
+                      }`}
+                    >
+                      + {s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+
 
           <div className="grid md:grid-cols-3 gap-4">
             <label className="space-y-1">
