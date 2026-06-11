@@ -16,6 +16,7 @@ import Notifications from "./pages/Notifications";
 import Onboarding from "./pages/Onboarding";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import FeedPage from "./pages/FeedPage";
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/onboarding/profile-setup" element={<Onboarding />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
