@@ -17,12 +17,7 @@ import {
 
 const Hero3D = lazy(() => import("@/components/Hero3D"));
 
-const stats = [
-  { label: "Active Projects", value: "1,240", change: "+12%", icon: Compass, color: "text-primary bg-primary-soft" },
-  { label: "Working Projects", value: "5", change: "+24%", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
-  { label: "My Team", value: "1", change: "Active", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
-  { label: "Match Score", value: "92%", change: "+3%", icon: TrendingUp, color: "text-success bg-success-bg" },
-];
+
 
 const features = [
   { icon: Brain, title: "Skill-Based Team Matching", desc: "Smart pairing across complementary skills, availability, and goals." },
@@ -57,6 +52,95 @@ export default function Index() {
   const isProfileComplete = !!state.currentUser?.profileCompleted;
 
   const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
+
+  const workingProjectsCount = useMemo(() => {
+    if (!state.currentUser) return 0;
+    return Object.values(state.projects || {}).filter(
+      (p) => p.ownerId === state.currentUser?.id || p.memberIds?.includes(state.currentUser?.id)
+    ).length;
+  }, [state.currentUser, state.projects]);
+
+  const myTeamsCount = useMemo(() => {
+    if (!state.currentUser) return 0;
+    const userProjects = Object.values(state.projects || {}).filter(
+      (p) => p.ownerId === state.currentUser?.id || p.memberIds?.includes(state.currentUser?.id)
+    );
+    if (userProjects.length === 0) return 0;
+
+    const uniqueMemberIds = new Set<string>();
+    userProjects.forEach((p) => {
+      if (p.ownerId) uniqueMemberIds.add(p.ownerId);
+      if (p.memberIds) {
+        p.memberIds.forEach((id) => uniqueMemberIds.add(id));
+      }
+    });
+    return uniqueMemberIds.size;
+  }, [state.currentUser, state.projects]);
+
+  const matchScore = useMemo(() => {
+    if (!state.currentUser || !state.currentUser.skills || state.currentUser.skills.length === 0) {
+      return 0;
+    }
+    const userSkills = state.currentUser.skills.map((s) => s.toLowerCase().trim());
+    const projectsList = Object.values(state.projects || {});
+    if (projectsList.length === 0) return 0;
+
+    const scores = projectsList.map((p) => {
+      const tech = p.tech || [];
+      if (tech.length === 0) return 0;
+      const matches = tech.filter((t) => userSkills.includes(t.toLowerCase().trim())).length;
+      return (matches / tech.length) * 100;
+    });
+
+    // Sort descending and take top 3 projects to represent best match compatibility
+    scores.sort((a, b) => b - a);
+    const topScores = scores.slice(0, 3);
+    const avg = topScores.reduce((sum, s) => sum + s, 0) / topScores.length;
+    return Math.round(avg);
+  }, [state.currentUser, state.projects]);
+
+  const averagePlatformMatchScore = useMemo(() => {
+    const usersList = Object.values(state.users || {});
+    const projectsList = Object.values(state.projects || {});
+    if (usersList.length === 0 || projectsList.length === 0) return 0;
+
+    let totalScoresSum = 0;
+    let validUsersCount = 0;
+
+    usersList.forEach((u) => {
+      if (u.skills && u.skills.length > 0) {
+        const uSkills = u.skills.map((s) => s.toLowerCase().trim());
+        const scores = projectsList.map((p) => {
+          const tech = p.tech || [];
+          if (tech.length === 0) return 0;
+          const matches = tech.filter((t) => uSkills.includes(t.toLowerCase().trim())).length;
+          return (matches / tech.length) * 100;
+        });
+        scores.sort((a, b) => b - a);
+        const topScores = scores.slice(0, 3);
+        const avg = topScores.reduce((sum, s) => sum + s, 0) / topScores.length;
+        totalScoresSum += avg;
+        validUsersCount++;
+      }
+    });
+
+    return validUsersCount > 0 ? Math.round(totalScoresSum / validUsersCount) : 0;
+  }, [state.users, state.projects]);
+
+  const matchScoreChange = useMemo(() => {
+    if (!state.currentUser || matchScore === 0) return "0%";
+    const diff = matchScore - averagePlatformMatchScore;
+    if (diff > 0) return `+${Math.round(diff)}%`;
+    if (diff < 0) return `${Math.round(diff)}%`;
+    return "0%";
+  }, [matchScore, averagePlatformMatchScore, state.currentUser]);
+
+  const stats = useMemo(() => [
+    { label: "Active Projects", value: "1,240", change: "+12%", icon: Compass, color: "text-primary bg-primary-soft" },
+    { label: "Working Projects", value: workingProjectsCount.toString(), change: workingProjectsCount > 0 ? "+24%" : "0%", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
+    { label: "My Team", value: myTeamsCount.toString(), change: myTeamsCount > 0 ? "Active" : "Inactive", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
+    { label: "Match Score", value: `${matchScore}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
+  ], [workingProjectsCount, myTeamsCount, matchScore, matchScoreChange]);
 
   return (
     <div>

@@ -73,40 +73,38 @@ export default function Signup() {
   const [loginMessage, setLoginMessage] = useState("");
 
   const submit = () => {
-    // Check if user already exists by username or email
+    // Validate inputs first
+    if (!validate(false)) return;
+
     const users = Object.values(state.users || {});
     const trimmedUsername = username.trim().toLowerCase();
     const trimmedEmail = email.trim().toLowerCase();
 
+    // Check if username is already taken
     const existingUser = users.find(
       (u) =>
         u.username?.toLowerCase() === trimmedUsername ||
-        u.email?.toLowerCase() === trimmedEmail ||
         u.handle?.toLowerCase() === `@${trimmedUsername}`
     );
 
-    if (existingUser) {
-      // Existing user found — try to log them in
-      if (!validate(true)) return;
+    // Check if email is already registered
+    const existingEmail = users.find(
+      (u) => u.email?.toLowerCase() === trimmedEmail
+    );
 
-      if (existingUser.password && existingUser.password !== password) {
-        setErrors({ password: "Incorrect password for this account" });
-        setLoginMessage("");
-        return;
+    if (existingUser || existingEmail) {
+      const e: Record<string, string> = {};
+      if (existingUser) {
+        e.username = "Username is already taken";
       }
-
-      // Password matches (or no password set) — log them in
-      dispatch({ type: "setCurrentUser", payload: existingUser });
-      setLoginMessage("Account found! Logging you in…");
-      setTimeout(() => {
-        navigate(existingUser.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
-      }, 600);
+      if (existingEmail) {
+        e.email = "Email is already registered. Please sign in instead.";
+      }
+      setErrors(e);
       return;
     }
 
     // No existing user — create a new account
-    if (!validate(false)) return;
-
     const id = `u_${Date.now()}`;
     const user = {
       id,
@@ -191,12 +189,12 @@ export default function Signup() {
                 )}
                 {isUsernameTaken && (
                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                    <LogIn className="size-4 text-primary" />
+                    <X className="size-4 text-danger" />
                   </span>
                 )}
               </div>
               {errors.username && <p className="text-xs text-danger mt-1.5">{errors.username}</p>}
-              {isUsernameTaken && !errors.username && <p className="text-xs text-primary mt-1.5">Account exists — enter your password to sign in</p>}
+              {isUsernameTaken && !errors.username && <p className="text-xs text-danger mt-1.5">Username is already taken</p>}
             </div>
 
             {/* Email */}
@@ -349,12 +347,6 @@ export default function Signup() {
                 <>
                   <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Redirecting…
-                </>
-              ) : isUsernameTaken ? (
-                <>
-                  <LogIn className="size-4" />
-                  Sign in to existing account
-                  <ArrowRight className="size-4" />
                 </>
               ) : (
                 <>

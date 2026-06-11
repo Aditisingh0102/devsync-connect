@@ -71,14 +71,32 @@ export default function Hero3D({ className }: Hero3DProps) {
     group.add(instanced);
 
     const positions: number[] = [];
-    const threshold = 2.4;
+    const threshold = 2.9;
+    const connections = Array(nodes.length).fill(0);
+
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         if (nodes[i].distanceTo(nodes[j]) < threshold) {
           positions.push(nodes[i].x, nodes[i].y, nodes[i].z, nodes[j].x, nodes[j].y, nodes[j].z);
+          connections[i]++;
+          connections[j]++;
         }
       }
     }
+
+    // Ensure every node is connected to at least 2 neighbors to prevent isolated nodes
+    for (let i = 0; i < nodes.length; i++) {
+      if (connections[i] < 2) {
+        const distances = nodes.map((n, idx) => ({ idx, dist: nodes[i].distanceTo(n) }));
+        distances.sort((a, b) => a.dist - b.dist);
+        for (let k = 1; k <= 2; k++) {
+          const neighborIdx = distances[k].idx;
+          const neighbor = nodes[neighborIdx];
+          positions.push(nodes[i].x, nodes[i].y, nodes[i].z, neighbor.x, neighbor.y, neighbor.z);
+        }
+      }
+    }
+
     const lineGeom = new THREE.BufferGeometry();
     lineGeom.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     const lineMat = new THREE.LineBasicMaterial({

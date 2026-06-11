@@ -122,16 +122,103 @@ export default function ApplyRoleModal({ open, onClose, projectName, role, onSub
           </div>
 
           {/* Relevant Skills */}
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Relevant Skills / Tech Stack (comma-separated)
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Relevant Skills / Tech Stack
             </label>
-            <input
-              value={skills}
-              onChange={(e) => setSkills(e.target.value)}
-              placeholder="e.g. React, TypeScript, Figma"
-              className="ds-input"
-            />
+
+            {/* Current Skills as Tags */}
+            <div className="flex flex-wrap gap-2 p-3 bg-secondary/30 border border-border rounded-xl min-h-[50px]">
+              {skills.split(",").map((s) => s.trim()).filter(Boolean).length > 0 ? (
+                skills.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (
+                  <span key={s} className="ds-chip-primary flex items-center gap-1 py-1 px-2.5 text-xs font-semibold">
+                    {s}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                        setSkills(current.filter((x) => x !== s).join(", "));
+                      }}
+                      className="hover:text-danger-hover focus:outline-none ml-1 size-3.5 rounded-full inline-flex items-center justify-center hover:bg-secondary/40 text-muted-foreground text-sm font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground select-none">No skills added yet.</span>
+              )}
+            </div>
+
+            {/* Input to type/add and Select from popular skills */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex gap-2">
+                <input
+                  id="modal-skill-input"
+                  placeholder="Type a skill..."
+                  className="ds-input flex-1"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const input = e.currentTarget;
+                      const val = input.value.trim();
+                      if (val) {
+                        const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                        if (!current.includes(val)) {
+                          setSkills([...current, val].join(", "));
+                        }
+                        input.value = "";
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.getElementById("modal-skill-input") as HTMLInputElement;
+                    const val = input?.value.trim();
+                    if (val) {
+                      const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                      if (!current.includes(val)) {
+                        setSkills([...current, val].join(", "));
+                      }
+                      input.value = "";
+                    }
+                  }}
+                  className="h-11 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover shrink-0"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Dropdown Menu select */}
+              <select
+                aria-label="Select popular skill"
+                value=""
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                    if (!current.includes(val)) {
+                      setSkills([...current, val].join(", "));
+                    }
+                  }
+                  e.target.value = ""; // reset dropdown selection
+                }}
+                className="h-11 px-3 rounded-xl bg-secondary border border-border text-sm font-medium cursor-pointer outline-none focus:border-primary sm:w-48"
+              >
+                <option value="">-- Choose popular skill --</option>
+                {["React", "TypeScript", "Python", "Node.js", "UI/UX", "ML", "DevOps", "Mobile", "Data", "Cloud", "Next.js", "Tailwind", "Supabase", "PostgreSQL", "Figma", "Docker", "Git", "FastAPI", "Django", "Vue", "Express"].map((s) => {
+                  const current = skills.split(",").map((x) => x.trim()).filter(Boolean);
+                  const isAdded = current.includes(s);
+                  return (
+                    <option key={s} value={s} disabled={isAdded}>
+                      {s} {isAdded ? "(Added)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
           </div>
 
           {/* Resume Upload Field */}
