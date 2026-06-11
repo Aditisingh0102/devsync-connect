@@ -60,6 +60,7 @@ export default function RequestsPage() {
         {filtered.length ? filtered.map((request) => {
           const from = state.users[request.fromId];
           const to = state.users[request.toId];
+          const project = request.projectId ? state.projects[request.projectId] : null;
           const isIncoming = request.toId === me?.id;
 
           return (
@@ -70,7 +71,10 @@ export default function RequestsPage() {
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="font-semibold">{isIncoming ? `${from?.name} wants to collaborate` : `Request sent to ${to?.name}`}</div>
+                    <div className="font-semibold">
+                      {isIncoming ? `${from?.name} wants to collaborate` : `Request sent to ${to?.name}`}
+                      {project && <span className="text-muted-foreground font-normal">on {project.title}</span>}
+                    </div>
                     <span className={`ds-chip ${request.status === "pending" ? "bg-primary-soft text-primary" : request.status === "accepted" ? "bg-success-bg text-success" : "bg-secondary text-muted-foreground"}`}>
                       {request.status}
                     </span>
@@ -109,7 +113,7 @@ export default function RequestsPage() {
                 {isIncoming && request.status === "pending" ? (
                   <>
                     <button onClick={() => update(request.id, "accepted")} className="h-9 px-3 rounded-xl bg-primary text-white inline-flex items-center gap-2">
-                      <Check className="size-4" /> Accept
+                      <Check className="size-4" /> Accept & Enroll
                     </button>
                     <button onClick={() => update(request.id, "declined")} className="h-9 px-3 rounded-xl bg-card border border-border inline-flex items-center gap-2">
                       <X className="size-4" /> Decline

@@ -36,6 +36,7 @@ function loadState(): AppState {
                   roles: Array.isArray(p.lookingFor) ? p.lookingFor : [],
                   members: 1,
                   maxMembers: 4,
+                  memberIds: p.authorId ? [p.authorId] : [],
                   progress: 0,
                   status: "Recruiting",
                   category: p.projectType || "Web",
@@ -48,7 +49,7 @@ function loadState(): AppState {
         });
       }
 
-      // Robust migration: Ensure all projects have an ownerId
+      // Robust migration: Ensure all projects have an ownerId and memberIds
       if (mergedState.projects) {
         Object.keys(mergedState.projects).forEach((id) => {
           try {
@@ -70,6 +71,10 @@ function loadState(): AppState {
                   proj.ownerId = mergedState.currentUser.id;
                 }
               }
+            }
+            // Initialize memberIds with owner if not present
+            if (proj && proj.ownerId && !proj.memberIds) {
+              proj.memberIds = [proj.ownerId];
             }
           } catch (e) {
             console.error("Error migrating ownerId for project ID during loadState:", id, e);
@@ -154,9 +159,11 @@ function getInitialState(): AppState {
     "Jordan Lee": "u_5",
   };
   mockProjects.forEach((p) => {
+    const ownerId = ownerNameToId[p.owner];
     demoProjects[p.id] = {
       ...p,
-      ownerId: ownerNameToId[p.owner],
+      ownerId,
+      memberIds: ownerId ? [ownerId] : [],
       status: p.status as any,
     };
   });
@@ -198,17 +205,19 @@ function reducer(state: AppState, action: AppAction): AppState {
       const newProjects = { ...state.projects };
       if (p.projectName) {
         const projId = `proj_${p.id.replace(/^p_/, "")}`;
+        const authorId = author?.id || p.authorId;
         newProjects[projId] = {
           id: projId,
           title: p.projectName,
           owner: author?.name || "Unknown User",
-          ownerId: author?.id || p.authorId,
+          ownerId: authorId,
           team: `${author?.name || "Unknown User"}'s Core Team`,
           description: p.body,
           tech: p.tech || [],
           roles: Array.isArray(p.lookingFor) ? p.lookingFor : [],
           members: 1,
           maxMembers: 4,
+          memberIds: authorId ? [authorId] : [],
           progress: 0,
           status: "Recruiting",
           category: p.projectType || "Web",
@@ -342,11 +351,16 @@ function reducer(state: AppState, action: AppAction): AppState {
         if (req.projectId && state.projects[req.projectId]) {
           const proj = state.projects[req.projectId];
           if (proj.members < proj.maxMembers) {
+            const memberIds = proj.memberIds || [];
+            // Only add if not already a member
+            const isAlreadyMember = memberIds.includes(req.fromId);
+            const newMemberIds = isAlreadyMember ? memberIds : [...memberIds, req.fromId];
             updatedProjects = {
               ...state.projects,
               [req.projectId]: {
                 ...proj,
-                members: proj.members + 1,
+                members: newMemberIds.length,
+                memberIds: newMemberIds,
               },
             };
           }
@@ -368,7 +382,7 @@ function reducer(state: AppState, action: AppAction): AppState {
           [`n_req_update_${id}`]: createNotification({
             type: status === "accepted" ? "request" : "system",
             title: status === "accepted" ? "Request accepted" : "Request declined",
-            body: status === "accepted" ? `${state.users[req.fromId]?.name || "A builder"} accepted your collaboration request.` : `${state.users[req.toId]?.name || "A builder"} declined the collaboration request.`,
+            body: status === "accepted" ? `${state.users[req.fromId]?.name || "A builder"} joined "${state.projects[req.projectId]?.title || "your project"}"!` : `${state.users[req.toId]?.name || "A builder"} declined the collaboration request.`,
             href: "/requests",
           }),
         },

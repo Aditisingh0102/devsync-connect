@@ -172,14 +172,28 @@ export default function ProjectDetail() {
           </div>
 
           <div className="ds-card p-6">
-            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2"><Users className="size-4 text-primary" /> Contributors</h3>
+            <h3 className="font-semibold text-lg mb-3 flex items-center gap-2"><Users className="size-4 text-primary" /> Contributors ({(p.memberIds?.length || 0)})</h3>
             <div className="space-y-2">
-              {["Alex Carter", "Priya Mehta", "Rohan Verma"].map((c) => (
-                <div key={c} className="flex items-center gap-3">
-                  <div className="size-9 rounded-lg bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center">{c.split(" ").map(n => n[0]).join("")}</div>
-                  <span className="text-sm">{c}</span>
-                </div>
-              ))}
+              {(p.memberIds || []).length > 0 ? (
+                (p.memberIds || []).map((memberId) => {
+                  const member = state.users[memberId];
+                  return (
+                    <div key={memberId} className="flex items-center gap-3">
+                      <div className="size-9 rounded-lg bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center">
+                        {member?.avatar || member?.name?.split(" ").map((n) => n[0]).join("") || "U"}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{member?.name || "Unknown User"}</span>
+                        {member?.roles && member.roles.length > 0 && (
+                          <span className="text-xs text-muted-foreground">{member.roles.join(", ")}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-xs text-muted-foreground">No members yet. Be the first to join!</div>
+              )}
             </div>
           </div>
 

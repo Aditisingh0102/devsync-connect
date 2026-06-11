@@ -72,6 +72,7 @@ export type Project = {
   roles: string[];
   members: number;
   maxMembers: number;
+  memberIds?: ID[];
   progress: number;
   status: "Recruiting" | "In Progress" | "Completed";
   category: string;
