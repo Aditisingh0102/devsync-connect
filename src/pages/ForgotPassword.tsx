@@ -88,7 +88,7 @@ export default function ForgotPassword() {
       setShowPasswordReset(true);
       return true;
     } else {
-      throw new Error(result.message || "Invalid OTP. Please try again.");
+      throw new Error(result.message);
     }
   };
 

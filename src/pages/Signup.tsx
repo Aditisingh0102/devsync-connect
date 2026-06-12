@@ -136,8 +136,7 @@ export default function Signup() {
       createAccount();
       return true;
     } else {
-      // Throw error with the actual message from verifyOTP
-      throw new Error(result.message || "Invalid OTP. Please try again.");
+      throw new Error(result.message);
     }
   };
 
