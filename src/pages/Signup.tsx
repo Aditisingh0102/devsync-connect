@@ -72,55 +72,58 @@ export default function Signup() {
 
   const [loginMessage, setLoginMessage] = useState("");
 
-  const submit = async () => {
+  const submit = () => {
     // Validate inputs first
     if (!validate(false)) return;
 
-    setLoginMessage("Creating account...");
-    try {
-      const { api } = await import('@/lib/api');
-      
-      const response = await api.post('/users/auth/register/', {
-        username: username.trim().toLowerCase(),
-        email: email.trim().toLowerCase(),
-        password: password,
-        first_name: name.trim().split(' ')[0],
-        last_name: name.trim().split(' ').slice(1).join(' ')
-      });
+    const users = Object.values(state.users || {});
+    const trimmedUsername = username.trim().toLowerCase();
+    const trimmedEmail = email.trim().toLowerCase();
 
-      // After successful registration, log them in to get tokens
-      const loginResponse = await api.post('/users/auth/login/', {
-        username: username.trim().toLowerCase(),
-        password: password
-      });
+    // Check if username is already taken
+    const existingUser = users.find(
+      (u) =>
+        u.username?.toLowerCase() === trimmedUsername ||
+        u.handle?.toLowerCase() === `@${trimmedUsername}`
+    );
 
-      if (loginResponse.access) {
-        localStorage.setItem('access_token', loginResponse.access);
-        if (loginResponse.refresh) {
-          localStorage.setItem('refresh_token', loginResponse.refresh);
-        }
-        
-        // Fetch the user's profile data
-        const userData = await api.get('/users/me/');
-        
-        dispatch({ type: "setCurrentUser", payload: userData });
-        setLoginMessage("");
-        navigate("/onboarding/profile-setup");
+    // Check if email is already registered
+    const existingEmail = users.find(
+      (u) => u.email?.toLowerCase() === trimmedEmail
+    );
+
+    if (existingUser || existingEmail) {
+      const e: Record<string, string> = {};
+      if (existingUser) {
+        e.username = "Username is already taken";
       }
-    } catch (err: any) {
-      console.error(err);
-      setLoginMessage("");
-      if (err.data) {
-        // Map Django errors to form errors
-        const e: Record<string, string> = {};
-        if (err.data.username) e.username = err.data.username[0];
-        if (err.data.email) e.email = err.data.email[0];
-        if (err.data.password) e.password = err.data.password[0];
-        setErrors(e);
-      } else {
-        setErrors({ agreed: "An error occurred connecting to the server." });
+      if (existingEmail) {
+        e.email = "Email is already registered. Please sign in instead.";
       }
+      setErrors(e);
+      return;
     }
+
+    // No existing user — create a new account
+    const id = `u_${Date.now()}`;
+    const user = {
+      id,
+      name: name.trim(),
+      username: username.trim(),
+      handle: `@${username.trim()}`,
+      avatar: name.trim().split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
+      email: email.trim(),
+      password,
+      profileCompleted: false,
+      followers: [],
+      following: [],
+      pendingRequests: [],
+      sentRequests: [],
+      links: { github: "", linkedin: "", portfolio: "" },
+    } as any;
+    dispatch({ type: "updateUser", payload: user });
+    dispatch({ type: "setCurrentUser", payload: user });
+    navigate("/onboarding/profile-setup");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
