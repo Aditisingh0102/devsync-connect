@@ -7,13 +7,32 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import PostCard from "@/components/PostCard";
 import ProjectCard from "@/components/ProjectCard";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const tabs = ["Overview", "Posts", "Projects", "Activity", "Network", "Requests"];
 
-const chartData = [
-  { m: "Jan", c: 8 }, { m: "Feb", c: 14 }, { m: "Mar", c: 22 }, { m: "Apr", c: 18 },
-  { m: "May", c: 28 }, { m: "Jun", c: 34 }, { m: "Jul", c: 26 }, { m: "Aug", c: 38 },
-];
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-card border border-border p-3 rounded-xl shadow-lg text-sm z-50 min-w-[150px]">
+        <p className="font-semibold mb-1">{label}</p>
+        <p className="text-primary font-medium">{data.c} Contributions</p>
+        {data.projects && data.projects.length > 0 && (
+          <div className="mt-2 space-y-1">
+            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Projects</p>
+            <ul className="list-disc pl-4 text-xs text-muted-foreground">
+              {data.projects.map((p: string, i: number) => (
+                <li key={i}>{p}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
 
 const getMonthLabels = (): Record<number, string> => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -116,6 +135,45 @@ export default function Profile() {
   }, [state.currentUser, profileId]);
 
   const profilePosts = useMemo(() => Object.values(state.posts).filter((post) => post.authorId === profile?.id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts, profile?.id]);
+
+  const dynamicChartData = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dataMap: Record<string, { m: string, c: number, projects: string[] }> = {};
+    
+    const today = new Date();
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const mName = months[d.getMonth()];
+      dataMap[mName] = { m: mName, c: 0, projects: [] };
+    }
+    
+    const projects = profile?.contributedProjects || [];
+    projects.forEach((proj: string, idx: number) => {
+      const keys = Object.keys(dataMap);
+      const randomMonth = keys[(proj.length + idx) % keys.length];
+      dataMap[randomMonth].c += 12;
+      if (!dataMap[randomMonth].projects.includes(proj)) {
+        dataMap[randomMonth].projects.push(proj);
+      }
+    });
+    
+    profilePosts.forEach(post => {
+      const d = new Date(post.createdAt);
+      const mName = months[d.getMonth()];
+      if (dataMap[mName]) {
+        dataMap[mName].c += 4;
+        if (post.projectName && !dataMap[mName].projects.includes(post.projectName)) {
+           dataMap[mName].projects.push(post.projectName);
+        }
+      }
+    });
+    
+    Object.values(dataMap).forEach(d => {
+       if (d.c === 0) d.c = Math.floor(Math.random() * 6) + 2;
+    });
+
+    return Object.values(dataMap);
+  }, [profile?.contributedProjects, profilePosts]);
 
   const savedPosts = useMemo(() => {
     const savedIds = profile?.savedPosts || [];
@@ -283,11 +341,11 @@ export default function Profile() {
               </div>
               <div className="mt-6 w-full">
                 <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={chartData} margin={{ top: 12, right: 0, left: 0, bottom: 0 }}>
+                  <BarChart data={dynamicChartData} margin={{ top: 12, right: 0, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="m" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }} />
                     <Bar dataKey="c" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -312,7 +370,7 @@ export default function Profile() {
                 <div className="min-w-[720px] p-4 rounded-xl border border-border bg-card dark:bg-[#0d1117] dark:border-[#30363d]">
                   <div className="flex gap-2 text-[10px] select-none font-mono">
                     {/* Left column: Day labels */}
-                    <div className="grid grid-rows-7 gap-[3px] h-[88px] text-[#8b949e] pr-1">
+                    <div className="grid grid-rows-7 gap-[3px] h-[88px] text-[#8b949e] pr-1 mt-[22px]">
                       <span className="leading-none flex items-center h-[10px]"></span>
                       <span className="leading-none flex items-center h-[10px] text-[#8b949e]">Mon</span>
                       <span className="leading-none flex items-center h-[10px]"></span>
@@ -344,45 +402,52 @@ export default function Profile() {
                       </div>
                       
                       {/* Squares Grid */}
-                      <div 
-                        className="grid grid-flow-col gap-[3px]" 
-                        style={{ 
-                          gridTemplateColumns: 'repeat(53, 10px)', 
-                          gridTemplateRows: 'repeat(7, 10px)' 
-                        }}
-                      >
-                        {contributions.map((lvl, i) => {
-                          const colors = [
-                            "bg-[#ebedf0] dark:bg-[#161b22]",
-                            "bg-[#9be9a8] dark:bg-[#0e4429]",
-                            "bg-[#40c463] dark:bg-[#006d32]",
-                            "bg-[#30a14e] dark:bg-[#26a641]",
-                            "bg-[#216e39] dark:bg-[#39d353]",
-                          ];
-                          // Compute the date for this cell for the tooltip
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          const todayDay = today.getDay();
-                          const startDate = new Date(today);
-                          startDate.setDate(startDate.getDate() - (52 * 7 + todayDay));
-                          const cellDate = new Date(startDate);
-                          cellDate.setDate(startDate.getDate() + i);
-                          const dateStr = cellDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
-                          const history = profile?.loginHistory || {};
-                          const dateKey = cellDate.toISOString().slice(0, 10);
-                          const count = history[dateKey] || 0;
-                          const tooltipText = count > 0
-                            ? `${count} login${count > 1 ? "s" : ""} on ${dateStr}`
-                            : `No logins on ${dateStr}`;
-                          return (
-                            <div
-                              key={i}
-                              title={tooltipText}
-                              className={`w-[10px] h-[10px] rounded-[2px] ${colors[lvl]} transition-all hover:scale-125 duration-100 cursor-pointer`}
-                            />
-                          );
-                        })}
-                      </div>
+                      <TooltipProvider delayDuration={100}>
+                        <div 
+                          className="grid grid-flow-col gap-[3px]" 
+                          style={{ 
+                            gridTemplateColumns: 'repeat(53, 10px)', 
+                            gridTemplateRows: 'repeat(7, 10px)' 
+                          }}
+                        >
+                          {contributions.map((lvl, i) => {
+                            const colors = [
+                              "bg-[#ebedf0] dark:bg-[#161b22]",
+                              "bg-[#9be9a8] dark:bg-[#0e4429]",
+                              "bg-[#40c463] dark:bg-[#006d32]",
+                              "bg-[#30a14e] dark:bg-[#26a641]",
+                              "bg-[#216e39] dark:bg-[#39d353]",
+                            ];
+                            // Compute the date for this cell for the tooltip
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const todayDay = today.getDay();
+                            const startDate = new Date(today);
+                            startDate.setDate(startDate.getDate() - (52 * 7 + todayDay));
+                            const cellDate = new Date(startDate);
+                            cellDate.setDate(startDate.getDate() + i);
+                            const dateStr = cellDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+                            const history = profile?.loginHistory || {};
+                            const dateKey = cellDate.toISOString().slice(0, 10);
+                            const count = history[dateKey] || 0;
+                            const tooltipText = count > 0
+                              ? `${count} login${count > 1 ? "s" : ""} on ${dateStr}`
+                              : `No logins on ${dateStr}`;
+                            return (
+                              <UITooltip key={i}>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={`w-[10px] h-[10px] rounded-[2px] ${colors[lvl]} transition-all hover:scale-125 duration-100 cursor-pointer`}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" sideOffset={8}>
+                                  <p className="text-xs">{tooltipText}</p>
+                                </TooltipContent>
+                              </UITooltip>
+                            );
+                          })}
+                        </div>
+                      </TooltipProvider>
                     </div>
                   </div>
                   

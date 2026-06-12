@@ -337,7 +337,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">College / ERP ID</label>
+                  <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">College / University</label>
                   <input
                     type="text"
                     value={currentUser?.college || "COL-129485"}
