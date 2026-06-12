@@ -2,8 +2,6 @@ import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, UserPlus, ShieldCheck, LogIn } from "lucide-react";
-import { OTPVerification } from "@/components/OTPVerification";
-import { sendOTP, verifyOTP, clearOTPSession } from "@/utils/otp";
 
 function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -33,7 +31,6 @@ export default function Signup() {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
 
-  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -43,11 +40,6 @@ export default function Signup() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [agreed, setAgreed] = useState(false);
-
-  // OTP state
-  const [showOTPVerification, setShowOTPVerification] = useState(false);
-  const [otpEmail, setOtpEmail] = useState("");
-  const [formData, setFormData] = useState<any>(null);
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
@@ -112,51 +104,16 @@ export default function Signup() {
       return;
     }
 
-    // Send OTP to email
-    const result = sendOTP(email.trim());
-    if (result.success) {
-      // Store form data for account creation after OTP verification
-      setFormData({
-        name: name.trim(),
-        email: email.trim(),
-        username: username.trim(),
-        password,
-      });
-      setOtpEmail(email.trim());
-      setShowOTPVerification(true);
-    } else {
-      setErrors({ email: result.message });
-    }
-  };
-
-  const handleOTPVerify = async (otp: string): Promise<boolean> => {
-    const result = verifyOTP(otpEmail, otp);
-    if (result.success) {
-      // OTP verified - create account
-      createAccount();
-      return true;
-    } else {
-      throw new Error(result.message);
-    }
-  };
-
-  const handleOTPResend = async (): Promise<boolean> => {
-    const result = sendOTP(otpEmail);
-    return result.success;
-  };
-
-  const createAccount = () => {
-    if (!formData) return;
-
+    // No existing user — create a new account
     const id = `u_${Date.now()}`;
     const user = {
       id,
-      name: formData.name,
-      username: formData.username,
-      handle: `@${formData.username}`,
-      avatar: formData.name.split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase(),
-      email: formData.email,
-      password: formData.password,
+      name: name.trim(),
+      username: username.trim(),
+      handle: `@${username.trim()}`,
+      avatar: name.trim().split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
+      email: email.trim(),
+      password,
       profileCompleted: false,
       followers: [],
       following: [],
@@ -164,48 +121,14 @@ export default function Signup() {
       sentRequests: [],
       links: { github: "", linkedin: "", portfolio: "" },
     } as any;
-    
     dispatch({ type: "updateUser", payload: user });
     dispatch({ type: "setCurrentUser", payload: user });
-    
-    setLoginMessage("Account created successfully! Redirecting...");
-    setTimeout(() => {
-      navigate("/onboarding/profile-setup");
-    }, 500);
-  };
-
-  const handleOTPBackClick = () => {
-    setShowOTPVerification(false);
-    clearOTPSession(otpEmail);
-    setOtpEmail("");
-    setFormData(null);
+    navigate("/onboarding/profile-setup");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !loginMessage && !showOTPVerification) submit();
+    if (e.key === "Enter" && !loginMessage) submit();
   };
-
-  // Show OTP verification screen
-  if (showOTPVerification) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">
-        {/* Background glow */}
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-32 size-[500px] rounded-full bg-primary/10 blur-[120px]" />
-          <div className="absolute bottom-1/4 -right-32 size-[400px] rounded-full bg-purple/10 blur-[120px]" />
-        </div>
-
-        <OTPVerification
-          email={otpEmail}
-          onVerify={handleOTPVerify}
-          onResend={handleOTPResend}
-          onBackClick={handleOTPBackClick}
-          title="Verify your email"
-          subtitle="Enter the 6-digit code we sent to your email address"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4">

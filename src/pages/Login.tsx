@@ -1,19 +1,17 @@
 import { useState } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
-import { Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, Sparkles, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function Login() {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [resetSuccess] = useState(searchParams.get("reset") === "success");
 
   const validate = (): boolean => {
     const e: Record<string, string> = {};
@@ -89,17 +87,6 @@ export default function Login() {
 
         {/* Card */}
         <div className="ds-card p-8 backdrop-blur-xl border-border/50">
-          {/* Success message */}
-          {resetSuccess && (
-            <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
-              <CheckCircle className="size-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-emerald-600 mb-1">Password reset successful!</p>
-                <p className="text-xs text-emerald-600/80">Your password has been updated. You can now sign in with your new password.</p>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-5" onKeyDown={handleKeyDown}>
             {/* Username / Email */}
             <div>
@@ -127,12 +114,13 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="login-password" className="text-sm font-medium">Password</label>
-                <Link
-                  to="/forgot-password"
+                <button
+                  type="button"
                   className="text-xs text-primary font-medium hover:underline"
+                  onClick={() => alert("Password reset functionality coming soon!")}
                 >
                   Forgot password?
-                </Link>
+                </button>
               </div>
               <div className="relative">
                 <input
