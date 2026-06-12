@@ -729,6 +729,25 @@ const AppContext = createContext<{
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(reducer, undefined, loadState);
 
+  // Hydrate state from backend API
+  useEffect(() => {
+    const hydrateUser = async () => {
+      const token = localStorage.getItem('access_token');
+      if (token && !state.currentUser) {
+        try {
+          const { api } = await import('./api');
+          const userData = await api.get('/users/me/');
+          dispatch({ type: "setCurrentUser", payload: userData });
+        } catch (error) {
+          console.error("Failed to hydrate user from API:", error);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+        }
+      }
+    };
+    hydrateUser();
+  }, []);
+
   // Save state to localStorage whenever it changes
   useEffect(() => {
     saveState(state);

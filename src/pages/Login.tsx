@@ -21,42 +21,41 @@ export default function Login() {
     return Object.keys(e).length === 0;
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate()) return;
 
     setIsLoading(true);
-
-    // Simulate a brief loading state for polish
-    setTimeout(() => {
-      const users = Object.values(state.users || {});
-      const trimmedId = identifier.trim().toLowerCase();
-
-      // Find user by username, handle, or email
-      let user = users.find(
-        (u) =>
-          u.username?.toLowerCase() === trimmedId ||
-          u.handle?.toLowerCase() === `@${trimmedId}` ||
-          u.handle?.toLowerCase() === trimmedId ||
-          u.email?.toLowerCase() === trimmedId
-      );
-
-      if (user) {
-        // User found — verify password if they have one
-        if (user.password && user.password !== password) {
-          setErrors({ password: "Incorrect password. Please try again." });
-          setIsLoading(false);
-          return;
+    try {
+      // Import the api wrapper dynamically or at the top of the file
+      const { api } = await import('@/lib/api');
+      
+      const response = await api.post('/users/auth/login/', {
+        username: identifier.trim().toLowerCase(),
+        password: password
+      });
+      
+      if (response.access) {
+        localStorage.setItem('access_token', response.access);
+        if (response.refresh) {
+          localStorage.setItem('refresh_token', response.refresh);
         }
-      } else {
-        // No matching user found
-        setErrors({ identifier: "Account does not exist. " });
-        setIsLoading(false);
-        return;
+        
+        // Fetch the user's profile data
+        const userData = await api.get('/users/me/');
+        
+        dispatch({ type: "setCurrentUser", payload: userData });
+        navigate("/dashboard"); // Assuming profile is completed
       }
-
-      dispatch({ type: "setCurrentUser", payload: user });
-      navigate(user.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
-    }, 400);
+    } catch (err: any) {
+      console.error(err);
+      if (err.status === 401) {
+        setErrors({ password: "Incorrect username or password. Please try again." });
+      } else {
+        setErrors({ identifier: "An error occurred connecting to the server." });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
