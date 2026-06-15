@@ -142,6 +142,7 @@ export default function Navbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <button
+                className="w-full text-left"
                 onClick={() => {
                   if (currentUser) {
                     dispatch({ type: "setCurrentUser" });
