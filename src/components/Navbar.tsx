@@ -138,7 +138,7 @@ export default function Navbar() {
             <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/profile?tab=Saved">Saved</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/profile?tab=Network">Following</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/onboarding/profile-setup">Onboarding</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/signup">Onboarding</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <button
