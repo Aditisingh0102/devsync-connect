@@ -221,6 +221,7 @@ function reducer(state: AppState, action: AppAction): AppState {
           progress: 0,
           status: "Recruiting",
           category: p.projectType || "Web",
+          imageUrl: p.imageUrl,
         } as Project;
       }
 

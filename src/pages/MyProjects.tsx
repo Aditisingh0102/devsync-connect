@@ -154,6 +154,13 @@ export default function MyProjects() {
                       </h3>
                     </Link>
                     <p className="text-xs text-muted-foreground font-medium mt-0.5">{p.team}</p>
+                    
+                    {p.imageUrl && (
+                      <div className="mt-3 mb-1 rounded-xl overflow-hidden border border-border bg-surface-alt h-32">
+                        <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+
                     <p className="text-xs text-muted-foreground mt-2.5 line-clamp-3 leading-relaxed">
                       {p.description}
                     </p>

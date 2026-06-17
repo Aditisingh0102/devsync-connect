@@ -112,6 +112,12 @@ export default function ProjectDetail() {
         </div>
       </div>
 
+      {p.imageUrl && (
+        <div className="ds-card overflow-hidden border border-border">
+          <img src={p.imageUrl} alt={p.title} className="w-full object-cover max-h-96" />
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
           {state.currentUser && p.ownerId === state.currentUser.id && (

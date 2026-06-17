@@ -78,6 +78,7 @@ export type Project = {
   status: "Recruiting" | "In Progress" | "Completed";
   category: string;
   bookmarked?: boolean;
+  imageUrl?: string;
 };
 
 export type Response = {
