@@ -50,6 +50,11 @@ In academic and developer communities, team formation and showcasing project pro
 - **Theme-Aware Themes**: Heatmap colors dynamically adjust using official GitHub palettes for dark and light modes.
 - **Seeded Generator**: Deterministically generates stable contribution history based on the builder's profile name.
 
+### G. Recent Enhancements & UI/UX Fixes
+- **Dynamic Stat Cards**: The Home Page features dynamic counters for Active Projects and Working Projects, updating in real-time. Cards are now clickable—"Active Projects" routes to `/find-projects` and "My Team" handles smart routing.
+- **Smart Login Modal**: Unauthenticated users clicking "My Team" are presented with a sleek, animated "Login Required" modal overlay guiding them to login or signup, rather than abrupt page redirects.
+- **Project Image Rendering**: Fixed image upload persistence. Media uploaded during project creation is now beautifully rendered with dynamic max-height cover styling across the Feed, `MyProjects.tsx` dashboard, and `ProjectDetail.tsx` overview.
+
 ---
 
 ## 3. Codebase Architecture & Directory Map
