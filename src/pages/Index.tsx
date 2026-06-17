@@ -135,12 +135,16 @@ export default function Index() {
     return "0%";
   }, [matchScore, averagePlatformMatchScore, state.currentUser]);
 
+  const totalProjectsCount = useMemo(() => {
+    return Object.keys(state.projects || {}).length;
+  }, [state.projects]);
+
   const stats = useMemo(() => [
-    { label: "Active Projects", value: "1,240", change: "+12%", icon: Compass, color: "text-primary bg-primary-soft" },
+    { label: "Active Projects", value: totalProjectsCount.toString(), change: "+12%", icon: Compass, color: "text-primary bg-primary-soft", route: "/find-projects" },
     { label: "Working Projects", value: workingProjectsCount.toString(), change: workingProjectsCount > 0 ? "+24%" : "0%", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
     { label: "My Team", value: myTeamsCount.toString(), change: myTeamsCount > 0 ? "Active" : "Inactive", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
     { label: "Match Score", value: `${matchScore}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
-  ], [workingProjectsCount, myTeamsCount, matchScore, matchScoreChange]);
+  ], [totalProjectsCount, workingProjectsCount, myTeamsCount, matchScore, matchScoreChange]);
 
   return (
     <div>
@@ -199,6 +203,7 @@ export default function Index() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((s) => {
             const isMyTeam = s.label === "My Team";
+            const isActiveProjects = s.label === "Active Projects";
             const handleCardClick = () => {
               if (isMyTeam) {
                 if (isLoggedIn) {
@@ -206,12 +211,17 @@ export default function Index() {
                 } else {
                   navigate("/login");
                 }
+              } else if (isActiveProjects) {
+                navigate(s.route || "/find-projects");
               }
             };
+            
+            const isClickable = isMyTeam || isActiveProjects;
+            
             return (
               <div 
                 key={s.label} 
-                className={`ds-card p-5 ${isMyTeam ? "ds-card-hover cursor-pointer" : ""}`}
+                className={`ds-card p-5 ${isClickable ? "ds-card-hover cursor-pointer" : ""}`}
                 onClick={handleCardClick}
               >
                 <div className={`size-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}>

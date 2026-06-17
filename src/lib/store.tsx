@@ -786,6 +786,8 @@ export function createPostDraft(input: Partial<Post>): Post {
     tech: input.tech || [],
     projectType: input.projectType,
     lookingFor: input.lookingFor,
+    imageUrl: input.imageUrl,
+    referenceLink: input.referenceLink,
     createdAt: new Date().toISOString(),
     status: input.status || "open",
     visibility: input.visibility || "public",
