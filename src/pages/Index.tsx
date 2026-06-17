@@ -1,9 +1,9 @@
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight, Sparkles, Users2, Compass, LayoutDashboard, Activity, Brain,
   Shield, UserPlus, Search as SearchIcon, Hammer, Github, Rocket, Trophy,
-  Briefcase, Zap, Globe, MessageSquare, TrendingUp, Star, CheckCircle2
+  Briefcase, Zap, Globe, MessageSquare, TrendingUp, Star, CheckCircle2, X
 } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
 import { useApp } from "@/lib/store";
@@ -48,6 +48,7 @@ const roadmap = [
 export default function Index() {
   const { state } = useApp();
   const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const isLoggedIn = !!state.currentUser;
   const isProfileComplete = !!state.currentUser?.profileCompleted;
 
@@ -209,7 +210,7 @@ export default function Index() {
                 if (isLoggedIn) {
                   navigate("/my-team");
                 } else {
-                  navigate("/login");
+                  setShowLoginModal(true);
                 }
               } else if (isActiveProjects) {
                 navigate(s.route || "/find-projects");
@@ -349,6 +350,42 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="size-5" />
+            </button>
+            <div className="text-center mb-6 mt-2">
+              <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Users2 className="size-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Login Required</h3>
+              <p className="text-muted-foreground text-sm">
+                If you want to see your enrolled teams or manage your contributions, please log in. Don't have an account? Don't worry, create one here!
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Link 
+                to="/login" 
+                className="w-full h-11 rounded-xl bg-primary text-white font-semibold flex items-center justify-center hover:bg-primary-hover shadow-glow transition-all"
+              >
+                Login
+              </Link>
+              <Link 
+                to="/signup" 
+                className="w-full h-11 rounded-xl bg-secondary text-foreground font-semibold flex items-center justify-center border border-border hover:bg-secondary/80 transition-all"
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
