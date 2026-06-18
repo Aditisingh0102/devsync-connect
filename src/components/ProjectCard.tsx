@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users, ArrowRight } from "lucide-react";
 import { Project } from "@/lib/types";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MouseEvent } from "react";
 
 const statusStyles: Record<Project["status"], string> = {
   Recruiting: "bg-success-bg text-success",
@@ -9,8 +9,23 @@ const statusStyles: Record<Project["status"], string> = {
   Completed: "bg-secondary text-muted-foreground",
 };
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({
+  project,
+  gateProjectDetails = false,
+  onProjectDetailsBlocked,
+}: {
+  project: Project;
+  gateProjectDetails?: boolean;
+  onProjectDetailsBlocked?: () => void;
+}) {
   const progressRef = useRef<HTMLDivElement | null>(null);
+
+  const handleProjectLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!gateProjectDetails) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onProjectDetailsBlocked?.();
+  };
 
   useEffect(() => {
     if (progressRef.current) {
@@ -33,7 +48,7 @@ export default function ProjectCard({ project }: { project: Project }) {
         </span>
       </div>
 
-      <Link to={`/project/${project.id}`} className="block">
+      <Link to={`/project/${project.id}`} className="block" onClick={handleProjectLinkClick}>
         <h3 className="font-semibold text-lg leading-snug group-hover:text-primary transition-colors">{project.title}</h3>
         <p className="text-xs text-muted-foreground mt-1">by {project.owner} · {project.team}</p>
       </Link>
@@ -61,7 +76,11 @@ export default function ProjectCard({ project }: { project: Project }) {
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Users className="size-3.5" />{project.members}/{project.maxMembers} members
         </div>
-        <Link to={`/project/${project.id}`} className="text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-1">
+        <Link
+          to={`/project/${project.id}`}
+          className="text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-1"
+          onClick={handleProjectLinkClick}
+        >
           Join <ArrowRight className="size-3.5" />
         </Link>
       </div>

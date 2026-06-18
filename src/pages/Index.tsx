@@ -48,9 +48,10 @@ const roadmap = [
 export default function Index() {
   const { state } = useApp();
   const navigate = useNavigate();
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginModalSource, setLoginModalSource] = useState<"teams" | "projects" | null>(null);
   const isLoggedIn = !!state.currentUser;
   const isProfileComplete = !!state.currentUser?.profileCompleted;
+  const showLoginModal = loginModalSource !== null;
 
   const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
 
@@ -210,7 +211,7 @@ export default function Index() {
                 if (isLoggedIn) {
                   navigate("/my-team");
                 } else {
-                  setShowLoginModal(true);
+                  setLoginModalSource("teams");
                 }
               } else if (isActiveProjects) {
                 navigate(s.route || "/find-projects");
@@ -259,7 +260,11 @@ export default function Index() {
           <CarouselContent className="-ml-5">
             {projects.map((p) => (
               <CarouselItem key={p.id} className="pl-5 md:basis-1/2 lg:basis-1/3">
-                <ProjectCard project={p} />
+                <ProjectCard
+                  project={p}
+                  gateProjectDetails={!isLoggedIn}
+                  onProjectDetailsBlocked={() => setLoginModalSource("projects")}
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -355,7 +360,7 @@ export default function Index() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-md p-6 relative animate-in zoom-in-95 duration-200">
             <button 
-              onClick={() => setShowLoginModal(false)}
+              onClick={() => setLoginModalSource(null)}
               className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="size-5" />
@@ -366,7 +371,9 @@ export default function Index() {
               </div>
               <h3 className="text-xl font-bold mb-2">Login Required</h3>
               <p className="text-muted-foreground text-sm">
-                If you want to see your enrolled teams or manage your contributions, please log in. Don't have an account? Don't worry, create one here!
+                {loginModalSource === "projects"
+                  ? "If you want to view project details, enroll in projects, collaborate with teams, and track your applications, please log in. New here? Create an account to get started and unlock all project opportunities."
+                  : "If you want to see your enrolled teams or manage your contributions, please log in. Don't have an account? Don't worry, create one here!"}
               </p>
             </div>
             <div className="flex flex-col gap-3">
