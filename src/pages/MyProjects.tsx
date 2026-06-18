@@ -129,7 +129,7 @@ export default function MyProjects() {
                         <span className="ds-chip text-[10px] uppercase tracking-wider">{p.category}</span>
                         <select
                           value={p.visibility || "public"}
-                          onChange={(e) => handleToggleVisibility(p, e.target.value as any)}
+                          onChange={(e) => handleToggleVisibility(p, e.target.value as "public" | "friends" | "private")}
                           className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
                             p.visibility === "private"
                               ? "bg-danger/10 text-danger border-danger/20"

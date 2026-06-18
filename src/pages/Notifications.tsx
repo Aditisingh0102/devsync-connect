@@ -35,6 +35,14 @@ function bucket(date: string): "Today" | "This Week" | "Earlier" {
 export default function Notifications() {
   const { state, dispatch } = useApp();
 
+  const [filter, setFilter] = useState<"all" | "unread">("all");
+
+  const items = useMemo(() => {
+    return Object.values(state.notifications)
+      .filter((n) => !n.userId || (state.currentUser && n.userId === state.currentUser.id))
+      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  }, [state.notifications, state.currentUser]);
+
   if (!state.currentUser) {
     return (
       <div className="container py-16 max-w-lg min-h-[calc(100vh-8rem)] flex items-center justify-center">
@@ -83,14 +91,6 @@ export default function Notifications() {
       </div>
     );
   }
-
-  const [filter, setFilter] = useState<"all" | "unread">("all");
-
-  const items = useMemo(() => {
-    return Object.values(state.notifications)
-      .filter((n) => !n.userId || (state.currentUser && n.userId === state.currentUser.id))
-      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-  }, [state.notifications, state.currentUser]);
   const unread = items.filter((item) => !item.read).length;
   const shown = items.filter((item) => filter === "all" || !item.read);
 

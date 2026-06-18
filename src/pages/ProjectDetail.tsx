@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
-import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Target, Users, FileText, X } from "lucide-react";
+import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Target, Users, FileText, X, Lock, LogIn, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import ApplyRoleModal from "@/components/ApplyRoleModal";
@@ -12,6 +12,16 @@ export default function ProjectDetail() {
   const projectsList = Object.values(state.projects || {});
   const p = projectsList.find((x) => x.id === id);
 
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("");
+
+  const projectRequests = useMemo(() => {
+    if (!p) return [];
+    return Object.values(state.requests || {}).filter(
+      (r) => r.projectId === p.id && r.status === "pending"
+    );
+  }, [state.requests, p?.id]);
+
   if (!p) {
     return (
       <div className="container py-10 text-center">
@@ -22,14 +32,57 @@ export default function ProjectDetail() {
     );
   }
 
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("");
+  if (!state.currentUser) {
+    return (
+      <div className="container py-16 max-w-lg min-h-[calc(100vh-8rem)] flex items-center justify-center">
+        {/* Background glow */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 -right-32 size-[400px] rounded-full bg-primary/10 blur-[100px]" />
+          <div className="absolute bottom-1/3 -left-32 size-[300px] rounded-full bg-purple/10 blur-[100px]" />
+        </div>
 
-  const projectRequests = useMemo(() => {
-    return Object.values(state.requests || {}).filter(
-      (r) => r.projectId === p.id && r.status === "pending"
+        <div className="w-full text-center">
+          <div className="ds-card p-8 backdrop-blur-xl border-border/50 shadow-glow relative overflow-hidden">
+            {/* Header Icon */}
+            <div className="relative size-20 mx-auto mb-6 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg">
+              <Lock className="size-10 text-white" />
+            </div>
+
+            <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight mb-3">
+              Join DevSync to View Project
+            </h1>
+            
+            <p className="text-muted-foreground text-sm leading-relaxed mb-8 max-w-sm mx-auto">
+              Please log in to see team members, milestones, active discussions, and apply for open roles in "{p.title}".
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                to="/login"
+                className="h-11 px-6 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all active:scale-[0.98] shadow-glow"
+              >
+                <LogIn className="size-4" />
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="h-11 px-6 rounded-xl bg-card border border-border text-foreground font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-secondary transition-colors"
+              >
+                <UserPlus className="size-4" />
+                Create Account
+              </Link>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-border/50">
+              <Link to="/find-projects" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
+                <ArrowLeft className="size-4" /> Back to projects
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
     );
-  }, [state.requests, p.id]);
+  }
 
   const handleToggleSave = () => {
     const updated = {

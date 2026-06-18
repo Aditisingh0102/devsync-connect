@@ -79,6 +79,7 @@ export type Project = {
   category: string;
   bookmarked?: boolean;
   imageUrl?: string;
+  visibility?: "public" | "friends" | "private";
 };
 
 export type Response = {
