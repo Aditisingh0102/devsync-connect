@@ -37,18 +37,19 @@ const steps = [
 ];
 
 const roadmap = [
-  { icon: Brain, title: "AI Team Matching", tag: "Coming Soon", color: "purple" },
-  { icon: MessageSquare, title: "Real-Time Collaboration", tag: "In Design", color: "primary" },
-  { icon: Github, title: "GitHub Integration", tag: "Roadmap", color: "primary" },
-  { icon: Globe, title: "Multi-College Expansion", tag: "Q3 2026", color: "cyan" },
-  { icon: Trophy, title: "Gamification", tag: "Exploring", color: "warning" },
-  { icon: Briefcase, title: "Internships & Jobs", tag: "Roadmap", color: "success" },
+  { icon: Brain, title: "AI Team Matching", tag: "Coming Soon", color: "purple", description: "We are building an intelligent matching engine that pairs you with teammates based on complementary skills, timezone, and project goals. Imagine instantly finding the perfect backend developer for your React frontend!" },
+  { icon: MessageSquare, title: "Real-Time Collaboration", tag: "In Design", color: "primary", description: "Integrated chat, live task boards, and video huddles right within your project workspace. No more switching between Discord, Slack, and Trello just to get your student project done." },
+  { icon: Github, title: "GitHub Integration", tag: "Roadmap", color: "primary", description: "Sync your GitHub commits directly to your project's activity feed. Automatically update task statuses when you merge pull requests and build a verified portfolio of your code contributions." },
+  { icon: Globe, title: "Multi-College Expansion", tag: "Q3 2026", color: "cyan", description: "Currently limited to select universities, we plan to open DevSync to a global network of colleges. You'll be able to form cross-university teams and participate in inter-college hackathons." },
+  { icon: Trophy, title: "Gamification", tag: "Exploring", color: "warning", description: "Earn badges, level up your developer profile, and gain reputation points by helping others, shipping projects on time, and receiving positive peer reviews." },
+  { icon: Briefcase, title: "Internships & Jobs", tag: "Roadmap", color: "success", description: "Top companies are looking for proven builders. We will connect your DevSync portfolio directly with recruiters, allowing them to hire you based on the real projects you've shipped." },
 ];
 
 export default function Index() {
   const { state } = useApp();
   const navigate = useNavigate();
   const [loginModalSource, setLoginModalSource] = useState<"teams" | "projects" | null>(null);
+  const [selectedRoadmapItem, setSelectedRoadmapItem] = useState<typeof roadmap[0] | null>(null);
   const isLoggedIn = !!state.currentUser;
   const isProfileComplete = !!state.currentUser?.profileCompleted;
   const showLoginModal = loginModalSource !== null;
@@ -322,16 +323,21 @@ export default function Index() {
             <h2 className="ds-section-title mt-3">What's next for DevSync</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {roadmap.map((r) => (
-              <div key={r.title} className="ds-card ds-card-hover p-5 flex items-center gap-4">
-                  <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 ${r.color === "warning" ? "bg-warning/10 text-warning" : r.color === "success" ? "bg-success/10 text-success" : r.color === "danger" ? "bg-danger/10 text-danger" : r.color === "cyan" ? "bg-cyan/10 text-cyan" : r.color === "purple" ? "bg-purple/10 text-purple" : "bg-primary/10 text-primary"}`}>
+            {roadmap.map((r, i) => (
+              <div 
+                key={r.title} 
+                onClick={() => isLoggedIn && setSelectedRoadmapItem(r)}
+                className={`ds-card p-5 flex items-center gap-4 transition-all duration-300 ${isLoggedIn ? "cursor-pointer hover:scale-[1.03] hover:shadow-lg hover:border-primary/40 group" : "opacity-95"}`}
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                  <div className={`size-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-500 ${isLoggedIn ? "group-hover:rotate-6 group-hover:scale-110" : ""} ${r.color === "warning" ? "bg-warning/10 text-warning" : r.color === "success" ? "bg-success/10 text-success" : r.color === "danger" ? "bg-danger/10 text-danger" : r.color === "cyan" ? "bg-cyan/10 text-cyan" : r.color === "purple" ? "bg-purple/10 text-purple" : "bg-primary/10 text-primary"}`}>
                   <r.icon className="size-5" />
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-sm">{r.title}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">{r.tag}</div>
                 </div>
-                <ArrowRight className="size-4 text-muted-foreground" />
+                <ArrowRight className={`size-4 transition-all duration-300 ${isLoggedIn ? "text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" : "text-border"}`} />
               </div>
             ))}
           </div>
@@ -390,6 +396,35 @@ export default function Index() {
                 Create Account
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedRoadmapItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg p-8 relative animate-in zoom-in-90 slide-in-from-bottom-10 duration-500">
+            <button 
+              onClick={() => setSelectedRoadmapItem(null)}
+              className="absolute top-5 right-5 size-8 flex items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <X className="size-4" />
+            </button>
+            <div className={`size-16 rounded-2xl flex items-center justify-center mb-6 shadow-glow animate-pulse ${selectedRoadmapItem.color === "warning" ? "bg-warning/20 text-warning" : selectedRoadmapItem.color === "success" ? "bg-success/20 text-success" : selectedRoadmapItem.color === "danger" ? "bg-danger/20 text-danger" : selectedRoadmapItem.color === "cyan" ? "bg-cyan/20 text-cyan" : selectedRoadmapItem.color === "purple" ? "bg-purple/20 text-purple" : "bg-primary/20 text-primary"}`}>
+              <selectedRoadmapItem.icon className="size-8" />
+            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-xs font-semibold mb-4">
+              <Sparkles className="size-3.5 text-primary" /> {selectedRoadmapItem.tag}
+            </div>
+            <h3 className="text-2xl font-bold mb-3">{selectedRoadmapItem.title}</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+              {selectedRoadmapItem.description}
+            </p>
+            <button
+              onClick={() => setSelectedRoadmapItem(null)}
+              className="w-full h-12 rounded-xl bg-primary text-white font-semibold flex items-center justify-center hover:bg-primary-hover shadow-glow transition-all active:scale-[0.98]"
+            >
+              Awesome, can't wait!
+            </button>
           </div>
         </div>
       )}
