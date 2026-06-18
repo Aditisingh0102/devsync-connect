@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useApp, createPostDraft } from "@/lib/store";
 import { PostType } from "@/lib/types";
 import { Link } from "lucide-react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const postTypes: PostType[] = [
   "Looking for Team",
@@ -78,7 +79,7 @@ export default function CreatePost() {
         <div className="size-10 rounded-full bg-gradient-primary text-white flex items-center justify-center">{state.currentUser?.avatar || ""}</div>
         <div className="flex-1">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Post title or headline" className="ds-input mb-2" />
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Describe what you're looking for..." className="ds-input mb-2 resize-none" rows={3} />
+          <RichTextEditor value={body} onChange={setBody} placeholder="Describe what you're looking for..." className="mb-2" />
           <div className="flex gap-2 items-center">
             <select aria-label="Post type" value={type} onChange={(e) => setType(e.target.value as PostType)} className="ds-input w-auto">
               {postTypes.map((t) => <option key={t} value={t}>{t}</option>)}

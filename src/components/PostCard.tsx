@@ -54,7 +54,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
             <span className="text-xs font-normal px-2 py-0.5 rounded bg-primary-soft text-primary">{post.projectType || "Project"}</span>
             {post.title}
           </h4>
-          <p className="mt-1 text-sm text-muted-foreground">{post.body}</p>
+          <div className="mt-2 text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: post.body }} />
 
           {post.imageUrl && (
             <div className="mt-3 rounded-xl overflow-hidden border border-border bg-surface-alt max-h-60">

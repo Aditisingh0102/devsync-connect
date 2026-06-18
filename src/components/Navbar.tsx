@@ -158,31 +158,7 @@ export default function Navbar() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <button className="md:hidden size-10 rounded-xl bg-secondary flex items-center justify-center" onClick={() => setOpen(!open)}>
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
       </div>
-
-      {open && (
-        <div className="md:hidden border-t border-border bg-card">
-          <div className="container py-3 flex flex-col gap-1">
-            {links.map((l) => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.to === "/"}
-                className={({ isActive }) =>
-                  `px-3 py-2.5 rounded-lg text-sm font-medium ${
-                    isActive ? "bg-primary-soft text-primary" : "text-foreground hover:bg-secondary"
-                  }`
-                }
-              >
-                {l.label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      )}
     </header>
   );
 }

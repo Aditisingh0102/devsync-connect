@@ -2,6 +2,9 @@ import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { useSearchParams, Link } from "react-router-dom";
 import { ChevronDown, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { playSuccessSound } from "@/lib/utils";
 
 const AVAILABLE_SKILLS = [
   "React",
@@ -36,6 +39,12 @@ export default function DiscoverBuilders() {
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [filterSkill, setFilterSkill] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredSkillsOptions = useMemo(() => {
     if (!filterSkill) return AVAILABLE_SKILLS;
@@ -127,6 +136,11 @@ export default function DiscoverBuilders() {
     if (!state.currentUser) return;
     const req = { id: `req_${Date.now()}`, fromId: state.currentUser.id, toId, message: "Hi — I'd like to collaborate on your project", status: "pending", createdAt: new Date().toISOString() } as any;
     dispatch({ type: "sendRequest", payload: req });
+    playSuccessSound();
+    toast.success("Connection Request Sent", {
+      description: "We'll let you know when they respond.",
+      icon: "✨"
+    });
   };
 
   return (
@@ -206,7 +220,27 @@ export default function DiscoverBuilders() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {results.length ? results.map(u => (
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="ds-card p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-12 rounded-full shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-[120px]" />
+                  <Skeleton className="h-3 w-[180px]" />
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+                <Skeleton className="h-6 w-14 rounded-full" />
+              </div>
+              <div className="mt-2">
+                <Skeleton className="h-9 w-24 rounded-xl" />
+              </div>
+            </div>
+          ))
+        ) : results.length ? results.map(u => (
           <div key={u.id} className="ds-card p-4">
             <Link to={`/profile/${u.id}`} className="flex items-center gap-3 hover:opacity-85 transition-opacity text-foreground no-underline">
               <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center shrink-0 overflow-hidden">

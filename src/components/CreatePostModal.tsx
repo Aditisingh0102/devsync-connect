@@ -4,6 +4,7 @@ import { PostType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { X, Link as LinkIcon, Image as ImageIcon, Globe, Lock, Users } from "lucide-react";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const DOMAINS = [
   "Frontend",
@@ -343,13 +344,10 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Basic Details / Description <span className="text-primary">*</span>
               </label>
-              <textarea
+              <RichTextEditor
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={(val) => setBody(val)}
                 placeholder="Describe what your project is about, its objectives, and what you hope to achieve..."
-                className="ds-input resize-none min-h-[100px]"
-                rows={4}
-                required
               />
             </div>
 

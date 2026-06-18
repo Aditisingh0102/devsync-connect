@@ -4,6 +4,8 @@ import { ArrowLeft, Bookmark, CheckCircle2, Circle, Github, MessageSquare, Targe
 import { useToast } from "@/hooks/use-toast";
 import { useState, useMemo } from "react";
 import ApplyRoleModal from "@/components/ApplyRoleModal";
+import { toast as sonnerToast } from "sonner";
+import { playSuccessSound } from "@/lib/utils";
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -134,9 +136,10 @@ export default function ProjectDetail() {
     setIsApplyModalOpen(false);
     setSelectedRole("");
 
-    toast({
-      title: "Application Submitted!",
+    playSuccessSound();
+    sonnerToast.success("Application Submitted!", {
       description: `Your application to join "${p.title}" as a "${selectedRole}" has been sent.`,
+      icon: "🚀"
     });
   };
 

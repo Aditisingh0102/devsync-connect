@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useMemo, useEffect } from "react";
-import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send } from "lucide-react";
+import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
 const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
@@ -539,8 +539,13 @@ export default function Profile() {
                 ))}
               </div>
             ) : (
-              <div className="ds-card p-12 text-center text-sm text-muted-foreground border-dashed">
-                No saved projects yet. Browse projects and click "Save" on details page to revisit them.
+              <div className="ds-card p-12 flex flex-col items-center justify-center text-center border-dashed">
+                <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4 shadow-sm">
+                  <FolderOpen className="size-8 text-muted-foreground" />
+                </div>
+                <h4 className="text-lg font-semibold text-foreground mb-2">No saved projects yet</h4>
+                <p className="text-sm text-muted-foreground max-w-sm mb-6">Browse projects and click "Save" on the details page to revisit them here.</p>
+                <Link to="/find-projects" className="h-10 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover transition-all shadow-glow">Explore Projects</Link>
               </div>
             )}
           </div>
@@ -557,8 +562,13 @@ export default function Profile() {
                 <PostCard key={post.id} post={post} />
               ))
             ) : (
-              <div className="ds-card p-12 text-center text-sm text-muted-foreground border-dashed">
-                No saved posts. Browse the collaboration feed and save posts to revisit them.
+              <div className="ds-card p-12 flex flex-col items-center justify-center text-center border-dashed">
+                <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4 shadow-sm">
+                  <Bookmark className="size-8 text-muted-foreground" />
+                </div>
+                <h4 className="text-lg font-semibold text-foreground mb-2">No saved posts</h4>
+                <p className="text-sm text-muted-foreground max-w-sm mb-6">Browse the collaboration feed and save posts to revisit them.</p>
+                <Link to="/feed" className="h-10 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover transition-all shadow-glow">Explore Feed</Link>
               </div>
             )}
           </div>
@@ -597,8 +607,13 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-             <div className="ds-card p-16 text-center text-sm text-muted-foreground border-dashed">
-                Not actively working on any projects yet.
+             <div className="ds-card p-12 flex flex-col items-center justify-center text-center border-dashed">
+                <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4 shadow-sm">
+                  <Telescope className="size-8 text-muted-foreground" />
+                </div>
+                <h4 className="text-lg font-semibold text-foreground mb-2">Not actively working on projects</h4>
+                <p className="text-sm text-muted-foreground max-w-sm mb-6">Find a team to join or start your own project to see it here.</p>
+                <Link to="/find-projects" className="h-10 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover transition-all shadow-glow">Find a Project</Link>
              </div>
           )}
         </div>

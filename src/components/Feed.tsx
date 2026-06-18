@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import PostCard from "./PostCard";
 import RespondModal from "./RespondModal";
 import { useApp, createResponseDraft } from "@/lib/store";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { playSuccessSound } from "@/lib/utils";
 
 const DOMAINS = ["Frontend","Backend","Full Stack","UI/UX","AI/ML","Data Science","App Development","Cloud","DevOps","Cybersecurity","3D","Infrastructure"];
 const ROLES = ["Frontend","Backend","Full Stack","UI/UX","ML","DevOps","Designer","Product"];
@@ -15,6 +18,12 @@ export default function Feed() {
   const [role, setRole] = useState<string | "">("");
   const [projectType, setProjectType] = useState<string | "">("");
   const [recentOnly, setRecentOnly] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const allPosts = useMemo(() => Object.values(state.posts).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts]);
 
@@ -56,6 +65,11 @@ export default function Feed() {
     const r = createResponseDraft({ postId: data.postId, message: data.message, skillsSummary: data.skills, resumeUrl: data.resumeUrl });
     dispatch({ type: "createResponse", payload: r });
     setActive(null);
+    playSuccessSound();
+    toast.success("Application Submitted!", {
+      description: "The project owner has been notified.",
+      icon: "🚀"
+    });
   };
 
   const toggleTech = (t: string) => setTech((s) => s.includes(t) ? s.filter(x=>x!==t) : [...s, t]);
@@ -98,7 +112,25 @@ export default function Feed() {
       </div>
 
       <div className="space-y-4">
-        {filtered.length ? filtered.map((p) => <PostCard key={p.id} post={p} onRespond={onRespond} />) : <div className="ds-card p-4 text-sm text-muted-foreground">No posts match your filters.</div>}
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="ds-card p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-10 rounded-xl shrink-0" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-3 w-[150px]" />
+                </div>
+              </div>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-[90%]" />
+              <div className="flex gap-2 mt-2">
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            </div>
+          ))
+        ) : filtered.length ? filtered.map((p) => <PostCard key={p.id} post={p} onRespond={onRespond} />) : <div className="ds-card p-4 text-sm text-muted-foreground">No posts match your filters.</div>}
       </div>
       {active && <RespondModal postId={active} open={!!active} onClose={() => setActive(null)} onSubmit={submitResponse} />}
     </div>
