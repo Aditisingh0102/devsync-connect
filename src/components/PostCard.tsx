@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Post } from "@/lib/types";
 import { useApp } from "@/lib/store";
 import { Bookmark, MessageSquare, Send, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { playSuccessSound } from "@/lib/utils";
 
 export default function PostCard({ post, onRespond }: { post: Post; onRespond?: (post: Post) => void }) {
   const { state, dispatch } = useApp();
@@ -39,8 +41,13 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
                   onClick={() => {
                     const me = state.currentUser;
                     if (!me) return;
-                    if (isFollowing) dispatch({ type: "unfollow", payload: { fromId: me.id, toId: author.id } });
-                    else dispatch({ type: "follow", payload: { fromId: me.id, toId: author.id } });
+                    if (isFollowing) {
+                      dispatch({ type: "unfollow", payload: { fromId: me.id, toId: author.id } });
+                    } else {
+                      dispatch({ type: "follow", payload: { fromId: me.id, toId: author.id } });
+                      playSuccessSound();
+                      toast.success("Followed successfully!", { icon: "🎉" });
+                    }
                   }}
                   className={`h-8 px-3 rounded-xl text-xs font-semibold ${isFollowing ? "bg-card border border-border" : "bg-primary text-white"}`}
                 >

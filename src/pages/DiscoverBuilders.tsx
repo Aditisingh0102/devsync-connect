@@ -126,6 +126,11 @@ export default function DiscoverBuilders() {
   const follow = (toId: string) => {
     if (!state.currentUser) return;
     dispatch({ type: "follow", payload: { fromId: state.currentUser.id, toId } });
+    playSuccessSound();
+    toast.success("Followed successfully!", {
+      description: "You will now see their posts.",
+      icon: "🎉"
+    });
   };
   const unfollow = (toId: string) => {
     if (!state.currentUser) return;

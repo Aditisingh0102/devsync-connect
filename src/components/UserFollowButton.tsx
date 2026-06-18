@@ -1,5 +1,7 @@
 import React from "react";
 import { useApp } from "@/lib/store";
+import { toast } from "sonner";
+import { playSuccessSound } from "@/lib/utils";
 
 export default function UserFollowButton({ userId }: { userId: string }) {
   const { state, dispatch } = useApp();
@@ -8,8 +10,13 @@ export default function UserFollowButton({ userId }: { userId: string }) {
   const isFollowing = (me.following || []).includes(userId);
 
   const toggle = () => {
-    if (isFollowing) dispatch({ type: "unfollow", payload: { fromId: me.id, toId: userId } });
-    else dispatch({ type: "follow", payload: { fromId: me.id, toId: userId } });
+    if (isFollowing) {
+      dispatch({ type: "unfollow", payload: { fromId: me.id, toId: userId } });
+    } else {
+      dispatch({ type: "follow", payload: { fromId: me.id, toId: userId } });
+      playSuccessSound();
+      toast.success("Followed successfully!", { icon: "🎉" });
+    }
   };
 
   return (

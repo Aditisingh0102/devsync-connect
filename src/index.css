@@ -121,6 +121,21 @@
   html { font-family: 'Inter', system-ui, sans-serif; }
   body { @apply bg-background text-foreground antialiased leading-relaxed; font-feature-settings: "cv11","ss01"; }
   h1,h2,h3,h4,h5,h6 { @apply font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  
+  /* Modern Slim Scrollbar to prevent layout overlaps on Windows */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
 }
 
 @layer components {

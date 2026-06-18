@@ -11,18 +11,19 @@ export const playSuccessSound = () => {
     if (!AudioContext) return;
     const ctx = new AudioContext();
     const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    const gainNode = ctx.createGain();
     
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
     
+    // Soft, modern UI pop (like iOS)
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.05);
     
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0, ctx.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
     
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.1);
