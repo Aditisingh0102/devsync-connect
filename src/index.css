@@ -119,17 +119,17 @@
 @layer base {
   * { @apply border-border; }
   html { font-family: 'Inter', system-ui, sans-serif; }
-  body { @apply bg-background text-foreground antialiased; font-feature-settings: "cv11","ss01"; }
-  h1,h2,h3,h4 { @apply tracking-tight text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  body { @apply bg-background text-foreground antialiased leading-relaxed; font-feature-settings: "cv11","ss01"; }
+  h1,h2,h3,h4,h5,h6 { @apply font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
 }
 
 @layer components {
   .ds-card { @apply bg-card border border-border rounded-2xl shadow-[var(--shadow-sm)] transition-all; }
   .ds-card-hover { @apply hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5; }
-  .ds-chip { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground; }
-  .ds-chip-primary { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--primary-soft))] text-primary; }
-  .ds-section-title { @apply text-2xl md:text-3xl font-bold text-foreground; }
-  .ds-page-title { @apply text-3xl md:text-4xl font-bold tracking-tight text-foreground; }
+  .ds-chip { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-secondary text-secondary-foreground; }
+  .ds-chip-primary { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-[hsl(var(--primary-soft))] text-primary; }
+  .ds-section-title { @apply text-2xl md:text-3xl font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  .ds-page-title { @apply text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
   .glass-panel { background: linear-gradient(135deg, hsl(var(--card) / 0.76), hsl(var(--card) / 0.5)); backdrop-filter: blur(12px); }
   .ds-input {
     @apply w-full h-11 px-3.5 rounded-xl bg-secondary border border-border text-sm outline-none transition-colors;

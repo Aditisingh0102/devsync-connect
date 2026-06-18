@@ -129,9 +129,9 @@ export default function Profile() {
 
   const profileTabs = useMemo(() => {
     if (state.currentUser && profileId === state.currentUser.id) {
-      return ["Overview", "Posts", "Saved", "Projects", "Activity", "Network", "Requests"];
+      return ["Overview", "Posts", "Saved", "Projects", "Working Projects", "Activity", "Network", "Requests"];
     }
-    return ["Overview", "Posts", "Projects", "Activity", "Network", "Requests"];
+    return ["Overview", "Posts", "Projects", "Working Projects", "Activity", "Network", "Requests"];
   }, [state.currentUser, profileId]);
 
   const profilePosts = useMemo(() => Object.values(state.posts).filter((post) => post.authorId === profile?.id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts, profile?.id]);
@@ -185,6 +185,13 @@ export default function Profile() {
   const savedProjects = useMemo(() => {
     return Object.values(state.projects || {}).filter((p) => p.bookmarked);
   }, [state.projects]);
+
+  const workingProjects = useMemo(() => {
+    if (!profile?.id) return [];
+    return Object.values(state.projects || {}).filter(
+      (p: any) => p.ownerId === profile.id || p.memberIds?.includes(profile.id)
+    );
+  }, [profile?.id, state.projects]);
 
   const matchScore = useMemo(() => {
     if (!profile || !profile.skills || profile.skills.length === 0) {
@@ -569,6 +576,31 @@ export default function Profile() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {tab === "Working Projects" && (
+        <div className="space-y-4">
+          <div className="ds-card p-6 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-lg">Working Projects</h3>
+              <p className="text-sm text-muted-foreground">Projects this builder is currently working on or leading.</p>
+            </div>
+            {isOwnProfileRoute && (
+              <Link to="/my-projects" className="h-10 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover inline-flex items-center justify-center">Manage</Link>
+            )}
+          </div>
+          {workingProjects.length ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {workingProjects.map((p) => (
+                <ProjectCard key={p.id} project={p} />
+              ))}
+            </div>
+          ) : (
+             <div className="ds-card p-16 text-center text-sm text-muted-foreground border-dashed">
+                Not actively working on any projects yet.
+             </div>
+          )}
         </div>
       )}
 

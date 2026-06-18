@@ -165,7 +165,7 @@ export default function Index() {
               <span className="bg-gradient-primary bg-clip-text text-transparent">Collaborate.</span><br />
               Build.
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground max-w-xl">
+            <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-xl">
               DevSync is the student collaboration platform to discover real-world projects, find skill-matched teammates, ship together, and build a verified portfolio for internships and careers.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -193,9 +193,9 @@ export default function Index() {
             <div className="absolute top-4 left-4 glass-panel rounded-xl px-3 py-2 text-xs font-medium border border-border">
                   <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-success animate-pulse" /> 3D shoe preview · live</span>
             </div>
-            <div className="absolute bottom-4 right-4 glass-panel rounded-xl px-3 py-2 text-xs border border-border">
-              <div className="font-semibold">Design Quality</div>
-              <div className="text-primary font-bold text-lg">92%</div>
+            <div className="absolute bottom-4 right-4 glass-panel rounded-xl px-4 py-3 text-xs border border-border">
+              <div className="font-semibold uppercase tracking-wider text-[10px] text-muted-foreground mb-1">Design Quality</div>
+              <div className="text-primary font-display font-extrabold text-2xl">92%</div>
             </div>
           </div>
         </div>
@@ -230,9 +230,9 @@ export default function Index() {
                 <div className={`size-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}>
                   <s.icon className="size-5" />
                 </div>
-                <div className="text-2xl font-bold">{s.value}</div>
-                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                  {s.label} <span className="text-success text-xs font-semibold">{s.change}</span>
+                <div className="font-display text-3xl font-extrabold tracking-tighter">{s.value}</div>
+                <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  {s.label} <span className="text-success text-xs font-bold">{s.change}</span>
                 </div>
               </div>
             );
@@ -278,7 +278,7 @@ export default function Index() {
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="ds-chip-primary">Key Features</span>
             <h2 className="ds-section-title mt-3">Everything you need to ship together</h2>
-            <p className="text-muted-foreground mt-3">Designed around how students actually find teams, build, and grow.</p>
+            <p className="text-muted-foreground leading-relaxed text-lg mt-3">Designed around how students actually find teams, build, and grow.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map((f) => (
@@ -288,7 +288,7 @@ export default function Index() {
                   <f.icon className="size-5" />
                 </div>
                 <h3 className="font-semibold text-lg">{f.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1.5">{f.desc}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mt-2">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -309,7 +309,7 @@ export default function Index() {
               </div>
               <s.icon className="size-6 text-primary mb-3 mt-1" />
               <h3 className="font-semibold text-sm">{s.title}</h3>
-              <p className="text-xs text-muted-foreground mt-1">{s.desc}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-1.5">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -348,8 +348,8 @@ export default function Index() {
       <section className="container py-20">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-primary p-10 md:p-16 text-center text-white shadow-glow cta-glow">
           <div className="relative">
-            <h2 className="font-display text-3xl md:text-5xl font-bold">Start syncing with your next team.</h2>
-            <p className="mt-3 text-white/85 max-w-xl mx-auto">Join thousands of students discovering projects, building teams, and shipping real-world experience.</p>
+            <h2 className="font-display text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">Start syncing with your next team.</h2>
+            <p className="mt-4 text-white/90 leading-relaxed text-lg max-w-xl mx-auto">Join thousands of students discovering projects, building teams, and shipping real-world experience.</p>
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Link to="/onboarding/profile-setup" className="h-12 px-6 rounded-xl bg-card text-foreground border border-border font-semibold inline-flex items-center gap-2 hover:bg-secondary transition-all">
                 Get started <Zap className="size-4" />
@@ -415,8 +415,8 @@ export default function Index() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary text-xs font-semibold mb-4">
               <Sparkles className="size-3.5 text-primary" /> {selectedRoadmapItem.tag}
             </div>
-            <h3 className="text-2xl font-bold mb-3">{selectedRoadmapItem.title}</h3>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-8">
+            <h3 className="font-display text-3xl font-extrabold tracking-tight mb-3">{selectedRoadmapItem.title}</h3>
+            <p className="text-muted-foreground text-base leading-relaxed mb-8">
               {selectedRoadmapItem.description}
             </p>
             <button
