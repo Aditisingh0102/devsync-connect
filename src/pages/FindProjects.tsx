@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useApp } from "@/lib/store";
 import ProjectCard from "@/components/ProjectCard";
@@ -12,6 +12,7 @@ const sorts = ["Recommended", "Newest", "Most Members", "Highest Progress"];
 export default function FindProjects() {
   const { state } = useApp();
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") || "");
 
