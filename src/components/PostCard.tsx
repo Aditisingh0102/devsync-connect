@@ -6,13 +6,18 @@ import { toast } from "sonner";
 import { playSuccessSound } from "@/lib/utils";
 import DOMPurify from "dompurify";
 
+const securePurifyConfig = {
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'ol', 'li', 'br'],
+  ALLOWED_ATTR: ['href', 'target', 'rel']
+};
+
 export default function PostCard({ post, onRespond }: { post: Post; onRespond?: (post: Post) => void }) {
   const { state, dispatch } = useApp();
   const author = state.users[post.authorId];
   const isImageAvatar = !!author?.avatar && /^(data:|https?:\/\/)/.test(author.avatar);
   const isFollowing = !!state.currentUser && (state.currentUser.following || []).includes(author?.id || "");
   const isSaved = !!state.currentUser && (state.currentUser.savedPosts || []).includes(post.id);
-  const initials = (author?.name || "U").split(" ").map((s) => s[0]).slice(0, 2).join("");
+  const initials = (author?.name || "U").split(" ").filter(Boolean).map((s) => s[0]?.toUpperCase()).slice(0, 2).join("");
 
   return (
     <div className="ds-card ds-card-hover p-5">
@@ -39,6 +44,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
               <span className="ds-chip-primary">{post.type}</span>
               {author && state.currentUser && author.id !== state.currentUser.id && (
                 <button
+                  type="button"
                   onClick={() => {
                     const me = state.currentUser;
                     if (!me) return;
@@ -62,7 +68,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
             <span className="text-xs font-normal px-2 py-0.5 rounded bg-primary-soft text-primary">{post.projectType || "Project"}</span>
             {post.title}
           </h4>
-          <div className="mt-2 text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }} />
+          <div className="mt-2 text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body, securePurifyConfig) }} />
 
           {post.imageUrl && (
             <div className="mt-3 rounded-xl overflow-hidden border border-border bg-surface-alt max-h-60">
@@ -132,10 +138,11 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
 
           <div className="flex items-center gap-2 mt-4 flex-wrap">
             {(!state.currentUser || post.authorId !== state.currentUser.id) && (
-              <button onClick={() => onRespond && onRespond(post)} className="h-9 px-3 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover"><Send className="size-3.5" /> Apply</button>
+              <button type="button" onClick={() => onRespond && onRespond(post)} className="h-9 px-3 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover"><Send className="size-3.5" /> Apply</button>
             )}
             {state.currentUser && post.authorId === state.currentUser.id && (
               <button
+                type="button"
                 onClick={() => {
                   if (confirm("Are you sure you want to delete this post?")) {
                     dispatch({ type: "deletePost", payload: { postId: post.id } });
@@ -148,6 +155,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
             )}
             <Link to={`/post/${post.id}`} className="h-9 px-3 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 hover:bg-secondary"><MessageSquare className="size-3.5" /> View</Link>
             <button
+              type="button"
               onClick={() => {
                 if (!state.currentUser) return;
                 dispatch({ type: "toggleSavePost", payload: { postId: post.id } });

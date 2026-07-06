@@ -103,7 +103,7 @@ export function useEnterKey(
 
       handler(event);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [handler, ignoreModifiers, skipInsideForm],
   );
 

@@ -89,6 +89,9 @@ export default function Navbar() {
         <div className="hidden lg:flex items-center gap-2 px-3 h-10 w-72 rounded-xl bg-secondary border border-border focus-within:border-primary/50 transition-colors">
           <Search className="size-4 text-muted-foreground" />
           <input
+            type="search"
+            name="search"
+            autoComplete="off"
             value={searchQuery}
             onChange={(e) => handleInputChange(e.target.value)}
             placeholder="Search skills, tech (use , for multiple)…"
@@ -138,7 +141,7 @@ export default function Navbar() {
             <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/profile?tab=Saved">Saved</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/profile?tab=Network">Following</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/signup">Onboarding</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/onboarding/profile-setup">Onboarding</Link></DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <button

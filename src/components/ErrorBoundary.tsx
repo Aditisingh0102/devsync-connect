@@ -15,7 +15,7 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
 
   componentDidCatch(error: any, info: any) {
     // console log for dev
-    // eslint-disable-next-line no-console
+     
     console.error("Unhandled error captured by ErrorBoundary:", error, info);
   }
 

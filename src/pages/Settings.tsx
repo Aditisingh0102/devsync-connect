@@ -80,6 +80,8 @@ export default function SettingsPage() {
     setCollaborationAlerts(currentUser.preferences?.collaborationAlerts ?? true);
     setDiscoverable(currentUser.preferences?.discoverable ?? true);
     setTeamInviteNotifications(currentUser.preferences?.teamInviteNotifications ?? false);
+    setDataSharing(currentUser.preferences?.dataSharing ?? true);
+    setProfileIndexing(currentUser.preferences?.profileIndexing ?? false);
   }, [currentUser]);
 
   if (!currentUser) {
@@ -138,6 +140,18 @@ export default function SettingsPage() {
       },
     });
 
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("http://localhost:8000/api/v1/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ password: newPassword })
+      }).catch((err) => {
+        console.error(err);
+        toast({ title: "Connection Error", description: "Failed to update password on server.", variant: "destructive" });
+      });
+    }
+
     toast({
       title: "Password Updated",
       description: "Your password has been changed successfully.",
@@ -150,16 +164,27 @@ export default function SettingsPage() {
   // Visibility change action
   const handleVisibilityChange = (val: "public" | "team-only" | "private") => {
     setProfileVisibility(val);
+    const newPrefs = { ...currentUser.preferences, profileVisibility: val };
     dispatch({
       type: "updateUser",
       payload: {
         ...currentUser,
-        preferences: {
-          ...currentUser.preferences,
-          profileVisibility: val,
-        },
+        preferences: newPrefs,
       },
     });
+    
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("http://localhost:8000/api/v1/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ preferences: newPrefs })
+      }).catch((err) => {
+        console.error(err);
+        toast({ title: "Connection Error", description: "Failed to sync preferences.", variant: "destructive" });
+      });
+    }
+
     toast({
       title: "Settings Saved",
       description: `Profile visibility updated to ${val.replace("-", " ")}.`,
@@ -170,16 +195,24 @@ export default function SettingsPage() {
   const handlePreferenceToggle = (key: string, currentVal: boolean, setValState: (b: boolean) => void) => {
     const newVal = !currentVal;
     setValState(newVal);
+    const newPrefs = { ...currentUser.preferences, [key]: newVal };
     dispatch({
       type: "updateUser",
       payload: {
         ...currentUser,
-        preferences: {
-          ...currentUser.preferences,
-          [key]: newVal,
-        },
+        preferences: newPrefs,
       },
     });
+    
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("http://localhost:8000/api/v1/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ preferences: newPrefs })
+      }).catch(console.error);
+    }
+
     toast({
       title: "Settings Saved",
       description: "Notification preferences updated.",
@@ -196,7 +229,23 @@ export default function SettingsPage() {
       });
       return;
     }
-    dispatch({ type: "scheduleDeleteUser", payload: { id: currentUser.id } });
+    
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("http://localhost:8000/api/v1/users/me", {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      }).then(() => {
+        dispatch({ type: "setCurrentUser" });
+        navigate("/login");
+      }).catch((err) => {
+        console.error(err);
+        toast({ title: "Connection Error", description: "Failed to delete account.", variant: "destructive" });
+      });
+    } else {
+      dispatch({ type: "scheduleDeleteUser", payload: { id: currentUser.id } });
+    }
+    
     setShowDeleteModal(false);
     setConfirmText("");
   };
@@ -351,10 +400,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4 pt-2">
+                {/* Hidden username input to absorb password manager autofill and protect the Navbar search bar from triggering redirects */}
+                <input type="text" name="username" autoComplete="username" className="hidden" aria-hidden="true" defaultValue={currentUser?.username} />
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">New password</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
@@ -365,6 +417,7 @@ export default function SettingsPage() {
                   <label className="text-[11px] font-semibold text-[#64748b] uppercase tracking-wide">Confirm password</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
@@ -578,7 +631,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setDataSharing(!dataSharing)}
+                    onClick={() => handlePreferenceToggle("dataSharing", dataSharing, setDataSharing)}
                     className={`relative w-9 h-5 rounded-full transition-colors ${
                       dataSharing ? "bg-[#4f46e5]" : "bg-[#e2e8f0]"
                     }`}
@@ -598,7 +651,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setProfileIndexing(!profileIndexing)}
+                    onClick={() => handlePreferenceToggle("profileIndexing", profileIndexing, setProfileIndexing)}
                     className={`relative w-9 h-5 rounded-full transition-colors ${
                       profileIndexing ? "bg-[#4f46e5]" : "bg-[#e2e8f0]"
                     }`}
