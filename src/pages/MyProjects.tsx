@@ -37,7 +37,7 @@ export default function MyProjects() {
     return Object.values(state.projects || {}).filter(
       (p) =>
         (p.ownerId && p.ownerId === me.id) ||
-        (p.owner && p.owner.toLowerCase() === me.name.toLowerCase())
+        (p.owner && p.owner.toLowerCase() === me.name?.toLowerCase())
     );
   }, [state.projects, me]);
 
@@ -46,7 +46,7 @@ export default function MyProjects() {
     return Object.values(state.projects || {}).filter(
       (p) =>
         (!p.ownerId || p.ownerId !== me.id) &&
-        (!p.owner || p.owner.toLowerCase() !== me.name.toLowerCase())
+        (!p.owner || p.owner.toLowerCase() !== me.name?.toLowerCase())
     );
   }, [state.projects, me]);
 

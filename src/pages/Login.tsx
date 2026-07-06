@@ -21,42 +21,51 @@ export default function Login() {
     return Object.keys(e).length === 0;
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate()) return;
 
     setIsLoading(true);
 
-    // Simulate a brief loading state for polish
-    setTimeout(() => {
-      const users = Object.values(state.users || {});
-      const trimmedId = identifier.trim().toLowerCase();
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: identifier.trim(), password })
+      });
 
-      // Find user by username, handle, or email
-      let user = users.find(
-        (u) =>
-          u.username?.toLowerCase() === trimmedId ||
-          u.handle?.toLowerCase() === `@${trimmedId}` ||
-          u.handle?.toLowerCase() === trimmedId ||
-          u.email?.toLowerCase() === trimmedId
-      );
-
-      if (user) {
-        // User found — verify password if they have one
-        if (user.password && user.password !== password) {
-          setErrors({ password: "Incorrect password. Please try again." });
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        // No matching user found
-        setErrors({ identifier: "Account does not exist. " });
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrors({ identifier: errorData.detail || "Login failed" });
         setIsLoading(false);
         return;
       }
 
+      const data = await response.json();
+
+      // Store JWT token
+      localStorage.setItem("token", data.access_token);
+
+      // We should ideally fetch the full user profile here, but for now we'll mock it based on what we got
+      const user = {
+        id: data.user_id.toString(),
+        username: data.username,
+        email: data.email,
+        handle: `@${data.username}`,
+        avatar: data.username.substring(0, 2).toUpperCase(),
+        profileCompleted: true, // Assuming true for now
+        followers: [],
+        following: [],
+        pendingRequests: [],
+        sentRequests: [],
+        links: { github: "", linkedin: "", portfolio: "" },
+      } as any;
+
       dispatch({ type: "setCurrentUser", payload: user });
       navigate(user.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
-    }, 400);
+    } catch (error) {
+      setErrors({ identifier: "Could not connect to the server." });
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

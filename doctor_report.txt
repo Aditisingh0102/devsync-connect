@@ -1,0 +1,1133 @@
+React Doctor v0.5.6
+
+  
+
+  ⚠ Security: HTML injection sink with dynamic content
+    Learn more: https://react.doctor/docs/rules/react-doctor/dangerous-html-sink
+    HTML is injected from a dynamic-looking source, which can
+    become XSS if the value is user-controlled or unsanitized.
+    → Prefer rendering structured React nodes. If HTML is
+    required, sanitize with a well-reviewed sanitizer and keep
+    the trust boundary close to the sink.
+
+    src/components/PostCard.tsx:64
+
+  ⚠ Bugs: Missing effect dependencies ×8
+    Learn more: https://react.doctor/docs/rules/react-doctor/exhaustive-deps
+    `useMemo` can run with a stale `state.currentUser,
+    state.currentUser.id, state.currentUser.following` & show
+    your users old data.
+    → Don't blindly add missing dependencies. Read the hook
+    callback first.
+    
+    Bad:
+    useEffect(() => {
+      setCount(count + 1);
+    }, [count]);
+    
+    Better:
+    useEffect(() => {
+      setCount((currentCount) => currentCount + 1);
+    }, []);
+    
+    If the missing value is recreated every render, move it
+    inside the hook or stabilize it before adding it to deps.
+
+    src/components/Feed.tsx:60
+
+    src/pages/Settings.tsx:72
+
+    src/pages/ProjectDetail.tsx:25
+
+    src/pages/DiscoverBuilders.tsx:124
+
+    src/pages/FindProjects.tsx:145
+
+    src/pages/Profile.tsx:128
+
+    src/pages/Profile.tsx:216
+
+    src/lib/store.tsx:757
+
+  ⚠ Bugs: Array index used as a key ×6
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-array-index-as-key
+    Your users can see & submit the wrong data when this list
+    reorders or filters, so use a stable id like
+    `key={item.id}`, not the array index "i".
+    → Use a stable id from the item, like `key={item.id}` or
+    `key={item.slug}`. Index keys break when the list reorders
+    or filters.
+
+    src/pages/MyTeam.tsx:287
+
+    src/pages/ProjectDetail.tsx:288
+
+    src/pages/ProjectDetail.tsx:300
+
+    src/pages/Profile.tsx:26
+
+    src/pages/Profile.tsx:444
+
+    src/pages/EditProfilePage.jsx:330
+
+  ⚠ Bugs: Time or random value in JSX
+    Learn more: https://react.doctor/docs/rules/react-doctor/rendering-hydration-mismatch-time
+    This can cause a hydration mismatch because new Date()
+    reached from JSX gives a different value on the server than
+    in the browser. Move it into useEffect+useState to run only
+    in the browser, or add suppressHydrationWarning to the
+    parent if it's on purpose.
+    → Move time or random values into useEffect+useState so
+    they only run in the browser, or add
+    suppressHydrationWarning to the parent if it's intentional
+
+    src/pages/Profile.tsx:429
+
+  ⚠ Bugs: Uncontrolled input value ×2
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-uncontrolled-input
+    Your users can't type in this <input value={...}> because
+    it has no `onChange` or `readOnly`, so add `onChange` (or
+    `readOnly` if that's intended).
+    → Give `useState` a starting value (e.g. `useState("")`
+    instead of `useState()`), add `onChange` (or `readOnly`)
+    whenever you set `value`, and drop `defaultValue` on
+    controlled inputs since React ignores it.
+
+    src/pages/Settings.tsx:332
+
+    src/pages/Settings.tsx:341
+
+  ⚠ Accessibility: Label missing associated control ×38
+    Learn more: https://react.doctor/docs/rules/react-doctor/label-has-associated-control
+    Screen reader users can't tell which input this label names
+    because it's tied to none, so add `htmlFor` or wrap the
+    input inside it.
+    → Tie every label to a control with `htmlFor`, or by
+    nesting the input.
+
+    src/components/Feed.tsx:99
+
+    src/pages/Settings.tsx:331
+
+    src/pages/Settings.tsx:340
+
+    src/pages/Settings.tsx:352
+
+    src/pages/Settings.tsx:362
+
+    src/pages/Settings.tsx:693
+
+    src/pages/Onboarding.tsx:203
+
+    src/components/ApplyRoleModal.tsx:111
+
+    src/components/ApplyRoleModal.tsx:126
+
+    src/components/ApplyRoleModal.tsx:226
+
+    src/components/EditProjectModal.tsx:130
+
+    src/components/EditProjectModal.tsx:144
+
+    src/components/EditProjectModal.tsx:158
+
+    src/components/EditProjectModal.tsx:173
+
+    src/components/EditProjectModal.tsx:191
+
+    src/components/EditProjectModal.tsx:210
+
+    src/components/EditProjectModal.tsx:222
+
+    src/components/EditProjectModal.tsx:260
+
+    src/components/EditProjectModal.tsx:274
+
+    src/components/CreatePostModal.tsx:296
+
+    src/components/CreatePostModal.tsx:311
+
+    src/components/CreatePostModal.tsx:323
+
+    src/components/CreatePostModal.tsx:344
+
+    src/components/CreatePostModal.tsx:357
+
+    src/components/CreatePostModal.tsx:444
+
+    src/components/CreatePostModal.tsx:465
+
+    src/components/CreatePostModal.tsx:552
+
+    src/components/CreatePostModal.tsx:595
+
+    src/components/CreatePostModal.tsx:610
+
+    src/pages/EditProfilePage.jsx:254
+
+    src/pages/EditProfilePage.jsx:264
+
+    src/pages/EditProfilePage.jsx:278
+
+    src/pages/EditProfilePage.jsx:294
+
+    src/pages/EditProfilePage.jsx:304
+
+    src/pages/EditProfilePage.jsx:326
+
+    src/pages/EditProfilePage.jsx:394
+
+    src/pages/EditProfilePage.jsx:404
+
+    src/pages/EditProfilePage.jsx:414
+
+  ⚠ Bugs: Derived state stored in an effect ×2
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-derived-state-effect
+    You pay an extra render for state derived from other values.
+    → Work out derived values while rendering: `const x =
+    fn(dep)`. To reset a component's state when a prop changes,
+    give it a key prop: `<Component key={prop} />`. See
+    https://react.dev/learn/you-might-not-need-an-effect
+
+    src/pages/DiscoverBuilders.tsx:56
+
+    src/pages/FindProjects.tsx:18
+
+  ⚠ Security: Raw HTML injection can run unsafe markup ×2
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-danger
+    `dangerouslySetInnerHTML` is an XSS hole that runs
+    attacker-controlled HTML in your users' browsers.
+    → Render trusted content as React children so
+    attacker-controlled HTML cannot run in users' browsers.
+
+    src/components/ui/chart.tsx:70
+
+    src/components/PostCard.tsx:64
+
+  ⚠ Bugs: Unknown DOM property
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-unknown-property
+    React ignores this prop because it doesn't recognize the
+    name.
+    → Use the prop name React expects, like `className`,
+    `htmlFor`, or `tabIndex`, so the attribute is applied
+    correctly.
+
+    src/components/ui/command.tsx:42
+
+  ⚠ Performance: Unstable context provider value ×6
+    Learn more: https://react.doctor/docs/rules/react-doctor/jsx-no-constructed-context-values
+    Every reader of this context redraws on each render because
+    you build its `value` inline.
+    → Wrap the context value in `useMemo` or move it outside
+    the component so consumers do not redraw every render.
+
+    src/components/ui/carousel.tsx:127
+
+    src/components/ui/toggle-group.tsx:18
+
+    src/components/ui/form.tsx:27
+
+    src/components/ui/form.tsx:67
+
+    src/components/ui/chart.tsx:43
+
+    src/lib/store.tsx:772
+
+  ⚠ Performance: Heavy library loaded eagerly ×3
+    Learn more: https://react.doctor/docs/rules/react-doctor/prefer-dynamic-import
+    "recharts" ships extra code to your users up front & slows
+    page load. Load it on demand with React.lazy() or
+    next/dynamic.
+    → Load it only when needed: `const Component = dynamic(()
+    => import('library'), { ssr: false })` from next/dynamic,
+    or React.lazy().
+
+    src/pages/TeamDetail.tsx:4
+
+    src/pages/Profile.tsx:5
+
+    src/components/ui/chart.tsx:2
+
+  ⚠ Performance: setState reads a stale value
+    Learn more: https://react.doctor/docs/rules/react-doctor/rerender-functional-setstate
+    You can lose this update because setStep(step + ...) reads
+    a stale value.
+    → Use the callback form: `setState(prev => prev + 1)` to
+    always read the latest value
+
+    src/pages/Onboarding.tsx:154
+
+  ⚠ Accessibility: Control missing accessible label ×50
+    Learn more: https://react.doctor/docs/rules/react-doctor/control-has-associated-label
+    Blind users can't tell what this control does because
+    screen readers find no label, so add visible text,
+    `aria-label`, or `aria-labelledby`.
+    → Give every interactive control a label screen readers can
+    read.
+
+    src/pages/Settings.tsx:332
+
+    src/pages/Settings.tsx:341
+
+    src/pages/Settings.tsx:353
+
+    src/pages/Settings.tsx:363
+
+    src/pages/Settings.tsx:478
+
+    src/pages/Settings.tsx:499
+
+    src/pages/Settings.tsx:520
+
+    src/pages/Settings.tsx:541
+
+    src/pages/Settings.tsx:576
+
+    src/pages/Settings.tsx:596
+
+    src/pages/Settings.tsx:696
+
+    src/components/CreatePost.tsx:81
+
+    src/components/CreatePost.tsx:87-88
+
+    src/components/CreatePost.tsx:92-95
+
+    src/pages/DiscoverBuilders.tsx:157
+
+    src/pages/DiscoverBuilders.tsx:162
+
+    src/pages/FindProjects.tsx:174
+
+    src/pages/Onboarding.tsx:183-186
+
+    src/pages/Onboarding.tsx:205
+
+    src/pages/Onboarding.tsx:258
+
+    src/pages/Onboarding.tsx:266
+
+    src/components/ApplyRoleModal.tsx:114
+
+    src/components/ApplyRoleModal.tsx:156
+
+    src/components/RespondModal.tsx:21-22
+
+    src/components/EditProjectModal.tsx:133
+
+    src/components/EditProjectModal.tsx:147
+
+    src/components/EditProjectModal.tsx:161
+
+    src/components/EditProjectModal.tsx:213
+
+    src/components/EditProjectModal.tsx:263
+
+    src/components/EditProjectModal.tsx:277
+
+    src/components/Navbar.tsx:91
+
+    src/components/CreatePostModal.tsx:299
+
+    src/components/CreatePostModal.tsx:314
+
+    src/components/CreatePostModal.tsx:377
+
+    src/components/CreatePostModal.tsx:485
+
+    src/components/CreatePostModal.tsx:600
+
+    src/pages/EditProfilePage.jsx:255
+
+    src/pages/EditProfilePage.jsx:267
+
+    src/pages/EditProfilePage.jsx:279
+
+    src/pages/EditProfilePage.jsx:295
+
+    src/pages/EditProfilePage.jsx:344
+
+    src/pages/EditProfilePage.jsx:395
+
+    src/pages/EditProfilePage.jsx:405
+
+    src/pages/EditProfilePage.jsx:415
+
+  ⚠ Accessibility: Heading has no content ×2
+    Learn more: https://react.doctor/docs/rules/react-doctor/heading-has-content
+    Blind users can't use this heading to navigate because
+    screen readers skip it empty, so add text, `aria-label`, or
+    `aria-labelledby`.
+    → Put readable text in every heading.
+
+    src/components/ui/card.tsx:19
+
+    src/components/ui/alert.tsx:31
+
+  ⚠ Bugs: Parent kept in sync with a callback effect
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-prop-callback-in-effect
+    Your parent re-renders on every local state change because
+    this useEffect calls the prop "setApi" just to stay in sync.
+    → Move the shared state into a Provider so both sides read
+    the same value. Then you don't need a useEffect to keep
+    them in sync.
+
+    src/components/ui/carousel.tsx:108
+
+  ⚠ Bugs: Multiple setState calls in one effect ×3
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-cascading-set-state
+    5 setState calls in one useEffect redraw your screen each
+    time they run together.
+    → Combine related updates in `useReducer` so one effect
+    does not redraw the screen once per `setState` call.
+
+    src/pages/Settings.tsx:75
+
+    src/components/EditProjectModal.tsx:39
+
+    src/pages/EditProfilePage.jsx:63
+
+  ⚠ Accessibility: Anchor used as a button ×4
+    Learn more: https://react.doctor/docs/rules/react-doctor/anchor-is-valid
+    Keyboard users can't reach this link because its `href`
+    goes nowhere (`#`, `javascript:`, or empty), so point it at
+    a real destination.
+    → Give links a real destination. Use `<button>` for in-page
+    actions.
+
+    src/pages/ProjectDetail.tsx:353
+
+    src/components/Footer.tsx:31-33
+
+  ⚠ Bugs: Derived value copied into state ×12
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-derived-state
+    Storing "title" in state when you can derive it from other
+    values costs an extra render.
+    → Work out the value while rendering (or with useMemo if
+    it's expensive) instead of copying it into useState through
+    a useEffect. See
+    https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state
+
+    src/components/EditProjectModal.tsx:41-50
+
+    src/pages/EditProfilePage.jsx:71-72
+
+  ⚠ Accessibility: Role used instead of HTML tag ×4
+    Learn more: https://react.doctor/docs/rules/react-doctor/prefer-tag-over-role
+    Screen reader users get more reliable semantics from
+    `<section>` than `role="region"`, so use `<section>`
+    instead.
+    → Use the matching HTML element when one exists so browsers
+    and assistive tech get native semantics.
+
+    src/components/ui/carousel.tsx:144
+
+    src/components/ui/carousel.tsx:181
+
+    src/components/ui/input-otp.tsx:54
+
+    src/components/ui/breadcrumb.tsx:52
+
+  ⚠ Accessibility: Interaction on static element ×13
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-static-element-interactions
+    Screen reader users can't tell this click handler is
+    interactive because it has no `role`, so add a `role` or
+    use a button or link.
+    → Give clickable static elements a `role`, or use a button
+    or link.
+
+    src/pages/Settings.tsx:398
+
+    src/pages/Settings.tsx:418
+
+    src/pages/Settings.tsx:438
+
+    src/pages/Settings.tsx:672
+
+    src/pages/Signup.tsx:170
+
+    src/pages/Login.tsx:99
+
+    src/pages/DiscoverBuilders.tsx:193
+
+    src/components/ApplyRoleModal.tsx:83
+
+    src/pages/Index.tsx:225
+
+    src/pages/Index.tsx:327
+
+    src/components/RespondModal.tsx:15
+
+    src/components/EditProjectModal.tsx:104
+
+    src/components/CreatePostModal.tsx:242
+
+  ⚠ Performance: Array lookup inside a loop ×9
+    Learn more: https://react.doctor/docs/rules/react-doctor/js-set-map-lookups
+    This scales poorly because `array.includes()` inside a loop
+    scans the whole list every time. Use a Set for
+    constant-time lookups.
+    → Use a `Set` or `Map` when you check for the same items
+    over and over. `Array.includes`/`find` scans the whole list
+    each time
+
+    src/pages/DiscoverBuilders.tsx:104
+
+    src/pages/DiscoverBuilders.tsx:109
+
+    src/pages/DiscoverBuilders.tsx:115
+
+    src/pages/FindProjects.tsx:112
+
+    src/pages/FindProjects.tsx:117
+
+    src/pages/FindProjects.tsx:123-126
+
+  ⚠ Maintainability: deslop/unused-file ×42
+    Unused file is not reachable from any entry point, so it
+    adds maintenance surface without shipping any code.
+    → Delete the file if it is truly unreachable, or import it
+    from an entry point.
+
+    src/components/CreatePost.tsx
+
+    src/components/NavLink.tsx
+
+    src/components/UserFollowButton.tsx
+
+    src/components/ui/accordion.tsx
+
+    src/components/ui/alert-dialog.tsx
+
+    src/components/ui/alert.tsx
+
+    src/components/ui/aspect-ratio.tsx
+
+    src/components/ui/badge.tsx
+
+    src/components/ui/breadcrumb.tsx
+
+    src/components/ui/calendar.tsx
+
+    src/components/ui/card.tsx
+
+    src/components/ui/chart.tsx
+
+    src/components/ui/checkbox.tsx
+
+    src/components/ui/collapsible.tsx
+
+    src/components/ui/command.tsx
+
+    src/components/ui/context-menu.tsx
+
+    src/components/ui/drawer.tsx
+
+    src/components/ui/form.tsx
+
+    src/components/ui/hover-card.tsx
+
+    src/components/ui/input-otp.tsx
+
+    src/components/ui/menubar.tsx
+
+    src/components/ui/navigation-menu.tsx
+
+    src/components/ui/pagination.tsx
+
+    src/components/ui/popover.tsx
+
+    src/components/ui/progress.tsx
+
+    src/components/ui/radio-group.tsx
+
+    src/components/ui/resizable.tsx
+
+    src/components/ui/scroll-area.tsx
+
+    src/components/ui/select.tsx
+
+    src/components/ui/separator.tsx
+
+    src/components/ui/sheet.tsx
+
+    src/components/ui/sidebar.tsx
+
+    src/components/ui/slider.tsx
+
+    src/components/ui/switch.tsx
+
+    src/components/ui/table.tsx
+
+    src/components/ui/tabs.tsx
+
+    src/components/ui/textarea.tsx
+
+    src/components/ui/toggle-group.tsx
+
+    src/components/ui/toggle.tsx
+
+    src/components/ui/use-toast.ts
+
+    src/hooks/use-enter-key.ts
+
+    src/hooks/use-mobile.tsx
+
+  ⚠ Bugs: Button missing explicit type ×74
+    Learn more: https://react.doctor/docs/rules/react-doctor/button-has-type
+    Your users can submit the form by accident because a
+    `<button>` with no `type` defaults to submit.
+    → Set an explicit button `type` so plain buttons do not
+    submit forms by accident: `type="button"`, `"submit"`, or
+    `"reset"`.
+
+    src/pages/Reviews.tsx:106
+
+    src/pages/MyProjects.tsx:94
+
+    src/pages/MyProjects.tsx:111
+
+    src/pages/MyProjects.tsx:207
+
+    src/pages/MyProjects.tsx:214
+
+    src/components/Feed.tsx:107-109
+
+    src/pages/MyTeam.tsx:96
+
+    src/pages/MyTeam.tsx:122
+
+    src/pages/MyTeam.tsx:166
+
+    src/pages/Settings.tsx:243
+
+    src/pages/Settings.tsx:262
+
+    src/pages/Settings.tsx:272
+
+    src/pages/Settings.tsx:282
+
+    src/pages/Settings.tsx:292
+
+    src/pages/Settings.tsx:302
+
+    src/pages/Settings.tsx:645
+
+    src/components/UserFollowButton.tsx:23
+
+    src/pages/Signup.tsx:354
+
+    src/pages/Signup.tsx:383
+
+    src/pages/Signup.tsx:387
+
+    src/pages/Notifications.tsx:108
+
+    src/pages/Notifications.tsx:115
+
+    src/pages/Login.tsx:158
+
+    src/pages/Login.tsx:187
+
+    src/pages/Login.tsx:191
+
+    src/pages/ProjectDetail.tsx:158-161
+
+    src/pages/ProjectDetail.tsx:243
+
+    src/pages/ProjectDetail.tsx:249
+
+    src/pages/ProjectDetail.tsx:321
+
+    src/components/CreatePost.tsx:89
+
+    src/components/CreatePost.tsx:106
+
+    src/pages/FeedPage.tsx:21
+
+    src/pages/DiscoverBuilders.tsx:269-271
+
+    src/pages/FindProjects.tsx:157
+
+    src/pages/FindProjects.tsx:187
+
+    src/pages/FindProjects.tsx:207-211
+
+    src/components/ui/sidebar.tsx:249
+
+    src/pages/Profile.tsx:326
+
+    src/pages/Profile.tsx:335
+
+    src/pages/Onboarding.tsx:79-80
+
+    src/pages/Onboarding.tsx:197
+
+    src/pages/Onboarding.tsx:286-289
+
+    src/components/ApplyRoleModal.tsx:88
+
+    src/pages/Index.tsx:368
+
+    src/pages/Index.tsx:406
+
+    src/pages/Index.tsx:422
+
+    src/pages/Requests.tsx:53
+
+    src/pages/Requests.tsx:115-118
+
+    src/pages/Requests.tsx:123
+
+    src/components/AvatarUpload.tsx:29
+
+    src/components/AvatarUpload.tsx:47-48
+
+    src/components/ErrorBoundary.tsx:31
+
+    src/components/RespondModal.tsx:19
+
+    src/components/RespondModal.tsx:24-25
+
+    src/components/EditProjectModal.tsx:109
+
+    src/components/Navbar.tsx:112
+
+    src/components/Navbar.tsx:119
+
+    src/components/Navbar.tsx:144
+
+    src/components/PostCard.tsx:40
+
+    src/components/PostCard.tsx:134-137
+
+    src/components/PostCard.tsx:149
+
+    src/components/CreatePostModal.tsx:247
+
+    src/components/CreatePostModal.tsx:282
+
+  ⚠ Performance: Listener re-subscribes on every handler change
+    Learn more: https://react.doctor/docs/rules/react-doctor/advanced-event-handler-refs
+    useEffect re-adds the "onSelect" listener every time the
+    handler changes.
+    → Store the handler in a ref and have the listener read
+    `handlerRef.current()`. The subscription stays put while
+    the latest handler still runs.
+
+    src/components/ui/carousel.tsx:111
+
+  ⚠ Performance: State only used in handlers ×4
+    Learn more: https://react.doctor/docs/rules/react-doctor/rerender-state-only-in-handlers
+    Each update to "resumeData" redraws your component for
+    nothing because this useState is set but never shown on
+    screen.
+    → Use useRef instead of useState when the value is only set
+    and never shown on screen. `ref.current = ...` updates it
+    without redrawing the component.
+
+    src/components/ApplyRoleModal.tsx:17
+
+    src/components/Navbar.tsx:21
+
+    src/pages/EditProfilePage.jsx:49-50
+
+  ⚠ Bugs: Event logic handled in an effect
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-event-handler
+    Faking an event handler with a prop plus a useEffect costs
+    an extra render & runs late.
+    → Run the side effect in the event handler that triggers
+    it, instead of watching its state from a useEffect. See
+    https://react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers
+
+    src/components/EditProjectModal.tsx:40
+
+  ⚠ Accessibility: Click handler missing keyboard handler ×11
+    Learn more: https://react.doctor/docs/rules/react-doctor/click-events-have-key-events
+    Keyboard users can't trigger this click handler because
+    there's no keyboard one, so add `onKeyUp`, `onKeyDown`, or
+    `onKeyPress`.
+    → Pair `onClick` with a key handler so keyboard users can
+    trigger it.
+
+    src/pages/Settings.tsx:398
+
+    src/pages/Settings.tsx:418
+
+    src/pages/Settings.tsx:438
+
+    src/pages/Settings.tsx:672
+
+    src/pages/DiscoverBuilders.tsx:193
+
+    src/components/ApplyRoleModal.tsx:83
+
+    src/pages/Index.tsx:225
+
+    src/pages/Index.tsx:327
+
+    src/components/RespondModal.tsx:15
+
+    src/components/EditProjectModal.tsx:104
+
+    src/components/CreatePostModal.tsx:242
+
+  ⚠ Bugs: State initialized from a mount effect
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-initialize-state
+    Your users see an extra render with empty "isMobile"
+    because a useEffect sets its starting value.
+    → Pass the initial value directly to useState() instead of
+    setting it from a mount-only useEffect. For SSR hydration,
+    prefer useSyncExternalStore().
+
+    src/hooks/use-mobile.tsx:14
+
+  ⚠ Accessibility: Anchor has no content
+    Learn more: https://react.doctor/docs/rules/react-doctor/anchor-has-content
+    Blind users can't follow this link because screen readers
+    announce nothing, so add visible text, `aria-label`, or
+    `aria-labelledby`.
+    → Put readable text inside every `<a>`.
+
+    src/components/ui/pagination.tsx:35
+
+  ✖ Bugs: Mutable value in effect dependencies
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-mutable-in-deps
+    Values like "location.*" can change without re-rendering
+    the component, so this dependency will not make the effect
+    run again.
+    → Read mutable values like `location.pathname` or
+    `ref.current` inside the effect body, or subscribe with
+    `useSyncExternalStore`. Changing them doesn't redraw the
+    screen, so listing them in deps won't make the effect run
+    again.
+
+    src/pages/NotFound.tsx:9
+    ┌──────────────────────────────────────────────────────────────┐
+    │    8 |     console.error("404 Error: User attempted to acce[0m… │
+    │ >  9 |   }, [location.pathname]);                            │
+    │      |       ^                                               │
+    │   10 |                                                       │
+    └──────────────────────────────────────────────────────────────┘
+
+  ⚠ Accessibility: Tabindex on non-interactive element
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-noninteractive-tabindex
+    Keyboard users get stuck focusing this element they can't
+    act on because `tabIndex` makes it tabbable, so remove it.
+    → Only add `tabIndex` to interactive elements or
+    interactive roles.
+
+    src/components/ui/carousel.tsx:146
+
+  ⚠ Maintainability: Static value rebuilt every render
+    Learn more: https://react.doctor/docs/rules/react-doctor/prefer-module-scope-static-value
+    `groups` inside `Notifications` uses no local state but is
+    rebuilt every render, so it looks new each time & breaks
+    memoized children. Move it to the top of the file, outside
+    the component.
+    → Move the value above the component, at the top of the
+    file. It doesn't use local state, so rebuilding it each
+    update is wasted and makes it look new every time.
+
+    src/pages/Notifications.tsx:97
+
+  ⚠ Maintainability: deslop/unused-export ×5
+    Unused export: `activities` is exported but no module
+    imports it, so it expands the public surface and can
+    mislead callers about supported API.
+    → Drop the `export` keyword (or remove the declaration) if
+    no other module uses this symbol.
+
+    src/data/mock.ts:32
+
+    src/data/mock.ts:40
+
+    src/data/mock.ts:77
+
+    src/lib/store.tsx:812
+
+    src/utils/keyboardAccessibility.ts:170
+
+  ⚠ Bugs: Data passed to parent via effect
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-pass-data-to-parent
+    Handing data back to a parent from a useEffect costs your
+    users an extra render.
+    → Fetch the data in the parent and pass it down as a prop
+    (or return it from the hook), instead of handing it back up
+    through a prop callback in a useEffect. See
+    https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent
+
+    src/components/ui/carousel.tsx:108
+
+  ⚠ Accessibility: Autofocus on an element ×2
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-autofocus
+    `autoFocus` moves focus on load, which can disrupt screen
+    reader and keyboard users. Remove it and let users choose
+    where to focus.
+    → Do not use `autoFocus`. It disorients users on load.
+
+    src/pages/Settings.tsx:702
+
+    src/pages/Login.tsx:110
+
+  ⚠ Performance: Spread copy before sort() ×6
+    Learn more: https://react.doctor/docs/rules/react-doctor/js-tosorted-immutable
+    This wastes work because [...array].sort() copies the array
+    just to sort it, so use array.toSorted() to sort without
+    the extra copy (ES2023)
+    → Use `array.toSorted()` (ES2023) instead of
+    `[...array].sort()` so you sort without copying the array
+    first
+
+    src/pages/DiscoverBuilders.tsx:94
+
+    src/pages/FindProjects.tsx:84-86
+
+    src/pages/FindProjects.tsx:99
+
+    src/pages/FindProjects.tsx:103
+
+    src/pages/FindProjects.tsx:136
+
+  ⚠ Accessibility: Redundant ARIA role
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-redundant-roles
+    Screen reader users gain nothing from this `role` because
+    `<nav>` already acts as a `navigation`, so remove it.
+    → Remove redundant `role` attributes so assistive tech
+    reads the element's native semantics without extra noise.
+
+    src/components/ui/pagination.tsx:9
+
+  ⚠ Maintainability: Pure function rebuilt every render ×3
+    Learn more: https://react.doctor/docs/rules/react-doctor/prefer-module-scope-pure-function
+    `handleDragStart` inside `MyTeam` uses no local state but
+    is rebuilt on every render, so it wastes work & breaks
+    memoized children. Move it to the top of the file, outside
+    the component.
+    → Move the function above the component, at the top of the
+    file. It doesn't use local state, so rebuilding it each
+    update is wasted work.
+
+    src/pages/MyTeam.tsx:44
+
+    src/pages/Onboarding.tsx:67
+
+    src/pages/EditProfilePage.jsx:132
+
+  ⚠ Maintainability: Large component is hard to read and change ×7
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-giant-component
+    Component "SettingsPage" is 711 lines long, which is hard
+    to read & change. Split it into a few smaller components.
+    → Pull each section into its own component so the parent is
+    easier to read, test, and change.
+
+    src/pages/Settings.tsx:18
+
+    src/pages/Signup.tsx:30
+
+    src/pages/ProjectDetail.tsx:10
+
+    src/pages/Profile.tsx:60
+
+    src/pages/Index.tsx:48
+
+    src/components/CreatePostModal.tsx:95
+
+    src/pages/EditProfilePage.jsx:34
+
+  ⚠ Performance: useMemo on a cheap value
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-usememo-simple-expression
+    This costs more than it saves because useMemo is wrapping a
+    value that's already cheap, so remove the useMemo
+    → Remove the useMemo. Property reads, math, and ternaries
+    are already fast, so wrapping them doesn't help
+
+    src/components/ui/sidebar.tsx:535
+
+  ⚠ Maintainability: deslop/unused-dependency ×2
+    Unused dependency: `@hookform/resolvers`
+    Unused dependency: `zod`
+    → An unused dependency adds install time and supply-chain
+    surface without being used; remove it from package.json if
+    it is genuinely unused.
+
+  ⚠ Performance: .map().filter(Boolean) loops twice ×17
+    Learn more: https://react.doctor/docs/rules/react-doctor/js-flatmap-filter
+    This loops over your list twice because
+    .map().filter(Boolean) makes two passes, so use .flatMap()
+    to change & drop items in one pass
+    → Use `.flatMap(item => condition ? [value] : [])` to
+    change and drop items in one pass, instead of building a
+    throwaway array in between
+
+    src/pages/MyTeam.tsx:76
+
+    src/pages/Dashboard.tsx:17
+
+    src/components/CreatePost.tsx:58-60
+
+    src/pages/DiscoverBuilders.tsx:74
+
+    src/pages/FindProjects.tsx:52
+
+    src/components/ApplyRoleModal.tsx:67
+
+    src/components/ApplyRoleModal.tsx:132-133
+
+    src/components/ApplyRoleModal.tsx:139
+
+    src/components/ApplyRoleModal.tsx:166
+
+    src/components/ApplyRoleModal.tsx:181
+
+    src/components/ApplyRoleModal.tsx:201
+
+    src/components/ApplyRoleModal.tsx:212
+
+    src/components/RespondModal.tsx:25
+
+    src/components/EditProjectModal.tsx:82
+
+    src/components/PostCard.tsx:106
+
+  ⚠ Performance: Chained array iterations ×6
+    Learn more: https://react.doctor/docs/rules/react-doctor/js-combine-iterations
+    This loops over your list twice because .filter().map()
+    makes two passes, so do it in one pass with .reduce() or a
+    for...of loop
+    → Combine `.map().filter()` style chains into one pass with
+    `.reduce()` or a `for...of` loop, so you only loop over the
+    list once
+
+    src/pages/Reviews.tsx:71
+
+    src/pages/DiscoverBuilders.tsx:78
+
+    src/pages/Onboarding.tsx:232
+
+    src/lib/store.tsx:429
+
+    src/lib/store.tsx:436
+
+    src/lib/store.tsx:446
+
+  ⚠ Bugs: Many related useState calls ×12
+    Learn more: https://react.doctor/docs/rules/react-doctor/prefer-useReducer
+    7 useState calls in "Feed" can each trigger a separate
+    render.
+    → Group related state in `useReducer` so one logical update
+    does not fan out into separate renders.
+
+    src/components/Feed.tsx:13
+
+    src/pages/MyTeam.tsx:25
+
+    src/pages/Settings.tsx:18
+
+    src/pages/Signup.tsx:30
+
+    src/pages/Login.tsx:6
+
+    src/components/CreatePost.tsx:18
+
+    src/pages/FindProjects.tsx:12
+
+    src/pages/Onboarding.tsx:29
+
+    src/components/ApplyRoleModal.tsx:13
+
+    src/components/EditProjectModal.tsx:24
+
+    src/components/CreatePostModal.tsx:95
+
+    src/pages/EditProfilePage.jsx:34
+
+  ⚠ Maintainability: Multiple components in one file ×10
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-multi-comp
+    This file declares several components, so each component is
+    harder to find, test, and change.
+    → Move secondary components into their own files so each
+    component stays easier to find, test, and change.
+
+    src/components/ui/tabs.tsx:23
+
+    src/components/ui/tabs.tsx:38
+
+    src/components/ui/avatar.tsx:18
+
+    src/components/ui/avatar.tsx:26
+
+    src/components/ui/input-otp.tsx:24
+
+    src/components/ui/input-otp.tsx:52
+
+    src/components/ui/alert.tsx:29
+
+    src/components/ui/alert.tsx:36
+
+    src/components/ui/accordion.tsx:17
+
+    src/components/ui/accordion.tsx:37
+
+  ⚠ Maintainability: Non-component export in component file ×7
+    Learn more: https://react.doctor/docs/rules/react-doctor/only-export-components
+    This file exports non-components, so Fast Refresh can't
+    safely preserve component state.
+    → Move non-component exports out of component files so Fast
+    Refresh can preserve component state instead of
+    full-reloading.
+
+    src/components/ui/navigation-menu.tsx:111
+
+    src/lib/store.tsx:778
+
+    src/lib/store.tsx:799
+
+    src/components/ui/sonner.tsx:27
+
+    src/components/ui/button.tsx:47
+
+    src/components/ui/toggle.tsx:37
+
+    src/components/ui/badge.tsx:29
+
+  ⚠ Performance: Bouncy easing animation
+    Learn more: https://react.doctor/docs/rules/react-doctor/no-inline-bounce-easing
+    Your users see a dated, tacky animate-bounce, so use a
+    subtle ease-out transform for a smoother finish.
+    → Use `cubic-bezier(0.16, 1, 0.3, 1)` (ease-out-expo) for a
+    natural finish. Real objects don't bounce.
+
+    src/pages/Notifications.tsx:59
+
+
+  ────────────────────────────────────────────────────────────
+
+  All 388 issues
+
+  Security › 3 warnings
+  Bugs › 1 error, 125 warnings
+  Performance › 55 warnings
+  Accessibility › 127 warnings
+  Maintainability › 77 warnings
+
+  ┌─────┐  40 / 100 Critical
+  │ x x │  ████████████████████▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░
+  │  ▽  │  React Doctor (https://react.doctor)
+  └─────┘
+
+  You could improve +10% by fixing the top 3 issues
+  Full diagnostics written to /var/folders/hk/28fdln290g37xf3p308s0ytr0000gn/T/react-doctor-1b1f64ce-779d-49e2-8e15-b15edaf58e67
+
+  ────────────────────────────────────────────────────────────
+
+  Share: https://react.doctor/share?p=vite_react_shadcn_ts&s=40&e=1&w=387&f=79
+  Tell others how you did on socials
+
+  Docs: https://react.doctor/docs
+  Learn more about fixing issues, setting up CI/CD, and
+  configuring rules with a config file
+
+  GitHub: https://github.com/millionco/react-doctor
+  Report issues and star the repository!
+

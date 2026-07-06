@@ -72,58 +72,71 @@ export default function Signup() {
 
   const [loginMessage, setLoginMessage] = useState("");
 
-  const submit = () => {
+  const submit = async () => {
     // Validate inputs first
     if (!validate(false)) return;
 
-    const users = Object.values(state.users || {});
-    const trimmedUsername = username.trim().toLowerCase();
-    const trimmedEmail = email.trim().toLowerCase();
+    setLoginMessage("Creating account...");
 
-    // Check if username is already taken
-    const existingUser = users.find(
-      (u) =>
-        u.username?.toLowerCase() === trimmedUsername ||
-        u.handle?.toLowerCase() === `@${trimmedUsername}`
-    );
+    try {
+      // Send data to FastAPI backend
+      const response = await fetch("http://localhost:8000/api/v1/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), email: email.trim(), password, skills: [] })
+      });
 
-    // Check if email is already registered
-    const existingEmail = users.find(
-      (u) => u.email?.toLowerCase() === trimmedEmail
-    );
-
-    if (existingUser || existingEmail) {
-      const e: Record<string, string> = {};
-      if (existingUser) {
-        e.username = "Username is already taken";
+      if (!response.ok) {
+        const errorData = await response.json();
+        setLoginMessage("");
+        // Show error from backend (e.g., email already exists)
+        setErrors({ email: errorData.detail || "Failed to create account" });
+        return;
       }
-      if (existingEmail) {
-        e.email = "Email is already registered. Please sign in instead.";
+
+      const userData = await response.json();
+
+      // Login to get access token
+      const loginResponse = await fetch("http://localhost:8000/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: email.trim(), password })
+      });
+
+      if (loginResponse.ok) {
+        const loginData = await loginResponse.json();
+        localStorage.setItem("token", loginData.access_token);
       }
-      setErrors(e);
-      return;
+
+      // Successfully created on backend. Set local UI state.
+      const user = {
+        id: userData.id.toString(),
+        name: name.trim(),
+        username: username.trim(),
+        handle: `@${username.trim()}`,
+        avatar: name.trim().split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
+        email: userData.email,
+        skills: userData.skills || [],
+        profileCompleted: false,
+        followers: [],
+        following: [],
+        pendingRequests: [],
+        sentRequests: [],
+        links: { github: "", linkedin: "", portfolio: "" },
+      } as any;
+
+      dispatch({ type: "updateUser", payload: user });
+      dispatch({ type: "setCurrentUser", payload: user });
+
+      setLoginMessage("Account created successfully!");
+      setTimeout(() => {
+        navigate("/onboarding/profile-setup");
+      }, 1000);
+
+    } catch (error) {
+      setLoginMessage("");
+      setErrors({ email: "Could not connect to the server." });
     }
-
-    // No existing user — create a new account
-    const id = `u_${Date.now()}`;
-    const user = {
-      id,
-      name: name.trim(),
-      username: username.trim(),
-      handle: `@${username.trim()}`,
-      avatar: name.trim().split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
-      email: email.trim(),
-      password,
-      profileCompleted: false,
-      followers: [],
-      following: [],
-      pendingRequests: [],
-      sentRequests: [],
-      links: { github: "", linkedin: "", portfolio: "" },
-    } as any;
-    dispatch({ type: "updateUser", payload: user });
-    dispatch({ type: "setCurrentUser", payload: user });
-    navigate("/onboarding/profile-setup");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

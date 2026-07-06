@@ -40,8 +40,7 @@ export default function FindProjects() {
   useEffect(() => {
     if (location.state && (location.state as any).openCreateModal) {
       setCreateModalOpen(true);
-      // Clear navigation state so that refreshing doesn't reopen the modal
-      window.history.replaceState({}, document.title);
+      navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location]);
 
@@ -142,7 +141,7 @@ export default function FindProjects() {
       }
     }
     return r;
-  }, [searchTerms, cat, status, sort, projects, state.currentUser?.skills]);
+  }, [searchTerms, cat, status, sort, projects, state.currentUser, state.currentUser?.skills]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   const slice = filtered.slice((page - 1) * perPage, page * perPage);

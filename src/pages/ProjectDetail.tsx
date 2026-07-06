@@ -22,7 +22,7 @@ export default function ProjectDetail() {
     return Object.values(state.requests || {}).filter(
       (r) => r.projectId === p.id && r.status === "pending"
     );
-  }, [state.requests, p?.id]);
+  }, [state.requests, p]);
 
   if (!p) {
     return (
@@ -53,7 +53,7 @@ export default function ProjectDetail() {
             <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight mb-3">
               Join DevSync to View Project
             </h1>
-            
+
             <p className="text-muted-foreground text-sm leading-relaxed mb-8 max-w-sm mx-auto">
               Please log in to see team members, milestones, active discussions, and apply for open roles in "{p.title}".
             </p>
@@ -74,7 +74,7 @@ export default function ProjectDetail() {
                 Create Account
               </Link>
             </div>
-            
+
             <div className="mt-8 pt-6 border-t border-border/50">
               <Link to="/find-projects" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
                 <ArrowLeft className="size-4" /> Back to projects
@@ -189,7 +189,7 @@ export default function ProjectDetail() {
                   </span>
                 )}
               </h3>
-              
+
               {projectRequests.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No pending applications for this project yet. When developers apply for roles, they will show up here.</p>
               ) : (
@@ -214,7 +214,7 @@ export default function ProjectDetail() {
                             <p className="text-xs text-muted-foreground mt-1.5 italic leading-relaxed">
                               "{r.message || "No message provided."}"
                             </p>
-                            
+
                             {applicant?.skills && applicant.skills.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {applicant.skills.map((s: string) => (
@@ -284,8 +284,8 @@ export default function ProjectDetail() {
                 { name: "Beta UI shipped", done: true },
                 { name: "Pilot with 3 colleges", done: false },
                 { name: "Public launch", done: false },
-              ].map((m, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt border border-border">
+              ].map((m) => (
+                <div key={m.name} className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt border border-border">
                   {m.done ? <CheckCircle2 className="size-5 text-success" /> : <Circle className="size-5 text-muted-foreground" />}
                   <span className={`text-sm ${m.done ? "line-through text-muted-foreground" : "font-medium"}`}>{m.name}</span>
                 </div>
@@ -296,8 +296,8 @@ export default function ProjectDetail() {
           <div className="ds-card p-6">
             <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><MessageSquare className="size-4 text-primary" /> Discussion</h3>
             <div className="space-y-3">
-              {[{ u: "Priya Mehta", t: "Pushed v0 of matching scoring — feedback welcome." }, { u: "Rohan Verma", t: "Profile cards in review, demo Friday." }].map((d, i) => (
-                <div key={i} className="flex gap-3">
+              {[{ u: "Priya Mehta", t: "Pushed v0 of matching scoring — feedback welcome." }, { u: "Rohan Verma", t: "Profile cards in review, demo Friday." }].map((d) => (
+                <div key={d.t} className="flex gap-3">
                   <div className="size-9 rounded-lg bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center shrink-0">{d.u[0]}</div>
                   <div className="flex-1"><p className="text-sm"><span className="font-semibold">{d.u}</span> · 2h ago</p><p className="text-sm text-muted-foreground">{d.t}</p></div>
                 </div>

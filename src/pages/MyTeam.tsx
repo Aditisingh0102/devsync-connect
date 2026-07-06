@@ -107,7 +107,7 @@ export default function MyTeam() {
             <div className="flex gap-0.5">
               {Array.from({ length: 20 }).map((_, i) => {
                 const activeSegments = Math.max(1, Math.round((team.sprint.progress / 100) * 20));
-                return <div key={i} className={`flex-1 h-1.5 rounded-full ${i < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
+                return <div key={`segment-${i}`} className={`flex-1 h-1.5 rounded-full ${i < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
               })}
             </div>
           </div>
@@ -283,8 +283,8 @@ export default function MyTeam() {
             { who: "Rohan Verma", what: "moved 'Profile cards' to Review", when: "3h" },
             { who: "Sarah Khan", what: "merged PR #42 — CI pipeline", when: "Yesterday" },
             { who: "Alex Carter", what: "scheduled Sprint Review for Friday", when: "Yesterday" },
-          ].map((a, i) => (
-            <li key={i} className="flex items-start gap-3">
+          ].map((a) => (
+            <li key={a.what} className="flex items-start gap-3">
               <div className="size-8 rounded-lg bg-primary-soft text-primary flex items-center justify-center text-xs font-semibold">{a.who[0]}</div>
               <div className="flex-1"><p className="text-sm"><span className="font-semibold">{a.who}</span> {a.what}</p><p className="text-xs text-muted-foreground">{a.when} ago</p></div>
               <MessageSquare className="size-4 text-muted-foreground" />

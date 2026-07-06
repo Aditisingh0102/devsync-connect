@@ -1,7 +1,8 @@
 import { Link, useParams } from "react-router-dom";
 import { team } from "@/data/mock";
 import { ArrowLeft, FileText, Target } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { lazy, Suspense } from "react";
+const TeamChart = lazy(() => import("@/components/TeamChart"));
 
 const roleData = [
   { name: "Frontend", value: 35, color: "hsl(var(--primary))" },
@@ -42,14 +43,9 @@ export default function TeamDetail() {
         <div className="ds-card p-6">
           <h3 className="font-semibold text-lg mb-2">Role Distribution</h3>
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={roleData} dataKey="value" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                  {roleData.map((d) => <Cell key={d.name} fill={d.color} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="flex items-center justify-center w-full h-full text-muted-foreground">Loading chart...</div>}>
+              <TeamChart roleData={roleData} />
+            </Suspense>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-2">
             {roleData.map((d) => {

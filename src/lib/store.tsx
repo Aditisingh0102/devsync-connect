@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useRef } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useRef, useMemo } from "react";
 import type { AppState, AppAction, AppNotification, User, Post, Response, Review, Request, Project } from "./types";
 import { projects as mockProjects } from "../data/mock";
 
@@ -754,7 +754,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         return () => clearTimeout(timer);
       }
     }
-  }, [state.currentUser?.accountStatus, state.currentUser?.deactivatedAt]);
+  }, [dispatch, state.currentUser, state.currentUser?.accountStatus, state.currentUser?.deactivatedAt]);
 
   // Record a daily login for the current user (once per calendar day per session)
   const loginRecordedRef = useRef<string | null>(null);
@@ -769,7 +769,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [state.currentUser?.id]);
 
-  return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>;
+  const contextValue = useMemo(() => ({ state, dispatch }), [state]);
+  return <AppContext.Provider value={contextValue}>{children}</AppContext.Provider>;
 };
 
 export const useApp = () => useContext(AppContext);

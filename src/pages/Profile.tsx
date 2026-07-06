@@ -2,7 +2,7 @@ import { useState, lazy, Suspense, useMemo, useEffect } from "react";
 import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
 const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
+const ProfileChart = lazy(() => import("@/components/ProfileChart"));
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import PostCard from "@/components/PostCard";
@@ -10,29 +10,6 @@ import ProjectCard from "@/components/ProjectCard";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const tabs = ["Overview", "Posts", "Projects", "Activity", "Network", "Requests"];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-card border border-border p-3 rounded-xl shadow-lg text-sm z-50 min-w-[150px]">
-        <p className="font-semibold mb-1">{label}</p>
-        <p className="text-primary font-medium">{data.c} Contributions</p>
-        {data.projects && data.projects.length > 0 && (
-          <div className="mt-2 space-y-1">
-            <p className="text-[10px] text-muted-foreground uppercase font-semibold">Projects</p>
-            <ul className="list-disc pl-4 text-xs text-muted-foreground">
-              {data.projects.map((p: string, i: number) => (
-                <li key={i}>{p}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  }
-  return null;
-};
 
 const getMonthLabels = (): Record<number, string> => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -125,7 +102,7 @@ export default function Profile() {
       }
     }
     return data;
-  }, [profile?.id, profile?.name, profile?.loginHistory]);
+  }, [profile]);
 
   const profileTabs = useMemo(() => {
     if (state.currentUser && profileId === state.currentUser.id) {
@@ -213,7 +190,7 @@ export default function Profile() {
     const topScores = scores.slice(0, 3);
     const avg = topScores.reduce((sum, s) => sum + s, 0) / topScores.length;
     return Math.round(avg);
-  }, [profile?.skills, state.projects]);
+  }, [profile, state.projects]);
 
   const profileStats = {
     posts: profilePosts.length,
@@ -347,15 +324,9 @@ export default function Profile() {
                 </div>
               </div>
               <div className="mt-6 w-full">
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={dynamicChartData} margin={{ top: 12, right: 0, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="m" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.2 }} />
-                    <Bar dataKey="c" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <Suspense fallback={<div className="flex items-center justify-center w-full h-full text-muted-foreground">Loading chart...</div>}>
+                  <ProfileChart data={dynamicChartData} />
+                </Suspense>
               </div>
             </div>
 
@@ -441,7 +412,7 @@ export default function Profile() {
                               ? `${count} login${count > 1 ? "s" : ""} on ${dateStr}`
                               : `No logins on ${dateStr}`;
                             return (
-                              <UITooltip key={i}>
+                              <UITooltip key={dateKey}>
                                 <TooltipTrigger asChild>
                                   <div
                                     className={`w-[10px] h-[10px] rounded-[2px] ${colors[lvl]} transition-all hover:scale-125 duration-100 cursor-pointer`}

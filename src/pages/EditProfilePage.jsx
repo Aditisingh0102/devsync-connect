@@ -327,7 +327,7 @@ export default function EditProfilePage() {
             <div className="flex flex-wrap gap-2 items-center min-h-[44px] p-2 bg-secondary border border-border rounded-xl focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
               {skills.map((skill, index) => (
                 <span
-                  key={index}
+                  key={skill}
                   className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary-soft text-primary text-xs font-semibold rounded-lg"
                 >
                   {skill}

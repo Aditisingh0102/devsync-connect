@@ -256,3 +256,29 @@ Replace local context dispatches in [store.tsx](file:///Users/anshgupta/Document
 - `POST /api/requests` (Create new member requests)
 - `PATCH /api/requests/:id` (Accept/decline application; handles atomic member increments in transactions)
 - `DELETE /api/projects/:id` (Trigger cascade project deletion logs)
+
+---
+
+## 8. React Doctor Audit & Recent Bug Fixes
+
+Recently, the codebase underwent an extensive audit using `react-doctor`, which flagged several architectural, security, and performance concerns. The following remediation steps were taken:
+
+### 1. Security & Cross-Site Scripting (XSS) Prevention
+- **Bug:** The application previously used React's `dangerouslySetInnerHTML` to render user-supplied post content and chart tooltips. This opened the application to potential XSS attacks where malicious users could inject executable JavaScript.
+- **Fix (DOMPurify):** We integrated **DOMPurify**, a DOM-only, super-fast, uber-tolerant XSS sanitizer for HTML. DOMPurify strips out dangerous HTML tags and JavaScript payload attributes (like `onload` or `onerror`) before they are rendered to the DOM. This allows us to safely render rich text without exposing users to malicious scripts.
+
+### 2. Performance: Lazy Loading Heavy Libraries
+- **Bug:** `recharts`, a heavy data visualization library, was being eagerly imported at the top of several pages (`Profile.tsx` and `TeamDetail.tsx`), blocking the initial page render and bloating the JavaScript bundle size.
+- **Fix:** We abstracted the charts into separate components (`ProfileChart.tsx` and `TeamChart.tsx`) and utilized React's `lazy` and `Suspense` APIs to dynamically load them only when needed. This significantly improves the application's load speed.
+
+### 3. React Core Warnings (Hooks & Keys)
+- **Bug:** Numerous `useEffect` and `useMemo` hooks were missing critical dependencies, leading to potential stale closures. Additionally, list iterators were using arbitrary array indices (`key={i}`) which corrupts React's DOM reconciliation.
+- **Fix:** We meticulously tracked all missing dependencies (like `dispatch` and `state.currentUser`) and replaced index-based keys with deterministic entity properties (e.g., `key={project.id}`).
+
+### 4. Navigation & Runtime Crashes
+- **Bug:** The `MyProjects` page crashed with a `TypeError: Cannot read properties of undefined (reading 'toLowerCase')` if a user's name was missing during load states. Additionally, clicking "Start a Project" corrupted React Router's internal history state by using the native `window.history.replaceState`.
+- **Fix:** Implemented optional chaining (`?.toLowerCase()`) to prevent immediate crashes and replaced native history mutation with React Router's `navigate(..., { replace: true })` to preserve back-button functionality.
+
+### 5. New Components & Dynamic Cards
+- **Created Chart Components:** To resolve the performance bottleneck, we created two entirely new components: `ProfileChart.tsx` and `TeamChart.tsx`. These encapsulate the heavy data visualization logic so they can be loaded independently.
+- **Interactive Project Cards:** The Project Cards displayed on the `MyProjects` dashboard were updated to be highly interactive. You can now change a project's visibility (Public, Friends, Private) directly via an inline dropdown right on the card itself.

@@ -15,6 +15,8 @@ function formatCountdown(ms: number): string {
   return `${hours}h ${minutes}m ${seconds}s`;
 }
 
+const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
+
 export default function SettingsPage() {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
@@ -47,7 +49,6 @@ export default function SettingsPage() {
   const [countdown, setCountdown] = useState<string | null>(null);
 
   const isPendingDeletion = currentUser?.accountStatus === "pending_deletion";
-  const SEVENTY_TWO_HOURS = 72 * 60 * 60 * 1000;
 
   // Countdown timer for pending deletion
   useEffect(() => {
@@ -333,6 +334,7 @@ export default function SettingsPage() {
                     type="email"
                     value={currentUser?.email || `${currentUser?.username || "student"}@college.edu`}
                     disabled
+                    readOnly
                     className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] text-[#64748b] cursor-not-allowed"
                   />
                 </div>
@@ -342,6 +344,7 @@ export default function SettingsPage() {
                     type="text"
                     value={currentUser?.college || "COL-129485"}
                     disabled
+                    readOnly
                     className="w-full px-3 h-[36px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] text-[13px] text-[#64748b] cursor-not-allowed"
                   />
                 </div>

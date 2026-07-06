@@ -121,7 +121,7 @@ export default function DiscoverBuilders() {
       });
     }
     return filtered;
-  }, [users, searchTerms, filterSkill]);
+  }, [users, searchTerms, filterSkill, q]);
 
   const follow = (toId: string) => {
     if (!state.currentUser) return;

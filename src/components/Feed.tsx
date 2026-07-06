@@ -57,7 +57,7 @@ export default function Feed() {
       }
       return true;
     });
-  }, [allPosts, domain, tech, role, projectType, recentOnly]);
+  }, [allPosts, domain, tech, role, projectType, recentOnly, state.currentUser]);
 
   const onRespond = (post: any) => setActive(post.id);
 

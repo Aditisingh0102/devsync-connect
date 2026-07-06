@@ -84,7 +84,7 @@ export default function Onboarding() {
     );
   }
 
-  const next = () => {
+  const next = async () => {
     const e: Record<string, string> = {};
     if (step === 0) {
       if (!data.name.trim()) e.name = "Enter your full name";
@@ -100,6 +100,28 @@ export default function Onboarding() {
     setErrors(e);
     if (Object.keys(e).length) return;
     if (step === steps.length - 1) {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          await fetch("http://localhost:8000/api/v1/users/me", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              name: data.name,
+              college: data.college.trim(),
+              year: data.year ? `Year ${data.year}` : undefined,
+              bio: data.bio,
+              skills: data.skills,
+            })
+          });
+        } catch (err) {
+          console.error("Failed to save onboarding data to backend", err);
+        }
+      }
+
       const existingUser = state.currentUser;
       const username = existingUser?.username || (data.name
         ? `${data.name.split(" ")[0].toLowerCase()}_${Date.now().toString().slice(-5)}`
