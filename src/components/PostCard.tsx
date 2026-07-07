@@ -32,7 +32,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <Link to={author ? `/profile/${author.id}` : "#"} className="font-semibold text-sm hover:text-primary truncate block">{author?.name || "Unknown"}</Link>
+              <Link to={author ? `/profile/${author.username}` : "#"} className="font-semibold text-sm hover:text-primary truncate block">{author?.name || "Unknown"}</Link>
               <div className="text-xs text-muted-foreground">@{author?.username || "user"} · {new Date(post.createdAt).toLocaleDateString()}</div>
             </div>
             <div className="flex items-center gap-2">

@@ -80,7 +80,7 @@ export default function Signup() {
 
     try {
       // Send data to FastAPI backend
-      const response = await fetch("http://localhost:8000/api/v1/auth/signup", {
+      const response = await fetch(`/api/v1/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim(), email: email.trim(), password, skills: [] })
@@ -89,15 +89,20 @@ export default function Signup() {
       if (!response.ok) {
         const errorData = await response.json();
         setLoginMessage("");
-        // Show error from backend (e.g., email already exists)
-        setErrors({ email: errorData.detail || "Failed to create account" });
+        // Show error from backend to the correct field
+        const detail = errorData.detail || "Failed to create account";
+        if (detail.toLowerCase().includes("username")) {
+            setErrors({ username: detail });
+        } else {
+            setErrors({ email: detail });
+        }
         return;
       }
 
       const userData = await response.json();
 
       // Login to get access token
-      const loginResponse = await fetch("http://localhost:8000/api/v1/auth/login", {
+      const loginResponse = await fetch(`/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: email.trim(), password })

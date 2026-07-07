@@ -142,7 +142,7 @@ export default function SettingsPage() {
 
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://localhost:8000/api/v1/users/me", {
+      fetch(`/api/v1/users/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ password: newPassword })
@@ -175,7 +175,7 @@ export default function SettingsPage() {
     
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://localhost:8000/api/v1/users/me", {
+      fetch(`/api/v1/users/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ preferences: newPrefs })
@@ -206,7 +206,7 @@ export default function SettingsPage() {
     
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://localhost:8000/api/v1/users/me", {
+      fetch(`/api/v1/users/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ preferences: newPrefs })
@@ -232,7 +232,7 @@ export default function SettingsPage() {
     
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://localhost:8000/api/v1/users/me", {
+      fetch(`/api/v1/users/me`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
       }).then(() => {

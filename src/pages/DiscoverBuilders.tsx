@@ -42,9 +42,31 @@ export default function DiscoverBuilders() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    let isMounted = true;
+    setIsLoading(true);
+    
+    // Fetch real users from backend
+    fetch("/api/v1/users/?limit=100")
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && Array.isArray(data)) {
+          // Normalize IDs to string to match frontend store expectation
+          const usersToStore = data.map(u => ({
+            ...u,
+            id: u.id.toString(),
+            handle: `@${u.username}`,
+            avatar: u.avatar || u.name?.split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase()
+          }));
+          dispatch({ type: "setUsers", payload: usersToStore });
+        }
+      })
+      .catch(err => console.error("Failed to fetch users:", err))
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+      
+    return () => { isMounted = false; };
+  }, [dispatch]);
 
   const filteredSkillsOptions = useMemo(() => {
     if (!filterSkill) return AVAILABLE_SKILLS;
@@ -123,7 +145,7 @@ export default function DiscoverBuilders() {
     return filtered;
   }, [users, searchTerms, filterSkill, q]);
 
-  const follow = (toId: string) => {
+  const follow = async (toId: string) => {
     if (!state.currentUser) return;
     dispatch({ type: "follow", payload: { fromId: state.currentUser.id, toId } });
     playSuccessSound();
@@ -131,21 +153,74 @@ export default function DiscoverBuilders() {
       description: "You will now see their posts.",
       icon: "🎉"
     });
-  };
-  const unfollow = (toId: string) => {
-    if (!state.currentUser) return;
-    dispatch({ type: "unfollow", payload: { fromId: state.currentUser.id, toId } });
+    
+    // Sync with backend
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        await fetch(`/api/v1/users/${toId}/follow`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error("Failed to sync follow with backend:", err);
+      }
+    }
   };
 
-  const sendRequest = (toId: string) => {
+  const unfollow = async (toId: string) => {
     if (!state.currentUser) return;
-    const req = { id: `req_${Date.now()}`, fromId: state.currentUser.id, toId, message: "Hi — I'd like to collaborate on your project", status: "pending", createdAt: new Date().toISOString() } as any;
-    dispatch({ type: "sendRequest", payload: req });
-    playSuccessSound();
-    toast.success("Connection Request Sent", {
-      description: "We'll let you know when they respond.",
-      icon: "✨"
+    dispatch({ type: "unfollow", payload: { fromId: state.currentUser.id, toId } });
+    
+    // Sync with backend
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        await fetch(`/api/v1/users/${toId}/follow`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+      } catch (err) {
+        console.error("Failed to sync unfollow with backend:", err);
+      }
+    }
+  };
+
+  const sendRequest = async (toId: string) => {
+    if (!state.currentUser) return;
+    const reqId = `req_${Date.now()}`;
+    dispatch({
+      type: "sendRequest",
+      payload: {
+        id: reqId,
+        fromId: state.currentUser.id,
+        toId,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      }
     });
+    playSuccessSound();
+    toast.success("Request Sent!", {
+      description: "They will be notified of your request.",
+      icon: "✉️"
+    });
+    
+    // Sync with backend
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        await fetch(`/api/v1/requests/`, {
+          method: "POST",
+          headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ to_id: parseInt(toId, 10) })
+        });
+      } catch (err) {
+        console.error("Failed to sync request with backend:", err);
+      }
+    }
   };
 
   return (
@@ -247,7 +322,7 @@ export default function DiscoverBuilders() {
           ))
         ) : results.length ? results.map(u => (
           <div key={u.id} className="ds-card p-4">
-            <Link to={`/profile/${u.id}`} className="flex items-center gap-3 hover:opacity-85 transition-opacity text-foreground no-underline">
+            <Link to={`/profile/${u.username}`} className="flex items-center gap-3 hover:opacity-85 transition-opacity text-foreground no-underline">
               <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center shrink-0 overflow-hidden">
                 {u.avatar && /^(data:|https?:\/\/)/.test(u.avatar) ? (
                   <img src={u.avatar} alt={u.name || "Profile"} className="size-full object-cover" />
@@ -269,6 +344,13 @@ export default function DiscoverBuilders() {
                 <button onClick={()=>unfollow(u.id)} className="h-9 px-3 rounded-xl bg-card border">Unfollow</button>
               ) : (
                 <button onClick={()=>follow(u.id)} className="h-9 px-3 rounded-xl bg-primary text-white">Follow</button>
+              )}
+              {state.currentUser && u.id !== state.currentUser.id && (
+                Object.values(state.requests).some(r => r.fromId === state.currentUser?.id && r.toId === u.id && r.status === "pending") ? (
+                  <button className="h-9 px-3 rounded-xl bg-secondary text-foreground text-sm font-medium" disabled>Requested</button>
+                ) : (
+                  <button onClick={() => sendRequest(u.id)} className="h-9 px-3 rounded-xl bg-card border hover:bg-secondary text-sm font-medium transition-colors">Connect</button>
+                )
               )}
             </div>
           </div>

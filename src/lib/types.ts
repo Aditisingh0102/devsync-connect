@@ -164,6 +164,7 @@ export type AppAction =
   | { type: "updateProject"; payload: Project }
   | { type: "deleteProject"; payload: { projectId: ID } }
   | { type: "toggleSaveBuilder"; payload: { builderId: ID } }
-  | { type: "recordLogin"; payload: { userId: ID } };
+  | { type: "recordLogin"; payload: { userId: ID } }
+  | { type: "setUsers"; payload: User[] };
 
 export {};

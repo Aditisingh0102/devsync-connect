@@ -103,7 +103,7 @@ export default function Onboarding() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          await fetch("http://localhost:8000/api/v1/users/me", {
+          await fetch(`/api/v1/users/me`, {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",

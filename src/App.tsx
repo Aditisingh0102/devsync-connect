@@ -48,7 +48,7 @@ const App = () => (
             <Route path="/find-builders" element={<DiscoverBuilders />} />
             <Route path="/my-team" element={<MyTeam />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/profile/:username" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfilePage />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/team/:id" element={<TeamDetail />} />

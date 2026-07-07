@@ -47,14 +47,26 @@ export default function Profile() {
   }, [queryTab]);
   const { state } = useApp();
   const params = useParams();
-  const profileId = params.id || state.currentUser?.id;
-  const isOwnProfileRoute = !params.id;
-  const user = (profileId && state.users[profileId]) || state.currentUser || null;
+  const profileUsername = params.username || state.currentUser?.username;
+  const isOwnProfileRoute = !params.username;
+  
+  // Find user by username
+  const user = profileUsername 
+    ? Object.values(state.users).find(u => u.username === profileUsername)
+    : state.currentUser;
   const isLoggedIn = !!state.currentUser;
   const profile = (user ?? {}) as any;
 
+  const profilePosts = useMemo(() => Object.values(state.posts).filter((post) => post.authorId === profile?.id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts, profile?.id]);
+
   const contributions = useMemo(() => {
-    const history: Record<string, number> = profile?.loginHistory || {};
+    const history: Record<string, number> = { ...(profile?.loginHistory || {}) };
+    
+    // Add dynamically calculated post contributions
+    profilePosts.forEach(post => {
+      const dateKey = new Date(post.createdAt).toISOString().slice(0, 10);
+      history[dateKey] = (history[dateKey] || 0) + 1;
+    });
 
     // Build a 53×7 grid (371 cells) ending on today
     const today = new Date();
@@ -105,35 +117,28 @@ export default function Profile() {
   }, [profile]);
 
   const profileTabs = useMemo(() => {
-    if (state.currentUser && profileId === state.currentUser.id) {
+    if (state.currentUser && user?.id === state.currentUser.id) {
       return ["Overview", "Posts", "Saved", "Projects", "Working Projects", "Activity", "Network", "Requests"];
     }
     return ["Overview", "Posts", "Projects", "Working Projects", "Activity", "Network", "Requests"];
-  }, [state.currentUser, profileId]);
+  }, [state.currentUser, user?.id]);
 
-  const profilePosts = useMemo(() => Object.values(state.posts).filter((post) => post.authorId === profile?.id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts, profile?.id]);
+
 
   const dynamicChartData = useMemo(() => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const dataMap: Record<string, { m: string, c: number, projects: string[] }> = {};
     
     const today = new Date();
-    for (let i = 7; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const mName = months[d.getMonth()];
       dataMap[mName] = { m: mName, c: 0, projects: [] };
     }
     
-    const projects = profile?.contributedProjects || [];
-    projects.forEach((proj: string, idx: number) => {
-      const keys = Object.keys(dataMap);
-      const randomMonth = keys[(proj.length + idx) % keys.length];
-      dataMap[randomMonth].c += 12;
-      if (!dataMap[randomMonth].projects.includes(proj)) {
-        dataMap[randomMonth].projects.push(proj);
-      }
-    });
-    
+    // Instead of mock contributedProjects, we can use workingProjects, or just leave it relying on posts.
+    // Let's use workingProjects if they have any dates, but since they don't, we'll map them randomly like before or skip.
+    // Actually, skipping is better so it is 0 initially. We'll just rely on posts for accurate dynamic data.
     profilePosts.forEach(post => {
       const d = new Date(post.createdAt);
       const mName = months[d.getMonth()];
@@ -144,13 +149,9 @@ export default function Profile() {
         }
       }
     });
-    
-    Object.values(dataMap).forEach(d => {
-       if (d.c === 0) d.c = Math.floor(Math.random() * 6) + 2;
-    });
 
     return Object.values(dataMap);
-  }, [profile?.contributedProjects, profilePosts]);
+  }, [profilePosts]);
 
   const savedPosts = useMemo(() => {
     const savedIds = profile?.savedPosts || [];
