@@ -3,7 +3,7 @@ import type { AppState, AppAction, AppNotification, User, Post, Response, Review
 import { projects as mockProjects } from "../data/mock";
 
 // Persistence helpers
-const STORAGE_KEY = "devsync_app_state_v3";
+const STORAGE_KEY = "devsync_app_state_v4";
 
 function loadState(): AppState {
   try {
@@ -99,80 +99,11 @@ function saveState(state: AppState) {
 }
 
 function getInitialState(): AppState {
-  // Seed demo users and posts to make the app feel multi-user and alive
-  const demoUsers: Record<string, User> = {};
-  const names = ["Priya Mehta", "Rohan Verma", "Alex Carter", "Sarah Khan", "Jordan Lee", "Neha Sharma", "Aarav Gupta"];
-  names.forEach((n, i) => {
-    const id = `u_${i + 1}`;
-    demoUsers[id] = {
-      id,
-      name: n,
-      username: `${n.split(" ")[0].toLowerCase()}${Math.floor(100 + Math.random() * 900)}`,
-      handle: `@${n.split(" ")[0].toLowerCase()}`,
-      avatar: n.split(" ").map((s) => s[0]).slice(0, 2).join("") ,
-      bio: "Building useful projects and collaborating with college teams.",
-      college: `Institute of Technology ${Math.floor(1 + Math.random() * 10)}`,
-      skills: ["React", "Node", "Python"].slice(0, 2 + (i % 2)),
-      roles: ["Frontend", "Full Stack"].slice(0, 1 + (i % 2)),
-      domains: ["Web", "AI", "OpenSource"].slice(0, 1 + (i % 3)),
-      links: { github: "https://github.com/example", linkedin: "https://linkedin.com/", portfolio: "https://example.com" },
-      followers: [],
-      following: [],
-      pendingRequests: [],
-      sentRequests: [],
-      profileCompleted: true,
-    } as User;
-  });
-
-  const demoPosts: Record<string, Post> = {};
-  const sample = [
-    { authorIndex: 0, title: "Looking for Frontend for HackPrep Planner", body: "Building a dashboard to help students prepare for hackathons. Need a frontend dev.", type: "Looking for Team", projectName: "HackPrep Planner" },
-    { authorIndex: 1, title: "Need ML help for PeerCode Review Hub", body: "Seeking an ML engineer to help build code quality suggestions.", type: "Seeking Contributor", projectName: "PeerCode Review Hub" },
-    { authorIndex: 2, title: "Open to Collaborate on Campus Connect Live", body: "Working on a live events platform for college clubs.", type: "Open to Join", projectName: "Campus Connect Live" },
-  ];
-  sample.forEach((s, idx) => {
-    const id = `p_${idx + 1}`;
-    const authorId = `u_${s.authorIndex + 1}`;
-    demoPosts[id] = {
-      id,
-      authorId,
-      title: s.title,
-      body: s.body,
-      type: s.type as any,
-      projectName: s.projectName,
-      domain: idx % 2 === 0 ? "Frontend" : "AI/ML",
-      tech: idx % 2 === 0 ? ["React", "TypeScript"] : ["Python", "PyTorch"],
-      projectType: idx % 2 === 0 ? "Hackathon" : "Open Source",
-      lookingFor: "Frontend, Designer",
-      createdAt: new Date(Date.now() - (idx * 1000 * 60 * 60 * 24)).toISOString(),
-      status: "open",
-      responses: [],
-    } as Post;
-  });
-
-  const demoProjects: Record<string, Project> = {};
-  const ownerNameToId: Record<string, string> = {
-    "Priya Mehta": "u_1",
-    "Rohan Verma": "u_2",
-    "Alex Carter": "u_3",
-    "Sarah Khan": "u_4",
-    "Jordan Lee": "u_5",
-  };
-  mockProjects.forEach((p) => {
-    const ownerId = ownerNameToId[p.owner];
-    demoProjects[p.id] = {
-      ...p,
-      ownerId,
-      memberIds: ownerId ? [ownerId] : [],
-      status: p.status as any,
-    };
-  });
-
   return {
     currentUser: undefined,
-    users: demoUsers,
-    posts: demoPosts,
-    projects: demoProjects,
+    users: {},
+    posts: {},
+    projects: {},
     responses: {},
     reviews: {},
     requests: {},

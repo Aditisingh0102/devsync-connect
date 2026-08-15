@@ -15,7 +15,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-const Hero3D = lazy(() => import("@/components/Hero3D"));
+import Hero3D from "@/components/Hero3D";
 
 
 

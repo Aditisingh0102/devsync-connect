@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense, useMemo, useEffect } from "react";
 import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
-const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
+import ProfileHero3D from "@/components/ProfileHero3D";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
