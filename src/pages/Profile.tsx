@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useMemo, useEffect } from "react";
-import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope } from "lucide-react";
+import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope, Activity } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
 const ProfileHero3D = lazy(() => import("@/components/ProfileHero3D"));
 const ProfileChart = lazy(() => import("@/components/ProfileChart"));
@@ -605,11 +605,32 @@ export default function Profile() {
 
       {tab === "Activity" && (
         <div className="ds-card p-6">
-          <ul className="space-y-3">
-            {["Joined DevSync Team Match AI", "Completed Sprint 3", "Earned 'Team Lead' badge", "Pushed 12 commits to Campus Connect"].map((t, i) => (
-              <li key={i} className="p-3 rounded-xl bg-surface-alt border border-border text-sm">{t}</li>
-            ))}
-          </ul>
+          {(() => {
+            const activities = [
+              ...workingProjects.map(p => `Joined project: ${p.title}`),
+              ...profilePosts.map(p => `Published post: ${p.title}`),
+              ...(profile?.following?.length ? [`Followed ${profile.following.length} builders`] : [])
+            ];
+            
+            return activities.length > 0 ? (
+              <ul className="space-y-3">
+                {activities.map((t, i) => (
+                  <li key={i} className="p-3 rounded-xl bg-surface-alt border border-border text-sm flex items-center gap-3">
+                    <div className="size-2 rounded-full bg-primary" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <div className="size-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+                  <Activity className="size-8 text-muted-foreground" />
+                </div>
+                <h4 className="text-lg font-semibold text-foreground mb-2">No activity yet</h4>
+                <p className="text-sm text-muted-foreground max-w-sm">This user hasn't engaged in any visible activity.</p>
+              </div>
+            );
+          })()}
         </div>
       )}
 

@@ -56,6 +56,7 @@ export type Post = {
   lookingFor?: string | string[];
   imageUrl?: string;
   referenceLink?: string;
+  deadline?: string;
   createdAt: string;
   status?: "open" | "closed" | "filled";
   visibility?: "public" | "private" | "friends";

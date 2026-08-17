@@ -800,6 +800,7 @@ export function createPostDraft(input: Partial<Post>): Post {
     lookingFor: input.lookingFor,
     imageUrl: input.imageUrl,
     referenceLink: input.referenceLink,
+    deadline: input.deadline,
     createdAt: new Date().toISOString(),
     status: input.status || "open",
     visibility: input.visibility || "public",

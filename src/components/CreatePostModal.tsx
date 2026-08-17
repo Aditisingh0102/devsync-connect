@@ -110,6 +110,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
   const [projectType, setProjectType] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [referenceLink, setReferenceLink] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private" | "friends">("public");
 
@@ -208,6 +209,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
       projectType: projectType || undefined,
       lookingFor: selectedRoles.length > 0 ? selectedRoles : undefined,
       referenceLink: referenceLink.trim() || undefined,
+      deadline: deadline || undefined,
       imageUrl: imageUrl || undefined,
       visibility,
     });
@@ -229,6 +231,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
     setProjectType("");
     setSelectedRoles([]);
     setReferenceLink("");
+    setDeadline("");
     setImageUrl("");
     setVisibility("public");
 
@@ -589,8 +592,8 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
               </div>
             </div>
 
-            {/* Optional Links and Image */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Optional Links, Deadline and Image */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                   Reference Link (optional)
@@ -600,7 +603,7 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
                   <input
                     value={referenceLink}
                     onChange={(e) => setReferenceLink(e.target.value)}
-                    placeholder="e.g. https://github.com/your-project"
+                    placeholder="e.g. https://github.com/..."
                     className="ds-input pl-10"
                   />
                 </div>
@@ -608,7 +611,22 @@ export default function CreatePostModal({ open, onClose }: CreatePostModalProps)
 
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                  Project Image Preview (optional)
+                  Application Deadline (optional)
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type="date"
+                    value={deadline}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setDeadline(e.target.value)}
+                    className="ds-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                  Project Image (optional)
                 </label>
                 <label className="h-11 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-2 cursor-pointer hover:bg-secondary w-full transition-all">
                   <ImageIcon className="size-4 text-muted-foreground" />

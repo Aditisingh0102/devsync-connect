@@ -6,7 +6,7 @@ import { useApp } from "@/lib/store";
 
 export default function Layout() {
   const { state } = useApp();
-  const unreadCount = state.currentUser && state.notifications ? Object.values(state.notifications).filter((n) => !n.read).length : 0;
+  const unreadCount = state.currentUser && state.notifications ? Object.values(state.notifications).filter((n) => !n.read && (!n.userId || n.userId === state.currentUser!.id)).length : 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16 md:pb-0">

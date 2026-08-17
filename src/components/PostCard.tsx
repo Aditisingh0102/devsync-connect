@@ -77,7 +77,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
           )}
 
           {/* Project Details Grid */}
-          {(post.projectName || post.projectType || post.domain || post.lookingFor || post.referenceLink) && (
+          {(post.projectName || post.projectType || post.domain || post.lookingFor || post.referenceLink || post.deadline) && (
             <div className="grid grid-cols-2 gap-3 mt-3.5 p-3 rounded-xl bg-surface-alt border border-border text-xs">
               {post.projectName && (
                 <div className="col-span-2 pb-1.5 border-b border-border/50">
@@ -125,6 +125,12 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
                   <a href={post.referenceLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold mt-0.5 block truncate">
                     {post.referenceLink}
                   </a>
+                </div>
+              )}
+              {post.deadline && (
+                <div className="col-span-2 border-t border-border/50 pt-2 mt-1">
+                  <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Deadline</span>
+                  <span className="font-semibold text-danger mt-0.5 block">{new Date(post.deadline).toLocaleDateString()}</span>
                 </div>
               )}
             </div>
