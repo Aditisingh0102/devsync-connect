@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -118,9 +118,18 @@
 
 @layer base {
   * { @apply border-border; }
-  html { font-family: 'Inter', system-ui, sans-serif; }
-  body { @apply bg-background text-foreground antialiased leading-relaxed; font-feature-settings: "cv11","ss01"; }
-  h1,h2,h3,h4,h5,h6 { @apply font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  html { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body { 
+    @apply bg-background text-foreground antialiased leading-relaxed; 
+    font-weight: 400;
+    font-feature-settings: "cv11","ss01"; 
+    -webkit-font-smoothing: antialiased; 
+    -moz-osx-font-smoothing: grayscale; 
+  }
+  h1 { @apply font-extrabold text-foreground; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; letter-spacing: -0.02em; }
+  h2 { @apply font-bold text-foreground; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; letter-spacing: -0.015em; }
+  h3,h4,h5,h6 { @apply font-semibold text-foreground; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; letter-spacing: -0.01em; }
+  button { @apply font-medium; }
   
   /* Modern Slim Scrollbar to prevent layout overlaps on Windows */
   ::-webkit-scrollbar {
@@ -143,8 +152,8 @@
   .ds-card-hover { @apply hover:shadow-[var(--shadow-md)] hover:-translate-y-0.5; }
   .ds-chip { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-secondary text-secondary-foreground; }
   .ds-chip-primary { @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-[hsl(var(--primary-soft))] text-primary; }
-  .ds-section-title { @apply text-2xl md:text-3xl font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
-  .ds-page-title { @apply text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tighter text-foreground; font-family: 'Space Grotesk', 'Inter', sans-serif; }
+  .ds-section-title { @apply text-2xl md:text-3xl font-bold text-foreground; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; letter-spacing: -0.015em; }
+  .ds-page-title { @apply text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; letter-spacing: -0.02em; }
   .glass-panel { background: linear-gradient(135deg, hsl(var(--card) / 0.76), hsl(var(--card) / 0.5)); backdrop-filter: blur(12px); }
   .ds-input {
     @apply w-full h-11 px-3.5 rounded-xl bg-secondary border border-border text-sm outline-none transition-colors;
