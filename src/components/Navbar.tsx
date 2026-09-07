@@ -74,8 +74,7 @@ export default function Navbar() {
               to={l.to}
               end={l.to === "/"}
               className={({ isActive }) =>
-                `px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? "bg-primary-soft text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                `px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-primary-soft text-primary" : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`
               }
             >
@@ -133,6 +132,7 @@ export default function Navbar() {
             <DropdownMenuSeparator />
             {currentUser ? (
               <>
+                <DropdownMenuItem asChild><Link to="/dashboard">Dashboard</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link to="/feed">Collaboration Feed</Link></DropdownMenuItem>
