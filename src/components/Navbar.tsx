@@ -131,30 +131,35 @@ export default function Navbar() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Hello! {currentUser?.name || "Guest"}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/feed">Collaboration Feed</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/my-projects">My Projects</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/profile?tab=Saved">Saved</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/profile?tab=Network">Following</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/signup">Onboarding</Link></DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <button
-                className="w-full text-left"
-                onClick={() => {
-                  if (currentUser) {
-                    dispatch({ type: "setCurrentUser" });
-                    navigate("/");
-                  } else {
-                    navigate("/login");
-                  }
-                }}
-              >
-                {currentUser ? "Sign out" : "Sign in"}
-              </button>
-            </DropdownMenuItem>
+            {currentUser ? (
+              <>
+                <DropdownMenuItem asChild><Link to="/profile">Profile</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/settings">Settings</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/feed">Collaboration Feed</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/my-projects">My Projects</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/profile?tab=Saved">Saved</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/profile?tab=Network">Following</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/signup">Onboarding</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <button
+                    className="w-full text-left"
+                    onClick={() => {
+                      dispatch({ type: "setCurrentUser" });
+                      navigate("/");
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem asChild><Link to="/login">Login</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/signup">Sign Up</Link></DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
