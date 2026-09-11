@@ -175,14 +175,16 @@ export default function Index() {
             </div>
             <div className="mt-8 flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex -space-x-2">
-                {["AC", "PM", "RV", "SK"].map((a, i) => {
+                {Object.values(state.users).slice(0, 4).map((u, i) => {
                   const depthClasses = ["z-40", "z-30", "z-20", "z-10"];
                   return (
-                    <div key={a} className={`size-8 rounded-full ring-2 ring-background bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center ${depthClasses[i]}`}>{a}</div>
+                    <div key={u.id} className={`size-8 rounded-full ring-2 ring-background bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center ${depthClasses[i]}`}>
+                      {u.avatar || u.name.substring(0, 2).toUpperCase()}
+                    </div>
                   );
                 })}
               </div>
-              <div><span className="font-semibold text-foreground">8.6K+ students</span> already syncing</div>
+              <div><span className="font-semibold text-foreground">{Object.keys(state.users).length} students</span> already syncing</div>
             </div>
           </div>
 
@@ -190,12 +192,9 @@ export default function Index() {
             <Suspense fallback={<div className="absolute inset-0 bg-gradient-primary opacity-10 animate-pulse" />}>
               <Hero3D className="absolute inset-0" />
             </Suspense>
-            <div className="absolute top-4 left-4 glass-panel rounded-xl px-3 py-2 text-xs font-medium border border-border">
-                  <span className="inline-flex items-center gap-1.5"><span className="size-2 rounded-full bg-success animate-pulse" /> 3D shoe preview · live</span>
-            </div>
             <div className="absolute bottom-4 right-4 glass-panel rounded-xl px-4 py-3 text-xs border border-border">
               <div className="font-semibold uppercase tracking-wider text-[10px] text-muted-foreground mb-1">Design Quality</div>
-              <div className="text-primary font-display font-extrabold text-2xl">92%</div>
+              <div className="text-primary font-display font-extrabold text-2xl">5%</div>
             </div>
           </div>
         </div>

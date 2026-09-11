@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { api, setToken } from "@/lib/api";
 
 export default function Login() {
   const { state, dispatch } = useApp();
@@ -21,42 +22,33 @@ export default function Login() {
     return Object.keys(e).length === 0;
   };
 
-  const submit = () => {
+  const submit = async () => {
     if (!validate()) return;
 
     setIsLoading(true);
 
-    // Simulate a brief loading state for polish
-    setTimeout(() => {
-      const users = Object.values(state.users || {});
-      const trimmedId = identifier.trim().toLowerCase();
+    try {
+      const tokenRes = await api.login({
+        identifier: identifier.trim(),
+        password: password,
+      });
 
-      // Find user by username, handle, or email
-      let user = users.find(
-        (u) =>
-          u.username?.toLowerCase() === trimmedId ||
-          u.handle?.toLowerCase() === `@${trimmedId}` ||
-          u.handle?.toLowerCase() === trimmedId ||
-          u.email?.toLowerCase() === trimmedId
-      );
+      setToken(tokenRes.access_token);
 
-      if (user) {
-        // User found — verify password if they have one
-        if (user.password && user.password !== password) {
-          setErrors({ password: "Incorrect password. Please try again." });
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        // No matching user found
-        setErrors({ identifier: "Account does not exist. " });
-        setIsLoading(false);
-        return;
-      }
-
+      const user = await api.getMe();
+      
       dispatch({ type: "setCurrentUser", payload: user });
       navigate(user.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
-    }, 400);
+    } catch (err: any) {
+      const msg = err.message || "An error occurred";
+      if (msg.toLowerCase().includes("password")) {
+        setErrors({ password: "Incorrect password. Please try again." });
+      } else {
+        setErrors({ identifier: msg });
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

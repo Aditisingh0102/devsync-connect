@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from "react";
 import type { AppState, AppAction, AppNotification, User, Post, Response, Review, Request, Project } from "./types";
 import { projects as mockProjects } from "../data/mock";
+import { api, getToken, removeToken } from "./api";
 
 // Persistence helpers
 const STORAGE_KEY = "devsync_app_state_v4";
@@ -127,7 +128,10 @@ function createNotification(input: Partial<AppNotification> & Pick<AppNotificati
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "setCurrentUser":
-      if (!action.payload) return { ...state, currentUser: undefined };
+      if (!action.payload) {
+        removeToken();
+        return { ...state, currentUser: undefined };
+      }
       return { ...state, currentUser: action.payload, users: { ...state.users, [action.payload.id]: action.payload } };
     case "createPost": {
       const p = action.payload as Post;
@@ -660,6 +664,22 @@ const AppContext = createContext<{
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(reducer, undefined, loadState);
+
+  // Hydrate user from backend if token exists
+  useEffect(() => {
+    const initAuth = async () => {
+      if (getToken()) {
+        try {
+          const user = await api.getMe();
+          dispatch({ type: "setCurrentUser", payload: user });
+        } catch (err) {
+          console.error("Failed to authenticate with token", err);
+          dispatch({ type: "setCurrentUser", payload: undefined });
+        }
+      }
+    };
+    initAuth();
+  }, []);
 
   // Save state to localStorage whenever it changes
   useEffect(() => {

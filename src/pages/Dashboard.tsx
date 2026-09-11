@@ -1,10 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList } from "lucide-react";
 import { useApp } from "@/lib/store";
 
 export default function Dashboard() {
   const { state } = useApp();
+  const location = useLocation();
+  const isNewSignup = location.state?.isNewSignup;
   const me = state.currentUser;
   const myPosts = useMemo(() => {
     const posts = Object.values(state.posts) as Array<{ authorId: string; id: string; title: string; domain?: string; projectType?: string; type: string; status?: string }>;
@@ -34,7 +36,9 @@ export default function Dashboard() {
         <div className="ds-card p-7 bg-gradient-hero flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <span className="ds-chip-primary">Dashboard</span>
-            <h1 className="ds-page-title mt-2">Welcome back, {me.name}!</h1>
+            <h1 className="ds-page-title mt-2">
+              {isNewSignup ? `Welcome, ${me.name}!` : `Welcome back, ${me.name}!`}
+            </h1>
             <p className="text-muted-foreground mt-1 max-w-2xl">Your projects, requests, followers, and recent activity are connected here.</p>
           </div>
           <div className="flex gap-2 flex-wrap">

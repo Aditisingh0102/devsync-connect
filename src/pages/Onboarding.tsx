@@ -128,7 +128,7 @@ export default function Onboarding() {
         links: existingUser?.links || { github: "", linkedin: "", portfolio: "" },
       } as any;
       dispatch({ type: "setCurrentUser", payload: user });
-      navigate("/dashboard");
+      navigate("/dashboard", { state: { isNewSignup: true } });
     } else setStep(step + 1);
   };
 

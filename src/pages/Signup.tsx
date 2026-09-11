@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, UserPlus, ShieldCheck, LogIn } from "lucide-react";
+import { api, setToken } from "@/lib/api";
 
 function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -59,7 +60,7 @@ export default function Signup() {
     else if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) e.username = "Only letters, numbers, and underscores";
     if (!isLoginAttempt) {
       if (!email.trim()) e.email = "Email is required";
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = "Enter a valid email address";
+      else if (!email.trim().toLowerCase().endsWith("@gmail.com")) e.email = "Only @gmail.com addresses are allowed";
     }
     if (!password) e.password = "Password is required";
     else if (!isLoginAttempt && password.length < 8) e.password = "Password must be at least 8 characters";
@@ -72,58 +73,46 @@ export default function Signup() {
 
   const [loginMessage, setLoginMessage] = useState("");
 
-  const submit = () => {
+  const submit = async () => {
     // Validate inputs first
     if (!validate(false)) return;
 
-    const users = Object.values(state.users || {});
-    const trimmedUsername = username.trim().toLowerCase();
-    const trimmedEmail = email.trim().toLowerCase();
+    setLoginMessage("Creating account...");
 
-    // Check if username is already taken
-    const existingUser = users.find(
-      (u) =>
-        u.username?.toLowerCase() === trimmedUsername ||
-        u.handle?.toLowerCase() === `@${trimmedUsername}`
-    );
+    try {
+      await api.signup({
+        username: username.trim(),
+        email: email.trim(),
+        password: password,
+      });
 
-    // Check if email is already registered
-    const existingEmail = users.find(
-      (u) => u.email?.toLowerCase() === trimmedEmail
-    );
+      // Auto login
+      setLoginMessage("Logging in...");
+      const tokenRes = await api.login({
+        identifier: email.trim(),
+        password: password,
+      });
+      setToken(tokenRes.access_token);
+      
+      // Fetch user profile
+      const user = await api.getMe();
+      
+      dispatch({ type: "setCurrentUser", payload: user });
+      
+      setLoginMessage("Success!");
+      setTimeout(() => navigate("/onboarding/profile-setup"), 500);
 
-    if (existingUser || existingEmail) {
-      const e: Record<string, string> = {};
-      if (existingUser) {
-        e.username = "Username is already taken";
+    } catch (err: any) {
+      setLoginMessage("");
+      const msg = err.message || "An error occurred";
+      if (msg.toLowerCase().includes("username")) {
+        setErrors({ username: "Username is already taken" });
+      } else if (msg.toLowerCase().includes("email")) {
+        setErrors({ email: "Email is already registered. Please sign in instead." });
+      } else {
+        setErrors({ agreed: msg });
       }
-      if (existingEmail) {
-        e.email = "Email is already registered. Please sign in instead.";
-      }
-      setErrors(e);
-      return;
     }
-
-    // No existing user — create a new account
-    const id = `u_${Date.now()}`;
-    const user = {
-      id,
-      name: name.trim(),
-      username: username.trim(),
-      handle: `@${username.trim()}`,
-      avatar: name.trim().split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase(),
-      email: email.trim(),
-      password,
-      profileCompleted: false,
-      followers: [],
-      following: [],
-      pendingRequests: [],
-      sentRequests: [],
-      links: { github: "", linkedin: "", portfolio: "" },
-    } as any;
-    dispatch({ type: "updateUser", payload: user });
-    dispatch({ type: "setCurrentUser", payload: user });
-    navigate("/onboarding/profile-setup");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -205,7 +194,7 @@ export default function Signup() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: "" })); }}
                 type="email"
-                placeholder="john@university.edu"
+                placeholder="john@gmail.com"
                 className="ds-input"
                 autoComplete="email"
               />

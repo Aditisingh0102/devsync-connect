@@ -10,6 +10,7 @@ export type User = {
   avatar?: string;
   bio?: string;
   college?: string;
+  year?: string;
   skills?: string[];
   roles?: string[];
   domains?: string[];
