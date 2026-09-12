@@ -1,57 +1,89 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/store";
 import { useSearchParams, Link } from "react-router-dom";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, UserPlus, UserCheck, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { playSuccessSound } from "@/lib/utils";
+import { api, getToken } from "@/lib/api";
 
 const AVAILABLE_SKILLS = [
-  "React",
-  "TypeScript",
-  "JavaScript",
-  "Python",
-  "Node.js",
-  "UI/UX",
-  "ML/AI",
-  "DevOps",
-  "Next.js",
-  "FastAPI",
-  "Tailwind CSS",
-  "Cloud / AWS",
-  "Supabase",
-  "PostgreSQL",
-  "MongoDB",
-  "Figma",
-  "Docker",
-  "Git / GitHub",
-  "ReactNative",
-  "Vue",
-  "Django",
-  "Firebase",
-  "Flutter",
-  "Angular"
+  "React", "TypeScript", "JavaScript", "Python", "Node.js", "UI/UX",
+  "ML/AI", "DevOps", "Next.js", "FastAPI", "Tailwind CSS", "Cloud / AWS",
+  "Supabase", "PostgreSQL", "MongoDB", "Figma", "Docker", "Git / GitHub",
+  "ReactNative", "Vue", "Django", "Firebase", "Flutter", "Angular"
 ];
 
+type BackendUser = {
+  id: number;
+  username: string;
+  name: string | null;
+  avatar: string | null;
+  college: string | null;
+  year: string | null;
+  bio: string | null;
+  skills: string[];
+  domains: string[];
+  created_at: string;
+};
+
 export default function DiscoverBuilders() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") || "");
   const [filterSkill, setFilterSkill] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [liveUsers, setLiveUsers] = useState<BackendUser[]>([]);
+  const [followingIds, setFollowingIds] = useState<number[]>([]);
+  const [followLoading, setFollowLoading] = useState<number | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
+  // Fetch users from backend
+  const fetchUsers = useCallback(async (search?: string, skill?: string) => {
+    setIsLoading(true);
+    try {
+      const params: any = { limit: 50 };
+      if (search?.trim()) params.q = search.trim();
+      if (skill?.trim()) params.skill = skill.trim();
+      const data = await api.listUsers(params);
+      if (Array.isArray(data)) {
+        setLiveUsers(data);
+      }
+    } catch (err) {
+      // Fallback: fetch without search params
+      try {
+        const res = await fetch("https://16.170.255.194.nip.io/api/v1/users/");
+        const data = await res.json();
+        if (Array.isArray(data)) setLiveUsers(data);
+      } catch {
+        // silent fail
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const filteredSkillsOptions = useMemo(() => {
-    if (!filterSkill) return AVAILABLE_SKILLS;
-    return AVAILABLE_SKILLS.filter((s) =>
-      s.toLowerCase().includes(filterSkill.toLowerCase())
-    );
-  }, [filterSkill]);
+  // Load current user's following list
+  useEffect(() => {
+    if (state.currentUser?.following) {
+      const ids = state.currentUser.following.map((id: any) => 
+        typeof id === 'number' ? id : parseInt(id, 10)
+      ).filter((id: number) => !isNaN(id));
+      setFollowingIds(ids);
+    }
+  }, [state.currentUser]);
+
+  // Fetch on mount and when search changes
+  useEffect(() => {
+    fetchUsers(q, filterSkill);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(q, filterSkill);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [q, filterSkill]);
 
   useEffect(() => {
     setQ(searchParams.get("q") || "");
@@ -68,93 +100,72 @@ export default function DiscoverBuilders() {
     setSearchParams(newParams, { replace: true });
   };
 
-  // Parse comma-separated search terms
-  const users = useMemo(() => Object.values(state.users || {}), [state.users]);
-  const searchTerms = useMemo(() =>
-    q.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
-  , [q]);
+  const filteredSkillsOptions = AVAILABLE_SKILLS.filter((s) =>
+    !filterSkill || s.toLowerCase().includes(filterSkill.toLowerCase())
+  );
 
-  const results = useMemo(() => {
-    let filtered = users.filter((u) => {
-      if (!u) return false;
-      if (!q) return true;
-
-      // Builder matches if ANY search term matches any field
-      return searchTerms.some((term) => {
-        if ((u.name || "").toLowerCase().includes(term)) return true;
-        if ((u.username || "").toLowerCase().includes(term)) return true;
-        if ((u.handle || "").toLowerCase().includes(term)) return true;
-        if ((u.skills || []).some((s) => s.toLowerCase().includes(term))) return true;
-        if ((u.domains || []).some((d) => d.toLowerCase().includes(term))) return true;
-        return false;
-      });
-    }).filter((u) => !filterSkill || (u.skills || []).map((x) => x.toLowerCase()).includes(filterSkill.toLowerCase()));
-
-    if (searchTerms.length > 0) {
-      filtered = [...filtered].sort((a, b) => {
-        const getRelevance = (u: typeof a) => {
-          let score = 0;
-          for (const term of searchTerms) {
-            const name = (u.name || "").toLowerCase();
-            const username = (u.username || "").toLowerCase();
-            const handle = (u.handle || "").toLowerCase();
-
-            if (name === term || username === term || handle === term) score += 100;
-            else if (name.startsWith(term) || username.startsWith(term) || handle.startsWith(term)) score += 60;
-            else if (name.includes(term) || username.includes(term) || handle.includes(term)) score += 30;
-
-            (u.skills || []).forEach((skill) => {
-              const skillLower = skill.toLowerCase();
-              if (skillLower === term) score += 40;
-              else if (skillLower.includes(term)) score += 15;
-            });
-
-            (u.domains || []).forEach((domain) => {
-              const domainLower = domain.toLowerCase();
-              if (domainLower === term) score += 20;
-              else if (domainLower.includes(term)) score += 10;
-            });
-          }
-          return score;
-        };
-        return getRelevance(b) - getRelevance(a);
-      });
+  // Follow user via backend
+  const handleFollow = async (userId: number) => {
+    if (!getToken()) {
+      toast.error("Please login first to follow users.");
+      return;
     }
-    return filtered;
-  }, [users, searchTerms, filterSkill]);
-
-  const follow = (toId: string) => {
-    if (!state.currentUser) return;
-    dispatch({ type: "follow", payload: { fromId: state.currentUser.id, toId } });
-    playSuccessSound();
-    toast.success("Followed successfully!", {
-      description: "You will now see their posts.",
-      icon: "🎉"
-    });
-  };
-  const unfollow = (toId: string) => {
-    if (!state.currentUser) return;
-    dispatch({ type: "unfollow", payload: { fromId: state.currentUser.id, toId } });
+    setFollowLoading(userId);
+    try {
+      await api.followUser(userId);
+      setFollowingIds(prev => [...prev, userId]);
+      toast.success("Followed successfully!", { description: "You will now see their posts.", icon: "🎉" });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to follow user");
+    } finally {
+      setFollowLoading(null);
+    }
   };
 
-  const sendRequest = (toId: string) => {
-    if (!state.currentUser) return;
-    const req = { id: `req_${Date.now()}`, fromId: state.currentUser.id, toId, message: "Hi — I'd like to collaborate on your project", status: "pending", createdAt: new Date().toISOString() } as any;
-    dispatch({ type: "sendRequest", payload: req });
-    playSuccessSound();
-    toast.success("Connection Request Sent", {
-      description: "We'll let you know when they respond.",
-      icon: "✨"
-    });
+  // Unfollow user via backend
+  const handleUnfollow = async (userId: number) => {
+    if (!getToken()) return;
+    setFollowLoading(userId);
+    try {
+      await api.unfollowUser(userId);
+      setFollowingIds(prev => prev.filter(id => id !== userId));
+      toast.success("Unfollowed successfully.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unfollow user");
+    } finally {
+      setFollowLoading(null);
+    }
+  };
+
+  // Filter out current user from the list
+  const displayUsers = liveUsers.filter(u => {
+    if (state.currentUser && (u.id === state.currentUser.id || u.username === state.currentUser.username)) {
+      return false;
+    }
+    return true;
+  });
+
+  const getInitials = (user: BackendUser) => {
+    if (user.name) {
+      return user.name.split(" ").map(s => s[0]).slice(0, 2).join("").toUpperCase();
+    }
+    return (user.username || "U").substring(0, 2).toUpperCase();
   };
 
   return (
     <div className="container py-10">
       <div className="ds-card p-6 mb-6">
-        <h1 className="text-2xl font-semibold">Discover Builders</h1>
-        <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain.</p>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="size-10 rounded-xl bg-gradient-primary text-white flex items-center justify-center shadow-glow">
+            <Users className="size-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold">Discover Builders</h1>
+            <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain. <span className="text-primary font-medium">{liveUsers.length} registered</span></p>
+          </div>
+        </div>
         <div className="mt-4 flex gap-2">
-          <input placeholder="Search builders..." value={q} onChange={(e)=>handleSearchChange(e.target.value)} className="ds-input" />
+          <input placeholder="Search builders..." value={q} onChange={(e) => handleSearchChange(e.target.value)} className="ds-input" />
           
           {/* Custom Searchable Select Dropdown */}
           <div className="relative w-56 shrink-0">
@@ -189,10 +200,7 @@ export default function DiscoverBuilders() {
 
             {isOpen && (
               <>
-                {/* Backdrop to close dropdown on click outside */}
                 <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                
-                {/* Dropdown Options List */}
                 <div className="absolute top-12 left-0 right-0 z-50 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto p-1 divide-y divide-border/50 animate-in fade-in slide-in-from-top-1 duration-100">
                   {filteredSkillsOptions.length > 0 ? (
                     filteredSkillsOptions.map((skill) => (
@@ -245,34 +253,73 @@ export default function DiscoverBuilders() {
               </div>
             </div>
           ))
-        ) : results.length ? results.map(u => (
-          <div key={u.id} className="ds-card p-4">
-            <Link to={`/profile/${u.id}`} className="flex items-center gap-3 hover:opacity-85 transition-opacity text-foreground no-underline">
-              <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center shrink-0 overflow-hidden">
-                {u.avatar && /^(data:|https?:\/\/)/.test(u.avatar) ? (
-                  <img src={u.avatar} alt={u.name || "Profile"} className="size-full object-cover" />
-                ) : (
-                  (u.name||"U").split(" ").map((s:any)=>s[0]).slice(0,2).join("")
+        ) : displayUsers.length > 0 ? (
+          displayUsers.map((u) => {
+            const isFollowing = followingIds.includes(u.id);
+            const isLoadingFollow = followLoading === u.id;
+            return (
+              <div key={u.id} className="ds-card p-4 hover:border-primary/30 transition-colors">
+                <Link to={`/profile/${u.username}`} className="flex items-center gap-3 hover:opacity-85 transition-opacity text-foreground no-underline">
+                  <div className="size-12 rounded-full bg-gradient-primary text-white flex items-center justify-center shrink-0 overflow-hidden text-sm font-semibold">
+                    {u.avatar && /^(data:|https?:\/\/)/.test(u.avatar) ? (
+                      <img src={u.avatar} alt={u.name || u.username} className="size-full object-cover" />
+                    ) : (
+                      getInitials(u)
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold">{u.name || u.username}</div>
+                    <div className="text-xs text-muted-foreground">@{u.username} · {u.college || "Student"}</div>
+                    {u.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{u.bio}</p>}
+                  </div>
+                </Link>
+                {u.skills && u.skills.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {u.skills.slice(0, 5).map((s) => (
+                      <span key={s} className="ds-chip-primary">{s}</span>
+                    ))}
+                    {u.skills.length > 5 && (
+                      <span className="text-[10px] text-muted-foreground px-1.5 py-0.5">+{u.skills.length - 5} more</span>
+                    )}
+                  </div>
                 )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between"><div>
-                  <div className="font-semibold">{u.name}</div>
-                  <div className="text-xs text-muted-foreground">{u.handle} · {u.college || "—"}</div>
+                <div className="mt-3 flex items-center gap-2">
+                  {isFollowing ? (
+                    <button
+                      onClick={() => handleUnfollow(u.id)}
+                      disabled={isLoadingFollow}
+                      className="h-9 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 hover:bg-secondary transition-colors disabled:opacity-50"
+                    >
+                      {isLoadingFollow ? (
+                        <div className="size-3.5 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+                      ) : (
+                        <UserCheck className="size-3.5 text-primary" />
+                      )}
+                      Following
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleFollow(u.id)}
+                      disabled={isLoadingFollow}
+                      className="h-9 px-4 rounded-xl bg-primary text-white text-sm font-medium inline-flex items-center gap-1.5 hover:bg-primary-hover transition-colors disabled:opacity-50"
+                    >
+                      {isLoadingFollow ? (
+                        <div className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <UserPlus className="size-3.5" />
+                      )}
+                      Follow
+                    </button>
+                  )}
                 </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">{(u.skills||[]).slice(0,5).map(s=> <span key={s} className="ds-chip-primary">{s}</span>)}</div>
               </div>
-            </Link>
-            <div className="mt-3 flex items-center gap-2">
-              {state.currentUser && (state.currentUser.following || []).includes(u.id) ? (
-                <button onClick={()=>unfollow(u.id)} className="h-9 px-3 rounded-xl bg-card border">Unfollow</button>
-              ) : (
-                <button onClick={()=>follow(u.id)} className="h-9 px-3 rounded-xl bg-primary text-white">Follow</button>
-              )}
-            </div>
+            );
+          })
+        ) : (
+          <div className="ds-card p-6 text-center col-span-full">
+            <p className="text-muted-foreground">No builders found. Try different keywords.</p>
           </div>
-        )) : <div className="ds-card p-4 text-sm text-muted-foreground">No builders found. Try different keywords.</div>}
+        )}
       </div>
     </div>
   );

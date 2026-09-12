@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, UserPlus, ShieldCheck, LogIn } from "lucide-react";
 import { api, setToken } from "@/lib/api";
+import { toast } from "sonner";
 
 function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
   let score = 0;
@@ -31,6 +32,12 @@ const PASSWORD_RULES = [
 export default function Signup() {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (state.currentUser) {
+      navigate("/dashboard");
+    }
+  }, [state.currentUser, navigate]);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -95,12 +102,23 @@ export default function Signup() {
       setToken(tokenRes.access_token);
       
       // Fetch user profile
-      const user = await api.getMe();
+      let user = await api.getMe();
+      
+      // Backend doesn't store full name during signup, so we update it now
+      if (name.trim()) {
+        try {
+          user = await api.updateMe({ name: name.trim() });
+        } catch (e) {
+          console.error("Failed to save full name:", e);
+        }
+      }
+      user.name = name.trim(); // Ensure local state also reflects it
       
       dispatch({ type: "setCurrentUser", payload: user });
       
       setLoginMessage("Success!");
-      setTimeout(() => navigate("/onboarding/profile-setup"), 500);
+      toast.success(`Welcome to DevSync, ${user.name}!`, { icon: "🎉" });
+      setTimeout(() => navigate("/dashboard"), 500);
 
     } catch (err: any) {
       setLoginMessage("");

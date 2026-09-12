@@ -47,40 +47,54 @@ export type PostType =
 export type Post = {
   id: ID;
   authorId: ID;
+  author_id?: ID;
   title: string;
   body: string;
   type: PostType;
   domain?: string | string[];
   tech?: string[];
   projectType?: string;
+  project_type?: string;
   projectName?: string;
+  project_name?: string;
   lookingFor?: string | string[];
+  looking_for?: string | string[];
   imageUrl?: string;
+  image_url?: string;
   referenceLink?: string;
+  reference_link?: string;
   createdAt: string;
+  created_at?: string;
   status?: "open" | "closed" | "filled";
   visibility?: "public" | "private" | "friends";
   responses?: ID[];
+  [key: string]: any;
 };
 
 export type Project = {
   id: ID;
   title: string;
+  name?: string;
   owner: string;
   ownerId?: ID;
+  owner_id?: ID;
   team: string;
   description: string;
   tech: string[];
   roles: string[];
   members: number;
   maxMembers: number;
+  max_members?: number;
   memberIds?: ID[];
-  progress: number;
+  member_ids?: ID[];
+  progress?: number;
   status: "Recruiting" | "In Progress" | "Completed";
   category: string;
   bookmarked?: boolean;
   imageUrl?: string;
+  image_url?: string;
   visibility?: "public" | "friends" | "private";
+  [key: string]: any;
 };
 
 export type Response = {

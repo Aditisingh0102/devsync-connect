@@ -140,7 +140,7 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation
     if (!name.trim()) {
       toast({
@@ -207,6 +207,21 @@ export default function EditProfilePage() {
         portfolio: (portfolio || "").trim(),
       },
     };
+
+    try {
+      import('@/lib/api').then(async ({ api }) => {
+        await api.updateMe({
+          name: name.trim(),
+          bio: bio.trim(),
+          college: college.trim(),
+          year: year,
+          skills: skills,
+          domains: domains
+        });
+      }).catch(console.error);
+    } catch(e) {
+      console.error(e);
+    }
 
     dispatch({
       type: "updateUser",

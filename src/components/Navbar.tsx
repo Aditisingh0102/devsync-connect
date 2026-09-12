@@ -24,8 +24,12 @@ export default function Navbar() {
   const { state, dispatch } = useApp();
   const currentUser = state.currentUser;
   const navigate = useNavigate();
-  const avatar = currentUser?.avatar || "AC";
   const isImageAvatar = !!currentUser?.avatar && /^(data:|https?:\/\/)/.test(currentUser.avatar);
+  const getInitials = (u: any) => {
+    if (u?.name) return u.name.split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase();
+    return (u?.username || "U").substring(0, 2).toUpperCase();
+  };
+  const avatar = isImageAvatar ? currentUser.avatar : getInitials(currentUser);
   const isDark = resolvedTheme === "dark";
 
   const [searchParams] = useSearchParams();
@@ -119,7 +123,7 @@ export default function Navbar() {
                 <Avatar className="size-8 overflow-hidden">
                   {isImageAvatar ? <img src={avatar} alt={currentUser?.name || "Profile"} className="size-full object-cover" /> : <AvatarFallback className="bg-gradient-primary text-white text-xs font-semibold">{avatar}</AvatarFallback>}
                 </Avatar>
-                <span className="text-sm font-medium">{currentUser?.name?.split(" ")[0]}</span>
+                <span className="text-sm font-medium">{currentUser?.name || currentUser?.username}</span>
               </button>
             ) : (
               <Link to="/login" className="hidden md:flex items-center gap-2 pl-3 pr-3 h-10 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors">
@@ -140,7 +144,6 @@ export default function Navbar() {
                 <DropdownMenuItem asChild><Link to="/my-team">My Team</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link to="/profile?tab=Saved">Saved</Link></DropdownMenuItem>
                 <DropdownMenuItem asChild><Link to="/profile?tab=Network">Following</Link></DropdownMenuItem>
-                <DropdownMenuItem asChild><Link to="/signup">Onboarding</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <button

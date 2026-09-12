@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
-import { Bell, CheckCheck, MessageSquare, UserPlus, Zap, Settings, ArrowRight, Star, LogIn } from "lucide-react";
+import { Bell, CheckCheck, MessageSquare, UserPlus, Zap, Settings, ArrowRight, Star, LogIn, Loader2 } from "lucide-react";
+import { api, getToken } from "@/lib/api";
 
-const icons = {
+const icons: Record<string, any> = {
   invite: UserPlus,
   project: Zap,
   task: MessageSquare,
@@ -11,9 +12,9 @@ const icons = {
   request: MessageSquare,
   follow: UserPlus,
   review: Star,
-} as const;
+};
 
-const colors = {
+const colors: Record<string, string> = {
   invite: "bg-primary-soft text-primary",
   project: "bg-[hsl(var(--cyan)/0.12)] text-cyan",
   task: "bg-[hsl(var(--warning)/0.12)] text-warning",
@@ -21,7 +22,7 @@ const colors = {
   request: "bg-primary-soft text-primary",
   follow: "bg-[hsl(var(--purple)/0.12)] text-purple",
   review: "bg-success-bg text-success",
-} as const;
+};
 
 function bucket(date: string): "Today" | "This Week" | "Earlier" {
   const d = +new Date(date);
@@ -33,15 +34,41 @@ function bucket(date: string): "Today" | "This Week" | "Earlier" {
 }
 
 export default function Notifications() {
-  const { state, dispatch } = useApp();
-
+  const { state } = useApp();
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const items = useMemo(() => {
-    return Object.values(state.notifications)
-      .filter((n) => !n.userId || (state.currentUser && n.userId === state.currentUser.id))
-      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-  }, [state.notifications, state.currentUser]);
+  useEffect(() => {
+    if (!getToken()) {
+      setLoading(false);
+      return;
+    }
+    api.getNotifications()
+      .then(data => {
+        if (Array.isArray(data)) {
+          // Sort descending by created_at
+          data.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+          setItems(data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleMarkRead = async (id: number) => {
+    try {
+      await api.markNotificationRead(id);
+      setItems(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch {}
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead();
+      setItems(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch {}
+  };
 
   if (!state.currentUser) {
     return (
@@ -91,11 +118,20 @@ export default function Notifications() {
       </div>
     );
   }
-  const unread = items.filter((item) => !item.read).length;
-  const shown = items.filter((item) => filter === "all" || !item.read);
+
+  if (loading) {
+    return (
+      <div className="container py-20 flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const unread = items.filter((item) => !item.is_read).length;
+  const shown = items.filter((item) => filter === "all" || !item.is_read);
 
   const groups: Record<string, typeof shown> = { Today: [], "This Week": [], Earlier: [] };
-  shown.forEach((n) => groups[bucket(n.createdAt)].push(n));
+  shown.forEach((n) => groups[bucket(n.created_at)].push(n));
 
   return (
     <div className="container py-10 max-w-3xl">
@@ -105,7 +141,7 @@ export default function Notifications() {
           <h1 className="ds-page-title mt-2">Notifications</h1>
           <p className="text-sm text-muted-foreground mt-1">Track requests, follows, reviews, and post activity in one place.</p>
         </div>
-        <button onClick={() => dispatch({ type: "markAllNotificationsRead" })} className="h-10 px-4 rounded-xl bg-card border border-border text-sm font-semibold inline-flex items-center gap-2 hover:bg-secondary">
+        <button onClick={handleMarkAllRead} className="h-10 px-4 rounded-xl bg-card border border-border text-sm font-semibold inline-flex items-center gap-2 hover:bg-secondary">
           <CheckCheck className="size-4" /> Mark all read
         </button>
       </div>
@@ -132,24 +168,24 @@ export default function Notifications() {
                 <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-1">{label}</div>
                 <div className="space-y-2">
                   {groups[label].map((notification) => {
-                    const Icon = icons[notification.type];
+                    const Icon = icons[notification.type] || Settings;
                     return (
                       <Link
                         key={notification.id}
-                        to={notification.href || "#"}
-                        onClick={() => dispatch({ type: "markNotificationRead", payload: { id: notification.id } })}
-                        className={`ds-card p-4 flex gap-4 cursor-pointer transition-all hover:shadow-[var(--shadow-md)] ${!notification.read ? "border-primary/30 bg-primary-soft/30" : ""}`}
+                        to={notification.link || "#"}
+                        onClick={() => handleMarkRead(notification.id)}
+                        className={`ds-card p-4 flex gap-4 cursor-pointer transition-all hover:shadow-[var(--shadow-md)] ${!notification.is_read ? "border-primary/30 bg-primary-soft/30" : ""}`}
                       >
-                        <div className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${colors[notification.type]}`}><Icon className="size-5" /></div>
+                        <div className={`size-11 rounded-xl flex items-center justify-center shrink-0 ${colors[notification.type] || colors.system}`}><Icon className="size-5" /></div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <p className="font-semibold text-sm">{notification.title}</p>
-                            <span className="text-xs text-muted-foreground shrink-0">{new Date(notification.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">{new Date(notification.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                           </div>
-                          <p className="text-sm text-muted-foreground mt-0.5">{notification.body}</p>
-                          {notification.href && <span className="mt-2 text-xs font-semibold text-primary inline-flex items-center gap-1">Open <ArrowRight className="size-3.5" /></span>}
+                          <p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p>
+                          {notification.link && <span className="mt-2 text-xs font-semibold text-primary inline-flex items-center gap-1">Open <ArrowRight className="size-3.5" /></span>}
                         </div>
-                        {!notification.read && <div className="size-2 rounded-full bg-primary mt-2" />}
+                        {!notification.is_read && <div className="size-2 rounded-full bg-primary mt-2" />}
                       </Link>
                     );
                   })}

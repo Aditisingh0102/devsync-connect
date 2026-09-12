@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight, Sparkles, Users2, Compass, LayoutDashboard, Activity, Brain,
@@ -53,6 +53,16 @@ export default function Index() {
   const isLoggedIn = !!state.currentUser;
   const isProfileComplete = !!state.currentUser?.profileCompleted;
   const showLoginModal = loginModalSource !== null;
+
+  // Fetch live registered users from backend
+  const [liveUsers, setLiveUsers] = useState<Array<{id: number; username: string; name: string | null; avatar: string | null}>>([
+  ]);
+  useEffect(() => {
+    fetch('https://16.170.255.194.nip.io/api/v1/users/')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setLiveUsers(data); })
+      .catch(() => {});
+  }, []);
 
   const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
 
@@ -138,16 +148,25 @@ export default function Index() {
     return "0%";
   }, [matchScore, averagePlatformMatchScore, state.currentUser]);
 
+  const [backendStats, setBackendStats] = useState<{active_projects: number; working_builders: number; average_match_score: number} | null>(null);
+  useEffect(() => {
+    fetch('https://16.170.255.194.nip.io/api/v1/home/stats')
+      .then(r => r.json())
+      .then(data => setBackendStats(data))
+      .catch(() => {});
+  }, []);
+
   const totalProjectsCount = useMemo(() => {
+    if (backendStats) return backendStats.active_projects;
     return Object.keys(state.projects || {}).length;
-  }, [state.projects]);
+  }, [state.projects, backendStats]);
 
   const stats = useMemo(() => [
-    { label: "Active Projects", value: totalProjectsCount.toString(), change: "+12%", icon: Compass, color: "text-primary bg-primary-soft", route: "/find-projects" },
-    { label: "Working Projects", value: workingProjectsCount.toString(), change: workingProjectsCount > 0 ? "+24%" : "0%", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
-    { label: "My Team", value: myTeamsCount.toString(), change: myTeamsCount > 0 ? "Active" : "Inactive", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
-    { label: "Match Score", value: `${matchScore}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
-  ], [totalProjectsCount, workingProjectsCount, myTeamsCount, matchScore, matchScoreChange]);
+    { label: "Active Projects", value: totalProjectsCount.toString(), change: totalProjectsCount > 0 ? "Live" : "0", icon: Compass, color: "text-primary bg-primary-soft", route: "/find-projects" },
+    { label: "Builders Online", value: (backendStats?.working_builders || liveUsers.length).toString(), change: liveUsers.length > 0 ? "Active" : "0", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
+    { label: "My Team", value: myTeamsCount.toString(), change: myTeamsCount > 0 ? "Active" : "—", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
+    { label: "Match Score", value: `${matchScore || backendStats?.average_match_score || 0}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
+  ], [totalProjectsCount, liveUsers.length, myTeamsCount, matchScore, matchScoreChange, backendStats]);
 
   return (
     <div>
@@ -175,16 +194,17 @@ export default function Index() {
             </div>
             <div className="mt-8 flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex -space-x-2">
-                {Object.values(state.users).slice(0, 4).map((u, i) => {
-                  const depthClasses = ["z-40", "z-30", "z-20", "z-10"];
+                {liveUsers.slice(0, 5).map((u, i) => {
+                  const depthClasses = ["z-50", "z-40", "z-30", "z-20", "z-10"];
+                  const initials = (u.name || u.username || 'U').substring(0, 2).toUpperCase();
                   return (
                     <div key={u.id} className={`size-8 rounded-full ring-2 ring-background bg-gradient-primary text-white text-xs font-semibold flex items-center justify-center ${depthClasses[i]}`}>
-                      {u.avatar || u.name.substring(0, 2).toUpperCase()}
+                      {initials}
                     </div>
                   );
                 })}
               </div>
-              <div><span className="font-semibold text-foreground">{Object.keys(state.users).length} students</span> already syncing</div>
+              <div><span className="font-semibold text-foreground">{liveUsers.length} students</span> already syncing</div>
             </div>
           </div>
 

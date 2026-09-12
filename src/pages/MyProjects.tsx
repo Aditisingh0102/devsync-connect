@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
-import { Plus, Trash2, ExternalLink, Layers, Users, FolderKanban, ShieldCheck, Pencil } from "lucide-react";
+import { Plus, Trash2, ExternalLink, Layers, Users, FolderKanban, ShieldCheck, Pencil, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import EditProjectModal from "@/components/EditProjectModal";
 import { Project } from "@/lib/types";
+import { api, getToken } from "@/lib/api";
 
 export default function MyProjects() {
   const { state, dispatch } = useApp();
@@ -12,43 +13,72 @@ export default function MyProjects() {
   const me = state.currentUser;
   const navigate = useNavigate();
 
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingProject, setEditingProject] = useState<any | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [myProjects, setMyProjects] = useState<any[]>([]);
+  const [otherProjects, setOtherProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleEdit = (p: Project) => {
+  useEffect(() => {
+    if (!getToken()) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch my projects
+    api.getMyProjects()
+      .then((data) => {
+        if (Array.isArray(data)) setMyProjects(data);
+      })
+      .catch(() => {});
+
+    // Fetch all projects for the right sidebar
+    fetch('https://16.170.255.194.nip.io/api/v1/projects/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          // Filter out my projects
+          setOtherProjects(data.filter((p: any) => p.owner_id !== me?.id));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [me]);
+
+  const handleEdit = (p: any) => {
     setEditingProject(p);
     setIsEditModalOpen(true);
   };
 
-  const handleToggleVisibility = (p: Project, newVis: "public" | "friends" | "private") => {
-    const updated = {
-      ...p,
-      visibility: newVis,
-    };
-    dispatch({ type: "updateProject", payload: updated });
-    toast({
-      title: "Visibility Updated",
-      description: `"${p.title}" is now ${newVis.toUpperCase()}.`,
-    });
+  const handleToggleVisibility = async (p: any, newVis: "public" | "friends" | "private") => {
+    try {
+      await api.updateProject(p.id, { visibility: newVis });
+      setMyProjects((prev) =>
+        prev.map((project) => (project.id === p.id ? { ...project, visibility: newVis } : project))
+      );
+      toast({
+        title: "Visibility Updated",
+        description: `"${p.name || p.title}" is now ${newVis.toUpperCase()}.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Failed to update visibility", description: err.message, variant: "destructive" });
+    }
   };
 
-  const myProjects = useMemo(() => {
-    if (!me) return [];
-    return Object.values(state.projects || {}).filter(
-      (p) =>
-        (p.ownerId && p.ownerId === me.id) ||
-        (p.owner && p.owner.toLowerCase() === me.name.toLowerCase())
-    );
-  }, [state.projects, me]);
-
-  const otherProjects = useMemo(() => {
-    if (!me) return [];
-    return Object.values(state.projects || {}).filter(
-      (p) =>
-        (!p.ownerId || p.ownerId !== me.id) &&
-        (!p.owner || p.owner.toLowerCase() !== me.name.toLowerCase())
-    );
-  }, [state.projects, me]);
+  const handleDelete = async (id: number, name: string) => {
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+      try {
+        await api.deleteProject(id);
+        setMyProjects((prev) => prev.filter((p) => p.id !== id));
+        toast({
+          title: "Project Deleted",
+          description: `"${name}" has been removed successfully.`,
+        });
+      } catch (err: any) {
+        toast({ title: "Failed to delete project", description: err.message, variant: "destructive" });
+      }
+    }
+  };
 
   if (!me) {
     return (
@@ -70,15 +100,13 @@ export default function MyProjects() {
     );
   }
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      dispatch({ type: "deleteProject", payload: { projectId: id } });
-      toast({
-        title: "Project Deleted",
-        description: `"${name}" has been removed successfully.`,
-      });
-    }
-  };
+  if (loading) {
+    return (
+      <div className="container py-20 flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-10 space-y-6">
@@ -126,14 +154,14 @@ export default function MyProjects() {
                   <div>
                     <div className="flex justify-between items-start gap-2 mb-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="ds-chip text-[10px] uppercase tracking-wider">{p.category}</span>
+                        <span className="ds-chip text-[10px] uppercase tracking-wider">{p.project_type || "General"}</span>
                         <select
-                          value={p.visibility || "public"}
+                          value={(p.visibility || "public").toLowerCase()}
                           onChange={(e) => handleToggleVisibility(p, e.target.value as "public" | "friends" | "private")}
                           className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase tracking-wider border cursor-pointer outline-none transition-all ${
-                            p.visibility === "private"
+                            (p.visibility || "").toLowerCase() === "private"
                               ? "bg-danger/10 text-danger border-danger/20"
-                              : p.visibility === "friends"
+                              : (p.visibility || "").toLowerCase() === "friends"
                               ? "bg-success-bg text-success border-success/15"
                               : "bg-primary-soft text-primary border-primary/15"
                           }`}
@@ -145,19 +173,19 @@ export default function MyProjects() {
                         </select>
                       </div>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-success-bg text-success font-semibold border border-success/15">
-                        {p.status}
+                        {p.status || "Recruiting"}
                       </span>
                     </div>
                     <Link to={`/project/${p.id}`}>
                       <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1 hover:underline">
-                        {p.title}
+                        {p.name || p.title}
                       </h3>
                     </Link>
-                    <p className="text-xs text-muted-foreground font-medium mt-0.5">{p.team}</p>
+                    <p className="text-xs text-muted-foreground font-medium mt-0.5">{p.headline}</p>
                     
-                    {p.imageUrl && (
+                    {p.image_url && (
                       <div className="mt-3 mb-1 rounded-xl overflow-hidden border border-border bg-surface-alt h-32">
-                        <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                        <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                       </div>
                     )}
 
@@ -169,10 +197,10 @@ export default function MyProjects() {
                     <div className="mt-4">
                       <div className="flex justify-between text-[10px] text-muted-foreground font-medium mb-1">
                         <span>Development Progress</span>
-                        <span>{p.progress}%</span>
+                        <span>{p.progress || 0}%</span>
                       </div>
                       <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-primary rounded-full" style={{ width: `${p.progress}%` }} />
+                        <div className="h-full bg-gradient-primary rounded-full" style={{ width: `${p.progress || 0}%` }} />
                       </div>
                     </div>
 
@@ -180,14 +208,14 @@ export default function MyProjects() {
                     <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-3.5">
                       <Users className="size-3.5" />
                       <span>
-                        {p.members} / {p.maxMembers} Members
+                        {p.members || 1} / {p.max_members || 5} Members
                       </span>
                     </div>
 
                     {/* Tech stack tags */}
-                    {p.tech.length > 0 && (
+                    {(p.tech || []).length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-3">
-                        {p.tech.slice(0, 4).map((t) => (
+                        {p.tech.slice(0, 4).map((t: string) => (
                           <span key={t} className="ds-chip text-[9px] py-0.5">
                             {t}
                           </span>
@@ -212,7 +240,7 @@ export default function MyProjects() {
                         <Pencil className="size-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(p.id, p.title)}
+                        onClick={() => handleDelete(p.id, p.name || p.title)}
                         className="size-8 rounded-lg bg-danger/10 text-danger border border-danger/10 flex items-center justify-center hover:bg-danger hover:text-white transition-all"
                         aria-label="Delete project"
                       >
@@ -240,15 +268,15 @@ export default function MyProjects() {
           <div className="ds-card p-6 space-y-4">
             <h3 className="font-bold text-sm text-foreground uppercase tracking-wider text-muted-foreground">Other Active Projects</h3>
             <div className="space-y-3">
+              {otherProjects.length === 0 && <p className="text-xs text-muted-foreground">No other active projects right now.</p>}
               {otherProjects.slice(0, 4).map((p) => (
                 <div key={p.id} className="p-3.5 rounded-xl bg-secondary border border-border/40 hover:border-border transition-colors">
                   <div className="flex justify-between items-center gap-2">
-                    <span className="font-semibold text-xs text-foreground truncate">{p.title}</span>
+                    <span className="font-semibold text-xs text-foreground truncate">{p.name || p.title}</span>
                     <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold shrink-0">
-                      {p.category}
+                      {p.project_type || p.category || "General"}
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Led by {p.owner}</p>
                 </div>
               ))}
             </div>

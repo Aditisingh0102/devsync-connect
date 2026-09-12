@@ -4,7 +4,7 @@ import { projects as mockProjects } from "../data/mock";
 import { api, getToken, removeToken } from "./api";
 
 // Persistence helpers
-const STORAGE_KEY = "devsync_app_state_v4";
+const STORAGE_KEY = "devsync_app_state_v5";
 
 function loadState(): AppState {
   try {

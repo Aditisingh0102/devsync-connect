@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { api, setToken } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function Login() {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (state.currentUser) {
+      navigate("/dashboard");
+    }
+  }, [state.currentUser, navigate]);
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +45,8 @@ export default function Login() {
       const user = await api.getMe();
       
       dispatch({ type: "setCurrentUser", payload: user });
-      navigate(user.profileCompleted ? "/dashboard" : "/onboarding/profile-setup");
+      toast.success(`Welcome back, ${user.name || user.username}!`, { icon: "👋" });
+      navigate("/dashboard");
     } catch (err: any) {
       const msg = err.message || "An error occurred";
       if (msg.toLowerCase().includes("password")) {

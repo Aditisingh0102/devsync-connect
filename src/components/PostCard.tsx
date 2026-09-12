@@ -7,11 +7,13 @@ import { playSuccessSound } from "@/lib/utils";
 
 export default function PostCard({ post, onRespond }: { post: Post; onRespond?: (post: Post) => void }) {
   const { state, dispatch } = useApp();
-  const author = state.users[post.authorId];
+  const authorId = post.author_id || post.authorId;
+  const author = state.users[authorId] || post.author;
   const isImageAvatar = !!author?.avatar && /^(data:|https?:\/\/)/.test(author.avatar);
   const isFollowing = !!state.currentUser && (state.currentUser.following || []).includes(author?.id || "");
   const isSaved = !!state.currentUser && (state.currentUser.savedPosts || []).includes(post.id);
-  const initials = (author?.name || "U").split(" ").map((s) => s[0]).slice(0, 2).join("");
+  const initials = (author?.name || "U").split(" ").map((s: string) => s[0]).slice(0, 2).join("");
+  const createdAt = post.created_at || post.createdAt;
 
   return (
     <div className="ds-card ds-card-hover p-5">
@@ -27,7 +29,7 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <Link to={author ? `/profile/${author.id}` : "#"} className="font-semibold text-sm hover:text-primary truncate block">{author?.name || "Unknown"}</Link>
-              <div className="text-xs text-muted-foreground">@{author?.username || "user"} · {new Date(post.createdAt).toLocaleDateString()}</div>
+              <div className="text-xs text-muted-foreground">@{author?.username || "user"} · {createdAt ? new Date(createdAt).toLocaleDateString() : ""}</div>
             </div>
             <div className="flex items-center gap-2">
               {post.visibility && post.visibility !== "public" && (
@@ -58,30 +60,30 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
           </div>
 
           <h4 className="font-semibold mt-3 text-base leading-snug text-foreground flex items-center gap-2">
-            <span className="text-xs font-normal px-2 py-0.5 rounded bg-primary-soft text-primary">{post.projectType || "Project"}</span>
+            <span className="text-xs font-normal px-2 py-0.5 rounded bg-primary-soft text-primary">{post.project_type || post.projectType || "Project"}</span>
             {post.title}
           </h4>
           <div className="mt-2 text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 leading-relaxed" dangerouslySetInnerHTML={{ __html: post.body }} />
 
-          {post.imageUrl && (
+          {(post.image_url || post.imageUrl) && (
             <div className="mt-3 rounded-xl overflow-hidden border border-border bg-surface-alt max-h-60">
-              <img src={post.imageUrl} alt={post.title} className="w-full h-full object-cover max-h-60" />
+              <img src={post.image_url || post.imageUrl} alt={post.title} className="w-full h-full object-cover max-h-60" />
             </div>
           )}
 
           {/* Project Details Grid */}
-          {(post.projectName || post.projectType || post.domain || post.lookingFor || post.referenceLink) && (
+          {(post.projectName || post.project_name || post.projectType || post.project_type || post.domain || post.lookingFor || post.looking_for || post.referenceLink || post.reference_link) && (
             <div className="grid grid-cols-2 gap-3 mt-3.5 p-3 rounded-xl bg-surface-alt border border-border text-xs">
-              {post.projectName && (
+              {(post.projectName || post.project_name) && (
                 <div className="col-span-2 pb-1.5 border-b border-border/50">
                   <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Project Name</span>
-                  <span className="font-semibold text-foreground text-sm mt-0.5 block">{post.projectName}</span>
+                  <span className="font-semibold text-foreground text-sm mt-0.5 block">{post.projectName || post.project_name}</span>
                 </div>
               )}
-              {post.projectType && (
+              {(post.projectType || post.project_type) && (
                 <div>
                   <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px]">Project Type</span>
-                  <span className="font-semibold text-foreground mt-0.5 block">{post.projectType}</span>
+                  <span className="font-semibold text-foreground mt-0.5 block">{post.projectType || post.project_type}</span>
                 </div>
               )}
               {post.domain && (
@@ -92,18 +94,18 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
                   </span>
                 </div>
               )}
-              {post.lookingFor && (
+              {(post.lookingFor || post.looking_for) && (
                 <div className="col-span-2 border-t border-border/50 pt-2 mt-1">
                   <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px] mb-1.5">Looking For (Roles/Skills)</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {Array.isArray(post.lookingFor) ? (
-                      post.lookingFor.map((role) => (
+                    {Array.isArray(post.lookingFor || post.looking_for) ? (
+                      (post.lookingFor || post.looking_for).map((role: string) => (
                         <span key={role} className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px]">
                           {role}
                         </span>
                       ))
                     ) : (
-                      (post.lookingFor || "").split(",").map((s) => s.trim()).filter(Boolean).map((role) => (
+                      ((post.lookingFor || post.looking_for) || "").split(",").map((s: string) => s.trim()).filter(Boolean).map((role: string) => (
                         <span key={role} className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px]">
                           {role}
                         </span>

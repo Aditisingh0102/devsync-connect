@@ -1,14 +1,10 @@
-import { useState, useMemo } from "react";
-import { team } from "@/data/mock";
-import { Calendar, ExternalLink, MessageSquare, Plus, Users, Activity as ActivityIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Calendar, ExternalLink, Plus, Users, Loader2, FolderOpen } from "lucide-react";
 import { Link } from "react-router-dom";
+import { api, getToken } from "@/lib/api";
+import { useApp } from "@/lib/store";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,274 +19,228 @@ const statusColor: Record<string, string> = {
 };
 
 export default function MyTeam() {
-  const [tasks, setTasks] = useState(() =>
-    team.tasks.map((t) => {
-      if (t.id === "t1") return { ...t, tech: ["FastAPI", "ML"] };
-      if (t.id === "t2") return { ...t, tech: ["React", "UI/UX"] };
-      if (t.id === "t3") return { ...t, tech: ["Docker", "GitHub"] };
-      if (t.id === "t4") return { ...t, tech: ["React"] };
-      return { ...t, tech: [] as string[] };
-    })
-  );
+  const { state } = useApp();
+  const [teams, setTeams] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTeam, setActiveTeam] = useState<any>(null);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [taskTech, setTaskTech] = useState("");
-  const [status, setStatus] = useState("Todo");
+  // Create team dialog
+  const [createOpen, setCreateOpen] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [teamDesc, setTeamDesc] = useState("");
 
+  // Create task dialog
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskStatus, setTaskStatus] = useState("Todo");
   const [draggedOverCol, setDraggedOverCol] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!getToken()) { setLoading(false); return; }
+    api.getMyTeams()
+      .then(data => {
+        if (Array.isArray(data)) {
+          setTeams(data);
+          if (data.length > 0) {
+            setActiveTeam(data[0]);
+            return api.getTeamTasks(data[0].id);
+          }
+        }
+        return [];
+      })
+      .then(taskData => {
+        if (Array.isArray(taskData)) setTasks(taskData);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleCreateTeam = async () => {
+    if (!teamName.trim()) return;
+    try {
+      const newTeam = await api.createTeam({ name: teamName.trim(), description: teamDesc.trim() || undefined });
+      setTeams(prev => [...prev, newTeam]);
+      setActiveTeam(newTeam);
+      setTasks([]);
+      setCreateOpen(false);
+      setTeamName("");
+      setTeamDesc("");
+    } catch (err: any) {
+      alert(err.message || "Failed to create team");
+    }
+  };
+
+  const handleCreateTask = async () => {
+    if (!taskTitle.trim() || !activeTeam) return;
+    try {
+      const newTask = await api.createTask(activeTeam.id, { title: taskTitle.trim(), status: taskStatus });
+      setTasks(prev => [...prev, newTask]);
+      setTaskOpen(false);
+      setTaskTitle("");
+      setTaskStatus("Todo");
+    } catch (err: any) {
+      alert(err.message || "Failed to create task");
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.setData("text/plain", String(id));
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDragOver = (e: React.DragEvent, col: string) => {
-    e.preventDefault();
-    if (draggedOverCol !== col) {
-      setDraggedOverCol(col);
-    }
-  };
-
-  const handleDragLeave = () => {
-    setDraggedOverCol(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, col: string) => {
+  const handleDrop = async (e: React.DragEvent, col: string) => {
     e.preventDefault();
     setDraggedOverCol(null);
     const id = e.dataTransfer.getData("text/plain");
-    if (id) {
-      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: col as any } : t)));
+    if (id && activeTeam) {
+      setTasks(prev => prev.map(t => (String(t.id) === id ? { ...t, status: col } : t)));
+      try {
+        await api.updateTask(activeTeam.id, Number(id), { status: col });
+      } catch {}
     }
   };
 
-  const handleAddTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-    const newTask = {
-      id: `t_${Date.now()}`,
-      title: title.trim(),
-      assignee: assignee.trim() || "Unassigned",
-      tech: taskTech ? taskTech.split(",").map((s) => s.trim()).filter(Boolean) : [],
-      status: status as any,
-    };
-    setTasks([...tasks, newTask]);
-    setTitle("");
-    setAssignee("");
-    setTaskTech("");
-    setStatus("Todo");
-    setIsOpen(false);
-  };
+  if (loading) {
+    return (
+      <div className="container py-20 flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // No teams yet
+  if (teams.length === 0) {
+    return (
+      <div className="container py-10">
+        <div className="ds-card p-12 text-center bg-gradient-hero">
+          <FolderOpen className="size-14 text-muted-foreground/40 mx-auto mb-4" />
+          <h1 className="ds-page-title">No teams yet</h1>
+          <p className="text-muted-foreground mt-2 max-w-md mx-auto">Create your first team to start collaborating with other builders on projects.</p>
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <button className="mt-6 h-11 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center gap-2 hover:bg-primary-hover">
+                <Plus className="size-4" /> Create Team
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Create a New Team</DialogTitle></DialogHeader>
+              <div className="space-y-4 py-2">
+                <div><Label>Team Name</Label><Input value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="e.g. DevSync Core Team" /></div>
+                <div><Label>Description (optional)</Label><Input value={teamDesc} onChange={e => setTeamDesc(e.target.value)} placeholder="What does this team work on?" /></div>
+              </div>
+              <DialogFooter><Button onClick={handleCreateTeam} disabled={!teamName.trim()}>Create Team</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-10 space-y-6">
       <div className="ds-card p-7 bg-gradient-hero flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <span className="ds-chip-primary">Your Team</span>
-          <h1 className="ds-page-title mt-2">{team.name}</h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl">{team.mission}</p>
+          <h1 className="ds-page-title mt-2">{activeTeam?.name || "My Team"}</h1>
+          <p className="text-muted-foreground mt-1 max-w-2xl">{activeTeam?.description || "Manage your team, tasks, and progress."}</p>
         </div>
         <div className="flex gap-2">
-          <Link to={`/team/${team.id}`} className="h-11 px-5 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2">View Team Page <ExternalLink className="size-4" /></Link>
-          <button className="h-11 px-5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover inline-flex items-center gap-2"><Plus className="size-4" /> Invite</button>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-5">
-        <div className="ds-card p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-1"><h3 className="font-semibold text-lg">Active Project</h3><span className="ds-chip-primary">In Progress</span></div>
-          <p className="text-2xl font-display font-bold mt-1">{team.activeProject}</p>
-          <p className="text-sm text-muted-foreground mt-1">{team.sprint.name} · {team.sprint.daysLeft} days left</p>
-          <div className="mt-5">
-            <div className="flex justify-between text-xs text-muted-foreground mb-1.5"><span>Sprint progress</span><span>{team.sprint.progress}%</span></div>
-            <div className="flex gap-0.5">
-              {Array.from({ length: 20 }).map((_, i) => {
-                const activeSegments = Math.max(1, Math.round((team.sprint.progress / 100) * 20));
-                return <div key={i} className={`flex-1 h-1.5 rounded-full ${i < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="ds-card p-6">
-          <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><Calendar className="size-4 text-primary" /> Meetings</h3>
-          <div className="space-y-3">
-            {team.meetings.map((m) => (
-              <div key={m.title} className="flex items-center justify-between p-3 rounded-xl bg-secondary">
-                <div><p className="font-medium text-sm">{m.title}</p><p className="text-xs text-muted-foreground">{m.time}</p></div>
-                <button className="text-xs font-semibold text-primary">Join</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-5">
-        <div className="ds-card p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <h3 className="font-semibold text-lg flex items-center gap-2"><Users className="size-4 text-primary" /> Members</h3>
-            <span className="text-sm text-muted-foreground">{team.members.length} active</span>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {team.members.map((m) => (
-              <div key={m.name} className="p-4 rounded-xl bg-surface-alt border border-border flex gap-3 items-center">
-                <div className="size-11 rounded-xl bg-gradient-primary text-white font-semibold flex items-center justify-center shrink-0">{m.avatar}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{m.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{m.role}</p>
-                  <div className="flex flex-wrap gap-1 mt-1.5">{m.skills.map((s) => <span key={s} className="ds-chip text-[10px] py-0.5">{s}</span>)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="ds-card p-6">
-          <h3 className="font-semibold text-lg mb-4">Resources</h3>
-          <div className="space-y-2">
-            {team.resources.map((r) => (
-              <a key={r.title} href={r.url} className="flex items-center justify-between p-3 rounded-xl hover:bg-secondary transition-colors">
-                <span className="text-sm font-medium">{r.title}</span><ExternalLink className="size-4 text-muted-foreground" />
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="ds-card p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="font-semibold text-lg">Task Board</h3>
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          {activeTeam && (
+            <Link to={`/team/${activeTeam.id}`} className="h-11 px-5 rounded-xl bg-card border border-border font-semibold text-sm hover:bg-secondary inline-flex items-center gap-2">View Team Page <ExternalLink className="size-4" /></Link>
+          )}
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <button className="h-10 px-4 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover inline-flex items-center gap-1.5 shadow-glow">
-                <Plus className="size-4" /> New task
-              </button>
+              <button className="h-11 px-5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover inline-flex items-center gap-2"><Plus className="size-4" /> New Team</button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create New Task</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAddTask} className="space-y-4 py-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="task-title">Task Title</Label>
-                  <Input
-                    id="task-title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Integrate matching engine API"
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="task-assignee">Assignee</Label>
-                  <Input
-                    id="task-assignee"
-                    value={assignee}
-                    onChange={(e) => setAssignee(e.target.value)}
-                    placeholder="e.g. Priya Mehta"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="task-tech">Tech Stack (comma-separated)</Label>
-                  <Input
-                    id="task-tech"
-                    value={taskTech}
-                    onChange={(e) => setTaskTech(e.target.value)}
-                    placeholder="e.g. React, FastAPI, Python"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="task-status">Status</Label>
-                  <select
-                    id="task-status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {columns.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Create Task</Button>
-                </DialogFooter>
-              </form>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Create a New Team</DialogTitle></DialogHeader>
+              <div className="space-y-4 py-2">
+                <div><Label>Team Name</Label><Input value={teamName} onChange={e => setTeamName(e.target.value)} placeholder="e.g. DevSync Core Team" /></div>
+                <div><Label>Description (optional)</Label><Input value={teamDesc} onChange={e => setTeamDesc(e.target.value)} placeholder="What does this team work on?" /></div>
+              </div>
+              <DialogFooter><Button onClick={handleCreateTeam} disabled={!teamName.trim()}>Create Team</Button></DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {columns.map((c) => {
-            const isHovered = draggedOverCol === c;
-            const columnTasks = tasks.filter((t) => t.status === c);
-            return (
-              <div
-                key={c}
-                className={`bg-surface-alt rounded-xl p-4 min-h-[260px] border transition-all duration-200 ${
-                  isHovered ? "border-primary bg-primary/5 shadow-inner scale-[1.01]" : "border-transparent"
-                }`}
-                onDragOver={(e) => handleDragOver(e, c)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, c)}
-              >
-                <div className={`ds-chip ${statusColor[c]} mb-4 font-semibold text-xs`}>{c}</div>
-                <div className="space-y-2.5">
-                  {columnTasks.map((t) => (
-                    <div
-                      key={t.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, t.id)}
-                      className="bg-card border border-border rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-primary/50 hover:shadow-md transition-all duration-200"
-                    >
-                      <p className="text-sm font-semibold text-foreground leading-snug">{t.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <span className="font-medium text-foreground/80">Assignee:</span> {t.assignee}
-                      </p>
-                      {t.tech && t.tech.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3 pt-2.5 border-t border-border/50">
-                          {t.tech.map((tech) => (
-                            <span key={tech} className="ds-chip text-[10px] py-0.5 px-2 bg-secondary text-secondary-foreground font-medium">
-                              {tech}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {columnTasks.length === 0 && (
-                    <div className="h-24 border border-dashed border-border/60 rounded-xl flex items-center justify-center text-xs text-muted-foreground select-none">
-                      Drag tasks here
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
+      {/* Sprint Progress */}
+      {activeTeam && (
+        <div className="ds-card p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-semibold text-lg">Sprint Progress</h3>
+            <span className="text-sm text-muted-foreground">{activeTeam.sprint_progress || 0}%</span>
+          </div>
+          <div className="flex gap-0.5 mt-2">
+            {Array.from({ length: 20 }).map((_, i) => {
+              const progress = activeTeam.sprint_progress || 0;
+              const activeSegments = Math.max(0, Math.round((progress / 100) * 20));
+              return <div key={i} className={`flex-1 h-1.5 rounded-full ${i < activeSegments ? "bg-gradient-primary" : "bg-secondary"}`} />;
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Task Board */}
       <div className="ds-card p-6">
-        <h3 className="font-semibold text-lg mb-4 flex items-center gap-2"><ActivityIcon className="size-4 text-primary" /> Recent Activity</h3>
-        <ul className="space-y-3">
-          {[
-            { who: "Priya Mehta", what: "pushed 5 commits to matching-engine", when: "1h" },
-            { who: "Rohan Verma", what: "moved 'Profile cards' to Review", when: "3h" },
-            { who: "Sarah Khan", what: "merged PR #42 — CI pipeline", when: "Yesterday" },
-            { who: "Alex Carter", what: "scheduled Sprint Review for Friday", when: "Yesterday" },
-          ].map((a, i) => (
-            <li key={i} className="flex items-start gap-3">
-              <div className="size-8 rounded-lg bg-primary-soft text-primary flex items-center justify-center text-xs font-semibold">{a.who[0]}</div>
-              <div className="flex-1"><p className="text-sm"><span className="font-semibold">{a.who}</span> {a.what}</p><p className="text-xs text-muted-foreground">{a.when} ago</p></div>
-              <MessageSquare className="size-4 text-muted-foreground" />
-            </li>
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-lg">Task Board</h3>
+          <Dialog open={taskOpen} onOpenChange={setTaskOpen}>
+            <DialogTrigger asChild>
+              <button className="h-9 px-4 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center gap-1.5 hover:bg-primary-hover">
+                <Plus className="size-4" /> New task
+              </button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Add a Task</DialogTitle></DialogHeader>
+              <div className="space-y-4 py-2">
+                <div><Label>Task Title</Label><Input value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="e.g. Design homepage wireframe" /></div>
+                <div>
+                  <Label>Status</Label>
+                  <select value={taskStatus} onChange={e => setTaskStatus(e.target.value)} className="ds-input w-full mt-1">
+                    {columns.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <DialogFooter><Button onClick={handleCreateTask} disabled={!taskTitle.trim()}>Add Task</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {columns.map((col) => (
+            <div
+              key={col}
+              onDragOver={(e) => { e.preventDefault(); setDraggedOverCol(col); }}
+              onDragLeave={() => setDraggedOverCol(null)}
+              onDrop={(e) => handleDrop(e, col)}
+              className={`min-h-[150px] rounded-xl border-2 border-dashed p-3 transition-colors ${
+                draggedOverCol === col ? "border-primary bg-primary/5" : "border-border"
+              }`}
+            >
+              <div className="mb-3">
+                <span className={`px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wider ${statusColor[col]}`}>{col}</span>
+              </div>
+              <div className="space-y-2">
+                {tasks.filter(t => t.status === col).map(t => (
+                  <div
+                    key={t.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, String(t.id))}
+                    className="p-3 rounded-xl bg-card border border-border cursor-grab active:cursor-grabbing hover:border-primary/30 transition-colors"
+                  >
+                    <p className="font-medium text-sm">{t.title}</p>
+                    {t.assignee_username && <p className="text-xs text-muted-foreground mt-1">@{t.assignee_username}</p>}
+                  </div>
+                ))}
+                {tasks.filter(t => t.status === col).length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">Drag tasks here</p>
+                )}
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );

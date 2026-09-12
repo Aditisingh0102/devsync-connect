@@ -158,7 +158,7 @@ export default function Onboarding() {
          {step === 0 && (
           <div className="space-y-4">
             <Field label="Email Address" error={errors.email}>
-              <input value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} type="email" placeholder="yourname@gmail.com" className="ds-input" autoComplete="off" />
+              <input value={data.email} disabled className="ds-input bg-secondary cursor-not-allowed text-muted-foreground" />
             </Field>
             <Field label="Full Name" error={errors.name}>
               <input value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })} placeholder="Your full name" className="ds-input" autoComplete="off" />

@@ -1,10 +1,11 @@
 import { useState, lazy, Suspense, useMemo, useEffect } from "react";
-import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope } from "lucide-react";
+import { Edit3, Github, Globe, Linkedin, Mail, MapPin, Trophy, Inbox, Users, Send, FolderOpen, Bookmark, Telescope, Loader2 } from "lucide-react";
 import AvatarUpload from "@/components/AvatarUpload";
 import ProfileHero3D from "@/components/ProfileHero3D";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
+import { api, getToken } from "@/lib/api";
 import PostCard from "@/components/PostCard";
 import ProjectCard from "@/components/ProjectCard";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -70,30 +71,47 @@ export default function Profile() {
   }, [queryTab]);
   const { state } = useApp();
   const params = useParams();
-  const profileId = params.id || state.currentUser?.id;
+  
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const targetUsername = params.id || state.currentUser?.username;
   const isOwnProfileRoute = !params.id;
-  const user = (profileId && state.users[profileId]) || state.currentUser || null;
   const isLoggedIn = !!state.currentUser;
-  const profile = (user ?? {}) as any;
+  
+  useEffect(() => {
+    if (!targetUsername) {
+      setLoading(false);
+      return;
+    }
+    api.getUserProfile(targetUsername)
+      .then(data => setProfile(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [targetUsername]);
 
   const contributions = useMemo(() => {
-    const history: Record<string, number> = profile?.loginHistory || {};
+    // Generate history from actual posts
+    const history: Record<string, number> = {};
+    const posts = profile?.posts_by_user || [];
+    posts.forEach((post: any) => {
+      const d = post.created_at || post.createdAt;
+      if (d) {
+        try {
+          const dateKey = new Date(d).toISOString().slice(0, 10);
+          history[dateKey] = (history[dateKey] || 0) + 1;
+        } catch(e) {}
+      }
+    });
 
     // Build a 53×7 grid (371 cells) ending on today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayDay = today.getDay(); // 0=Sun, 6=Sat
-    // The grid ends at today's position; we need to compute the start date
-    // Grid is column-major: col 0 is the oldest week, col 52 is the current week
-    // Each column has 7 rows (Sun=0 to Sat=6)
     const totalCells = 53 * 7;
-    // The last cell in the grid corresponds to Saturday of the current week column
-    // Today is at position: (52 * 7) + todayDay
-    // So the grid starts at: today - ((52*7) + todayDay) days
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - (52 * 7 + todayDay));
 
-    // Find the max login count for scaling
+    // Find the max count for scaling
     const values = Object.values(history);
     const maxCount = values.length > 0 ? Math.max(...values, 1) : 1;
 
@@ -125,16 +143,16 @@ export default function Profile() {
       }
     }
     return data;
-  }, [profile?.id, profile?.name, profile?.loginHistory]);
+  }, [profile?.posts_by_user]);
 
   const profileTabs = useMemo(() => {
-    if (state.currentUser && profileId === state.currentUser.id) {
+    if (state.currentUser && profile?.id === state.currentUser.id) {
       return ["Overview", "Posts", "Saved", "Projects", "Working Projects", "Activity", "Network", "Requests"];
     }
-    return ["Overview", "Posts", "Projects", "Working Projects", "Activity", "Network", "Requests"];
-  }, [state.currentUser, profileId]);
+    return ["Overview", "Posts", "Projects", "Working Projects", "Activity", "Network"];
+  }, [state.currentUser, profile?.id]);
 
-  const profilePosts = useMemo(() => Object.values(state.posts).filter((post) => post.authorId === profile?.id).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.posts, profile?.id]);
+  const profilePosts = useMemo(() => profile?.posts_by_user || [], [profile?.posts_by_user]);
 
   const dynamicChartData = useMemo(() => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -147,51 +165,27 @@ export default function Profile() {
       dataMap[mName] = { m: mName, c: 0, projects: [] };
     }
     
-    const projects = profile?.contributedProjects || [];
-    projects.forEach((proj: string, idx: number) => {
-      const keys = Object.keys(dataMap);
-      const randomMonth = keys[(proj.length + idx) % keys.length];
-      dataMap[randomMonth].c += 12;
-      if (!dataMap[randomMonth].projects.includes(proj)) {
-        dataMap[randomMonth].projects.push(proj);
-      }
-    });
-    
-    profilePosts.forEach(post => {
-      const d = new Date(post.createdAt);
+    profilePosts.forEach((post: any) => {
+      const d = new Date(post.created_at || post.createdAt);
+      if (isNaN(d.getTime())) return;
       const mName = months[d.getMonth()];
       if (dataMap[mName]) {
-        dataMap[mName].c += 4;
-        if (post.projectName && !dataMap[mName].projects.includes(post.projectName)) {
-           dataMap[mName].projects.push(post.projectName);
+        dataMap[mName].c += 1;
+        const pName = post.project_name || post.projectName;
+        if (pName && !dataMap[mName].projects.includes(pName)) {
+           dataMap[mName].projects.push(pName);
         }
       }
     });
-    
-    Object.values(dataMap).forEach(d => {
-       if (d.c === 0) d.c = Math.floor(Math.random() * 6) + 2;
-    });
 
     return Object.values(dataMap);
-  }, [profile?.contributedProjects, profilePosts]);
+  }, [profilePosts]);
 
-  const savedPosts = useMemo(() => {
-    const savedIds = profile?.savedPosts || [];
-    return Object.values(state.posts)
-      .filter((post) => savedIds.includes(post.id))
-      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-  }, [state.posts, profile?.savedPosts]);
+  const savedPosts = useMemo(() => profile?.saved_posts || [], [profile?.saved_posts]);
 
-  const savedProjects = useMemo(() => {
-    return Object.values(state.projects || {}).filter((p) => p.bookmarked);
-  }, [state.projects]);
+  const savedProjects = useMemo(() => profile?.saved_projects || [], [profile?.saved_projects]);
 
-  const workingProjects = useMemo(() => {
-    if (!profile?.id) return [];
-    return Object.values(state.projects || {}).filter(
-      (p: any) => p.ownerId === profile.id || p.memberIds?.includes(profile.id)
-    );
-  }, [profile?.id, state.projects]);
+  const workingProjects = useMemo(() => profile?.working_projects || [], [profile?.working_projects]);
 
   const matchScore = useMemo(() => {
     if (!profile || !profile.skills || profile.skills.length === 0) {
@@ -215,13 +209,16 @@ export default function Profile() {
     return Math.round(avg);
   }, [profile?.skills, state.projects]);
 
-  const profileStats = {
+  const isOwnProfile = state.currentUser && profile?.id === state.currentUser.id;
+  const profileStats: any = {
     posts: profilePosts.length,
-    followers: profile?.followers?.length ?? 0,
-    following: profile?.following?.length ?? 0,
-    pendingRequests: profile?.pendingRequests?.length ?? 0,
-    matchScore: matchScore,
+    followers: profile?.follower_count ?? 0,
+    following: profile?.following_count ?? 0,
   };
+  if (isOwnProfile) {
+    profileStats.pendingRequests = profile?.pending_requests_count ?? 0;
+  }
+  profileStats.matchScore = matchScore;
   const linkedProjects = profile?.contributedProjects ?? [];
   const profileAchievements = profile?.achievements ?? [];
   const profileLinks = profile?.links ?? { github: "#", linkedin: "#", portfolio: "#" };
@@ -240,6 +237,14 @@ export default function Profile() {
             <Link to="/signup" className="h-11 px-5 rounded-xl bg-card border border-border font-semibold inline-flex items-center justify-center hover:bg-secondary">Create account</Link>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="container py-20 flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -276,23 +281,16 @@ export default function Profile() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="ds-page-title">{profile?.name || "Guest Builder"}</h1>
+            <h1 className="ds-page-title">{profile?.name || profile?.username || "Unknown Builder"}</h1>
             <p className="text-muted-foreground">
-              {profile?.handle || "@guest"} · {profile?.role || "Student"}
+              @{profile?.username || "unknown"} · {profile?.college ? profile.college : "Student"}
               {profile?.year ? ` · ${profile.year}` : ""}
             </p>
-            {(profile?.college || profile?.email) && (
+            {profile?.college && (
               <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
-                {profile?.college && (
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5" /> {profile.college}
-                  </span>
-                )}
-                {profile?.email && (
-                  <span className="inline-flex items-center gap-1">
-                    <Mail className="size-3.5" /> {profile.email}
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-3.5" /> {profile.college}
+                </span>
               </p>
             )}
             {profile?.bio && (
@@ -438,8 +436,8 @@ export default function Profile() {
                             const dateKey = cellDate.toISOString().slice(0, 10);
                             const count = history[dateKey] || 0;
                             const tooltipText = count > 0
-                              ? `${count} login${count > 1 ? "s" : ""} on ${dateStr}`
-                              : `No logins on ${dateStr}`;
+                              ? `${count} contribution${count > 1 ? "s" : ""} on ${dateStr}`
+                              : `No contributions on ${dateStr}`;
                             return (
                               <UITooltip key={i}>
                                 <TooltipTrigger asChild>
@@ -634,9 +632,13 @@ export default function Profile() {
       {tab === "Activity" && (
         <div className="ds-card p-6">
           <ul className="space-y-3">
-            {["Joined DevSync Team Match AI", "Completed Sprint 3", "Earned 'Team Lead' badge", "Pushed 12 commits to Campus Connect"].map((t, i) => (
-              <li key={i} className="p-3 rounded-xl bg-surface-alt border border-border text-sm">{t}</li>
-            ))}
+            {profilePosts.length > 0 ? profilePosts.slice(0, 10).map((post: any) => (
+              <li key={post.id} className="p-3 rounded-xl bg-surface-alt border border-border text-sm">
+                Posted: <span className="font-semibold text-foreground">{post.title}</span> <span className="text-muted-foreground text-xs ml-2">{new Date(post.created_at || post.createdAt).toLocaleDateString()}</span>
+              </li>
+            )) : (
+              <li className="p-3 rounded-xl bg-surface-alt border border-border text-sm text-muted-foreground">No recent activity</li>
+            )}
           </ul>
         </div>
       )}

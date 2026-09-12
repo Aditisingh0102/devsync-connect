@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight, Plus, FolderOpen } from "lucide-react";
 import { useApp } from "@/lib/store";
 import ProjectCard from "@/components/ProjectCard";
 import CreatePostModal from "@/components/CreatePostModal";
@@ -45,7 +45,26 @@ export default function FindProjects() {
     }
   }, [location]);
 
-  const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
+  // Fetch projects from backend on mount
+  const [backendProjects, setBackendProjects] = useState<any[]>([]);
+  useEffect(() => {
+    fetch('https://16.170.255.194.nip.io/api/v1/projects/')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setBackendProjects(data); })
+      .catch(() => {});
+  }, []);
+
+  // Merge local + backend projects (backend takes priority)
+  const projects = useMemo(() => {
+    const localProjects = Object.values(state.projects || {});
+    if (backendProjects.length > 0) {
+      // Use backend projects, merge with local ones not in backend
+      const backendIds = new Set(backendProjects.map(p => String(p.id)));
+      const uniqueLocal = localProjects.filter(p => !backendIds.has(String(p.id)));
+      return [...backendProjects, ...uniqueLocal];
+    }
+    return localProjects;
+  }, [state.projects, backendProjects]);
 
   // Parse comma-separated search terms
   const searchTerms = useMemo(() => 
@@ -178,14 +197,30 @@ export default function FindProjects() {
         <Select value={sort} onChange={setSort} options={sorts} label="Sort" />
       </div>
 
-      <div className="ds-card p-4 mb-6 flex items-center gap-3 bg-primary-soft border-primary/20">
-        <div className="size-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0"><Sparkles className="size-5" /></div>
-        <div className="flex-1">
-          <div className="font-semibold text-sm text-foreground">3 high-match projects for you</div>
-          <div className="text-xs text-muted-foreground">Based on React, TypeScript, and your team-building history.</div>
+      {filtered.length > 0 && state.currentUser?.skills?.length > 0 && (() => {
+        const mySkills = (state.currentUser.skills || []).map((s: string) => s.toLowerCase());
+        const matchCount = filtered.filter(p => 
+          (p.tech || []).some((t: string) => mySkills.includes(t.toLowerCase()))
+        ).length;
+        if (matchCount === 0) return null;
+        return (
+          <div className="ds-card p-4 mb-6 flex items-center gap-3 bg-primary-soft border-primary/20">
+            <div className="size-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0"><Sparkles className="size-5" /></div>
+            <div className="flex-1">
+              <div className="font-semibold text-sm text-foreground">{matchCount} high-match project{matchCount !== 1 ? 's' : ''} for you</div>
+              <div className="text-xs text-muted-foreground">Based on {mySkills.slice(0, 3).join(', ')}{mySkills.length > 3 ? ` and ${mySkills.length - 3} more skills` : ''}.</div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {filtered.length === 0 && !q && cat === 'All' && status === 'All' && (
+        <div className="ds-card p-8 mb-6 text-center">
+          <FolderOpen className="size-12 text-muted-foreground/40 mx-auto mb-3" />
+          <h3 className="font-semibold text-lg">No projects yet</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">Be the first to post a project! Click "Post a New Project" above to get started and find collaborators.</p>
         </div>
-        <button className="text-sm font-semibold text-primary hover:text-primary-hover">See matches</button>
-      </div>
+      )}
 
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground"><span className="font-semibold text-foreground">{filtered.length}</span> projects found</p>

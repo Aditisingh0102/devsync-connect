@@ -1,28 +1,78 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
-import { Check, X, Inbox, Send, Users, FileText } from "lucide-react";
+import { Check, X, Inbox, Send, Users, FileText, Loader2 } from "lucide-react";
+import { api, getToken } from "@/lib/api";
 
 const tabs = ["Incoming", "Sent", "Accepted", "Declined"] as const;
 
 export default function RequestsPage() {
-  const { state, dispatch } = useApp();
+  const { state } = useApp();
   const me = state.currentUser;
   const [tab, setTab] = useState<(typeof tabs)[number]>("Incoming");
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [usersCache, setUsersCache] = useState<Record<number, any>>({});
 
-  const requests = useMemo(() => Object.values(state.requests).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)), [state.requests]);
+  useEffect(() => {
+    if (!getToken() || !me) {
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      api.getRequests("pending").catch(() => []),
+      api.getRequests("accepted").catch(() => []),
+      api.getRequests("declined").catch(() => [])
+    ])
+    .then(([pending, accepted, declined]) => {
+      const all = [...pending, ...accepted, ...declined];
+      all.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+      setRequests(all);
+
+      // We might need to fetch users involved in these requests. 
+      // For now, we will rely on state.users or just show IDs if state.users is missing.
+    })
+    .finally(() => setLoading(false));
+  }, [me]);
 
   const filtered = requests.filter((request) => {
     if (!me) return false;
-    if (tab === "Incoming") return request.toId === me.id && request.status === "pending";
-    if (tab === "Sent") return request.fromId === me.id && request.status === "pending";
-    if (tab === "Accepted") return (request.toId === me.id || request.fromId === me.id) && request.status === "accepted";
-    if (tab === "Declined") return (request.toId === me.id || request.fromId === me.id) && request.status === "declined";
+    if (tab === "Incoming") return request.to_id === me.id && request.status === "pending";
+    if (tab === "Sent") return request.from_id === me.id && request.status === "pending";
+    if (tab === "Accepted") return (request.to_id === me.id || request.from_id === me.id) && request.status === "accepted";
+    if (tab === "Declined") return (request.to_id === me.id || request.from_id === me.id) && request.status === "declined";
     return false;
   });
 
-  const update = (id: string, status: "pending" | "accepted" | "declined") => {
-    dispatch({ type: "updateRequest", payload: { id, status } });
+  const update = async (id: number, status: "pending" | "accepted" | "declined") => {
+    try {
+      await api.updateRequest(id, { status });
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  if (!me) {
+    return (
+      <div className="container py-10">
+        <div className="ds-card p-16 text-center">
+          <div className="size-14 rounded-2xl bg-primary-soft text-primary mx-auto flex items-center justify-center mb-4">
+            <Users className="size-6" />
+          </div>
+          <h3 className="font-semibold text-lg">Please log in</h3>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">You must be logged in to manage your collaboration requests.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="container py-20 flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-10 space-y-6">
@@ -34,15 +84,15 @@ export default function RequestsPage() {
         </div>
         <div className="grid grid-cols-3 gap-3 min-w-[240px]">
           <div className="ds-card p-4 text-center">
-            <div className="text-2xl font-bold">{requests.filter((r) => r.toId === me?.id && r.status === "pending").length}</div>
+            <div className="text-2xl font-bold">{requests.filter((r) => r.to_id === me?.id && r.status === "pending").length}</div>
             <div className="text-xs text-muted-foreground">Incoming</div>
           </div>
           <div className="ds-card p-4 text-center">
-            <div className="text-2xl font-bold">{requests.filter((r) => r.fromId === me?.id && r.status === "pending").length}</div>
+            <div className="text-2xl font-bold">{requests.filter((r) => r.from_id === me?.id && r.status === "pending").length}</div>
             <div className="text-xs text-muted-foreground">Sent</div>
           </div>
           <div className="ds-card p-4 text-center">
-            <div className="text-2xl font-bold">{requests.filter((r) => (r.toId === me?.id || r.fromId === me?.id) && r.status === "accepted").length}</div>
+            <div className="text-2xl font-bold">{requests.filter((r) => (r.to_id === me?.id || r.from_id === me?.id) && r.status === "accepted").length}</div>
             <div className="text-xs text-muted-foreground">Accepted</div>
           </div>
         </div>
@@ -58,22 +108,23 @@ export default function RequestsPage() {
 
       <div className="space-y-3">
         {filtered.length ? filtered.map((request) => {
-          const from = state.users[request.fromId];
-          const to = state.users[request.toId];
-          const project = request.projectId ? state.projects[request.projectId] : null;
-          const isIncoming = request.toId === me?.id;
+          // Attempt to map from local state or fallback
+          const from = state.users[request.from_id] || { name: `User ${request.from_id}` };
+          const to = state.users[request.to_id] || { name: `User ${request.to_id}` };
+          const project = request.project_id ? state.projects[request.project_id] : null;
+          const isIncoming = request.to_id === me?.id;
 
           return (
             <div key={request.id} className="ds-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="size-11 rounded-2xl bg-gradient-primary text-white flex items-center justify-center font-semibold shrink-0">
-                  {from?.avatar || from?.name?.slice(0, 2) || "U"}
+                  {from?.avatar ? <img src={from.avatar} className="size-full rounded-2xl object-cover" /> : from?.name?.slice(0, 2) || "U"}
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="font-semibold">
                       {isIncoming ? `${from?.name} wants to collaborate` : `Request sent to ${to?.name}`}
-                      {project && <span className="text-muted-foreground font-normal">on {project.title}</span>}
+                      {project && <span className="text-muted-foreground font-normal">on {project.name || project.title}</span>}
                     </div>
                     <span className={`ds-chip ${request.status === "pending" ? "bg-primary-soft text-primary" : request.status === "accepted" ? "bg-success-bg text-success" : "bg-secondary text-muted-foreground"}`}>
                       {request.status}
@@ -94,18 +145,7 @@ export default function RequestsPage() {
                       ))}
                     </div>
                   )}
-                  {request.resume && (
-                    <div className="mt-2.5">
-                      <a
-                        href={request.resume}
-                        download={request.resumeName || "resume.pdf"}
-                        className="h-8 px-3 rounded-lg bg-primary/10 text-primary border border-primary/10 hover:bg-primary hover:text-white transition-all text-xs font-semibold inline-flex items-center gap-1.5"
-                      >
-                        <FileText className="size-3.5" /> View Resume ({request.resumeName || "resume.pdf"})
-                      </a>
-                    </div>
-                  )}
-                  <div className="text-xs text-muted-foreground mt-1">{new Date(request.createdAt).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{new Date(request.created_at).toLocaleString()}</div>
                 </div>
               </div>
 
