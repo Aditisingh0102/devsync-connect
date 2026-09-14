@@ -99,13 +99,13 @@ export default function PostCard({ post, onRespond }: { post: Post; onRespond?: 
                   <span className="text-muted-foreground block uppercase font-medium tracking-wider text-[9px] mb-1.5">Looking For (Roles/Skills)</span>
                   <div className="flex flex-wrap gap-1.5">
                     {Array.isArray(post.lookingFor || post.looking_for) ? (
-                      (post.lookingFor || post.looking_for).map((role: string) => (
+                      ((post.lookingFor || post.looking_for) as string[]).map((role: string) => (
                         <span key={role} className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px]">
                           {role}
                         </span>
                       ))
                     ) : (
-                      ((post.lookingFor || post.looking_for) || "").split(",").map((s: string) => s.trim()).filter(Boolean).map((role: string) => (
+                      (((post.lookingFor || post.looking_for) as string) || "").split(",").map((s: string) => s.trim()).filter(Boolean).map((role: string) => (
                         <span key={role} className="px-2 py-0.5 rounded bg-primary/10 text-primary font-semibold text-[10px]">
                           {role}
                         </span>

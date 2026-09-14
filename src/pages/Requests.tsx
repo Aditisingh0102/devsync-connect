@@ -109,8 +109,8 @@ export default function RequestsPage() {
       <div className="space-y-3">
         {filtered.length ? filtered.map((request) => {
           // Attempt to map from local state or fallback
-          const from = state.users[request.from_id] || { name: `User ${request.from_id}` };
-          const to = state.users[request.to_id] || { name: `User ${request.to_id}` };
+          const from: any = state.users[request.from_id] || { name: `User ${request.from_id}` };
+          const to: any = state.users[request.to_id] || { name: `User ${request.to_id}` };
           const project = request.project_id ? state.projects[request.project_id] : null;
           const isIncoming = request.to_id === me?.id;
 

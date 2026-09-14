@@ -323,7 +323,7 @@ export default function Profile() {
         {Object.entries(profileStats).map(([k, v]) => (
           <button key={k} className="ds-card p-5 text-left hover:bg-secondary transition-colors">
             <p className="text-sm text-muted-foreground capitalize">{k.replace(/([A-Z])/g, " $1")}</p>
-            <p className="text-2xl font-bold mt-1">{v}{k === "matchScore" && "%"}</p>
+            <p className="text-2xl font-bold mt-1">{v as React.ReactNode}{k === "matchScore" && "%"}</p>
           </button>
         ))}
       </div>

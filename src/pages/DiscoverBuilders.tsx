@@ -139,7 +139,7 @@ export default function DiscoverBuilders() {
 
   // Filter out current user from the list
   const displayUsers = liveUsers.filter(u => {
-    if (state.currentUser && (u.id === state.currentUser.id || u.username === state.currentUser.username)) {
+    if (state.currentUser && (String(u.id) === String(state.currentUser.id) || u.username === state.currentUser.username)) {
       return false;
     }
     return true;
