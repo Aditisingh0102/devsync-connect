@@ -58,10 +58,15 @@ export default function Index() {
   const [liveUsers, setLiveUsers] = useState<Array<{id: number; username: string; name: string | null; avatar: string | null}>>([
   ]);
   useEffect(() => {
-    fetch('https://16.170.255.194.nip.io/api/v1/users/')
-      .then(r => r.json())
-      .then(data => { if (Array.isArray(data)) setLiveUsers(data); })
-      .catch(() => {});
+    const fetchUsers = () => {
+      fetch('https://16.170.255.194.nip.io/api/v1/users/')
+        .then(r => r.json())
+        .then(data => { if (Array.isArray(data)) setLiveUsers(data); })
+        .catch(() => {});
+    };
+    fetchUsers();
+    const interval = setInterval(fetchUsers, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const projects = useMemo(() => Object.values(state.projects || {}), [state.projects]);
@@ -150,10 +155,15 @@ export default function Index() {
 
   const [backendStats, setBackendStats] = useState<{active_projects: number; working_builders: number; average_match_score: number} | null>(null);
   useEffect(() => {
-    fetch('https://16.170.255.194.nip.io/api/v1/home/stats')
-      .then(r => r.json())
-      .then(data => setBackendStats(data))
-      .catch(() => {});
+    const fetchStats = () => {
+      fetch('https://16.170.255.194.nip.io/api/v1/home/stats')
+        .then(r => r.json())
+        .then(data => setBackendStats(data))
+        .catch(() => {});
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const totalProjectsCount = useMemo(() => {

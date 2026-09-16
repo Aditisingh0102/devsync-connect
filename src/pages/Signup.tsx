@@ -91,8 +91,14 @@ export default function Signup() {
     if (!email.trim()) e.email = "Email is required";
     else if (!email.trim().toLowerCase().endsWith("@gmail.com")) e.email = "Only @gmail.com addresses are allowed";
     
-    if (!password) e.password = "Password is required";
-    else if (password.length < 8) e.password = "Password must be at least 8 characters";
+    if (!password) {
+      e.password = "Password is required";
+    } else {
+      const failedRules = PASSWORD_RULES.filter(rule => !rule.test(password));
+      if (failedRules.length > 0) {
+        e.password = "Password must meet all requirements";
+      }
+    }
     
     if (!confirmPassword) e.confirmPassword = "Please confirm your password";
     else if (password !== confirmPassword) e.confirmPassword = "Passwords do not match";
@@ -487,7 +493,7 @@ export default function Signup() {
             {step === 3 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div>
-                  <label className="text-sm font-medium mb-3 block">Select Your Skills</label>
+                  <label className="text-sm font-medium mb-3 block">Select Your Skills <span className="text-xs text-muted-foreground font-normal ml-1">(At least 3)</span></label>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {PREDEFINED_SKILLS.map((skill) => (
                       <button
@@ -554,7 +560,13 @@ export default function Signup() {
                     Back
                   </button>
                   <button
-                    onClick={() => setStep(4)}
+                    onClick={() => {
+                      if (skills.length < 3) {
+                        toast.error("Please add at least 3 skills to continue.");
+                        return;
+                      }
+                      setStep(4);
+                    }}
                     className="h-12 w-2/3 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all shadow-glow active:scale-[0.98]"
                   >
                     Review <ArrowRight className="size-4" />
