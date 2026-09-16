@@ -12,6 +12,37 @@ export default function Dashboard() {
 
   const [dashData, setDashData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [acceptedRequests, setAcceptedRequests] = useState<number[]>([]);
+  const [rejectedRequests, setRejectedRequests] = useState<number[]>([]);
+  const [followedBack, setFollowedBack] = useState<number[]>([]);
+
+  const handleAcceptRequest = async (reqId: number) => {
+    try {
+      await api.updateRequest(reqId, { status: "accepted" });
+      setAcceptedRequests(prev => [...prev, reqId]);
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
+
+  const handleRejectRequest = async (reqId: number) => {
+    try {
+      await api.updateRequest(reqId, { status: "rejected" });
+      setRejectedRequests(prev => [...prev, reqId]);
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
+
+  const handleFollowBack = async (userId: number) => {
+    if (!userId) return;
+    try {
+      await api.followUser(userId);
+      setFollowedBack(prev => [...prev, userId]);
+    } catch (err: any) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     if (!getToken()) { setLoading(false); return; }
@@ -100,11 +131,33 @@ export default function Dashboard() {
                 <div className="ds-card p-6">
                   <h3 className="font-semibold text-lg mb-3">Incoming requests</h3>
                   <div className="space-y-2">
-                    {recentRequests.length > 0 ? recentRequests.map((req: any) => (
-                      <div key={req.id} className="p-3 rounded-xl bg-surface-alt border border-border text-sm">
-                        {req.from_username || "A builder"} wants to collaborate.
-                      </div>
-                    )) : <p className="text-sm text-muted-foreground">No pending requests right now.</p>}
+                    {recentRequests.length > 0 ? recentRequests.map((req: any) => {
+                      if (rejectedRequests.includes(req.id)) return null;
+                      const isAccepted = acceptedRequests.includes(req.id);
+                      const isFollowedBack = followedBack.includes(req.from_id);
+                      
+                      return (
+                        <div key={req.id} className="p-4 rounded-xl bg-surface-alt border border-border flex items-center justify-between">
+                          <div className="text-sm">
+                            <span className="font-semibold">{req.from_username || "A builder"}</span> {req.message || "wants to connect."}
+                          </div>
+                          <div className="flex gap-2">
+                            {isAccepted ? (
+                              isFollowedBack ? (
+                                <button disabled className="h-8 px-3 rounded-lg bg-secondary text-xs font-medium opacity-70">Following</button>
+                              ) : (
+                                <button onClick={() => handleFollowBack(req.from_id)} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-hover">Follow Back</button>
+                              )
+                            ) : (
+                              <>
+                                <button onClick={() => handleAcceptRequest(req.id)} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-hover">Accept</button>
+                                <button onClick={() => handleRejectRequest(req.id)} className="h-8 px-3 rounded-lg bg-secondary text-foreground text-xs font-medium hover:bg-secondary/80">Reject</button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }) : <p className="text-sm text-muted-foreground">No pending requests right now.</p>}
                   </div>
                 </div>
               </div>

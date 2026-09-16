@@ -35,6 +35,7 @@ export default function DiscoverBuilders() {
   const [isLoading, setIsLoading] = useState(true);
   const [liveUsers, setLiveUsers] = useState<BackendUser[]>([]);
   const [followingIds, setFollowingIds] = useState<number[]>([]);
+  const [requestedIds, setRequestedIds] = useState<number[]>([]);
   const [followLoading, setFollowLoading] = useState<number | null>(null);
 
   // Fetch users from backend ONCE
@@ -92,19 +93,19 @@ export default function DiscoverBuilders() {
     !filterSkill || s.toLowerCase().includes(filterSkill.toLowerCase())
   );
 
-  // Follow user via backend
+  // Send connection request via backend
   const handleFollow = async (userId: number) => {
     if (!getToken()) {
-      toast.error("Please login first to follow users.");
+      toast.error("Please login first to connect with users.");
       return;
     }
     setFollowLoading(userId);
     try {
-      await api.followUser(userId);
-      setFollowingIds(prev => [...prev, userId]);
-      toast.success("Followed successfully!", { description: "You will now see their posts.", icon: "🎉" });
+      await api.createRequest({ to_id: userId, message: "wants to connect with you", role: "follower" });
+      setRequestedIds(prev => [...prev, userId]);
+      toast.success("Request sent!", { description: "They will be notified of your request.", icon: "📩" });
     } catch (err: any) {
-      toast.error(err.message || "Failed to follow user");
+      toast.error(err.message || "Failed to send request");
     } finally {
       setFollowLoading(null);
     }
@@ -267,6 +268,7 @@ export default function DiscoverBuilders() {
         ) : displayUsers.length > 0 ? (
           displayUsers.map((u) => {
             const isFollowing = followingIds.includes(u.id);
+            const isRequested = requestedIds.includes(u.id);
             const isLoadingFollow = followLoading === u.id;
             return (
               <div key={u.id} className="ds-card p-4 hover:border-primary/30 transition-colors">
@@ -307,6 +309,14 @@ export default function DiscoverBuilders() {
                         <UserCheck className="size-3.5 text-primary" />
                       )}
                       Following
+                    </button>
+                  ) : isRequested ? (
+                    <button
+                      disabled
+                      className="h-9 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 opacity-70"
+                    >
+                      <UserCheck className="size-3.5 text-muted-foreground" />
+                      Requested
                     </button>
                   ) : (
                     <button
