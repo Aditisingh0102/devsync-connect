@@ -42,7 +42,9 @@ export default function EditProfilePage() {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [college, setCollege] = useState("");
-  const [year, setYear] = useState("Year 1");
+  const [year, setYear] = useState("");
+  const [department, setDepartment] = useState("");
+  const [semester, setSemester] = useState("");
 
   // Tag fields
   const [skills, setSkills] = useState([]);
@@ -66,7 +68,9 @@ export default function EditProfilePage() {
     setUsername((currentUser.username || currentUser.handle || "").replace(/[@\s]/g, ""));
     setBio(currentUser.bio || "");
     setCollege(currentUser.college || "");
-    setYear(currentUser.year || "Year 3"); // default to Year 3 if not specified
+    setYear(currentUser.year || "");
+    setDepartment(currentUser.preferences?.department || "");
+    setSemester(currentUser.preferences?.semester || "");
     setSkills(currentUser.skills || []);
     setDomains(currentUser.domains || []);
     setRoles(currentUser.roles || []);
@@ -216,7 +220,12 @@ export default function EditProfilePage() {
           college: college.trim(),
           year: year,
           skills: skills,
-          domains: domains
+          domains: domains,
+          preferences: {
+            ...currentUser.preferences,
+            department: department,
+            semester: semester
+          }
         });
       }).catch(console.error);
     } catch(e) {
@@ -316,17 +325,53 @@ export default function EditProfilePage() {
               />
             </div>
             <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Department Name</label>
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10"
+              >
+                <option value="" disabled>Select your department</option>
+                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics & Communication">Electronics & Communication</option>
+                <option value="Electrical Engineering">Electrical Engineering</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Civil Engineering">Civil Engineering</option>
+                <option value="Chemical Engineering">Chemical Engineering</option>
+                <option value="Aerospace Engineering">Aerospace Engineering</option>
+              </select>
+            </div>
+            <div className="space-y-1">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Year of Study</label>
               <select
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10"
               >
-                <option value="Year 1">Year 1</option>
-                <option value="Year 2">Year 2</option>
-                <option value="Year 3">Year 3</option>
-                <option value="Year 4">Year 4</option>
-                <option value="Graduated">Graduated</option>
+                <option value="" disabled>Select Year</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Current Semester</label>
+              <select
+                value={semester}
+                onChange={(e) => setSemester(e.target.value)}
+                className="w-full px-3.5 h-11 bg-secondary border border-border text-foreground rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10"
+              >
+                <option value="" disabled>Select Sem</option>
+                <option value="1st Semester">1st Semester</option>
+                <option value="2nd Semester">2nd Semester</option>
+                <option value="3rd Semester">3rd Semester</option>
+                <option value="4th Semester">4th Semester</option>
+                <option value="5th Semester">5th Semester</option>
+                <option value="6th Semester">6th Semester</option>
+                <option value="7th Semester">7th Semester</option>
+                <option value="8th Semester">8th Semester</option>
               </select>
             </div>
           </div>

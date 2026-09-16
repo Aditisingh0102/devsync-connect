@@ -37,19 +37,15 @@ export default function DiscoverBuilders() {
   const [followingIds, setFollowingIds] = useState<number[]>([]);
   const [followLoading, setFollowLoading] = useState<number | null>(null);
 
-  // Fetch users from backend
-  const fetchUsers = useCallback(async (search?: string, skill?: string) => {
+  // Fetch users from backend ONCE
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: any = { limit: 50 };
-      if (search?.trim()) params.q = search.trim();
-      if (skill?.trim()) params.skill = skill.trim();
-      const data = await api.listUsers(params);
+      const data = await api.listUsers({ limit: 100 });
       if (Array.isArray(data)) {
         setLiveUsers(data);
       }
     } catch (err) {
-      // Fallback: fetch without search params
       try {
         const res = await fetch("https://16.170.255.194.nip.io/api/v1/users/");
         const data = await res.json();
@@ -72,18 +68,10 @@ export default function DiscoverBuilders() {
     }
   }, [state.currentUser]);
 
-  // Fetch on mount and when search changes
+  // Fetch only on mount
   useEffect(() => {
-    fetchUsers(q, filterSkill);
-  }, []);
-
-  // Debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchUsers(q, filterSkill);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [q, filterSkill]);
+    fetchUsers();
+  }, [fetchUsers]);
 
   useEffect(() => {
     setQ(searchParams.get("q") || "");
@@ -137,11 +125,34 @@ export default function DiscoverBuilders() {
     }
   };
 
-  // Filter out current user from the list
+  // Filter out current user from the list and apply local search/skill filters
   const displayUsers = liveUsers.filter(u => {
+    // Exclude current user
     if (state.currentUser && (String(u.id) === String(state.currentUser.id) || u.username === state.currentUser.username)) {
       return false;
     }
+    
+    // Filter by search query
+    if (q) {
+      const searchLower = q.toLowerCase();
+      const matchesName = u.name?.toLowerCase().includes(searchLower) || false;
+      const matchesUsername = u.username?.toLowerCase().includes(searchLower) || false;
+      const matchesSkill = u.skills?.some(s => s.toLowerCase().includes(searchLower)) || false;
+      const matchesDomain = u.domains?.some(d => d.toLowerCase().includes(searchLower)) || false;
+      if (!matchesName && !matchesUsername && !matchesSkill && !matchesDomain) {
+        return false;
+      }
+    }
+
+    // Filter by exact skill
+    if (filterSkill) {
+      const skillLower = filterSkill.toLowerCase();
+      const hasSkill = u.skills?.some(s => s.toLowerCase() === skillLower) || false;
+      if (!hasSkill) {
+        return false;
+      }
+    }
+
     return true;
   });
 

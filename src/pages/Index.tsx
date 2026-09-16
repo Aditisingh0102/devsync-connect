@@ -165,7 +165,7 @@ export default function Index() {
     { label: "Active Projects", value: totalProjectsCount.toString(), change: totalProjectsCount > 0 ? "Live" : "0", icon: Compass, color: "text-primary bg-primary-soft", route: "/find-projects" },
     { label: "Builders Online", value: (backendStats?.working_builders || liveUsers.length).toString(), change: liveUsers.length > 0 ? "Active" : "0", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
     { label: "My Team", value: myTeamsCount.toString(), change: myTeamsCount > 0 ? "Active" : "—", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
-    { label: state.currentUser ? "Your Match Score" : "Avg Match Score", value: `${matchScore || backendStats?.average_match_score || 0}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
+    { label: state.currentUser ? "Your Match Score" : "Avg Match Score", value: `${state.currentUser ? matchScore : (backendStats?.average_match_score || 0)}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
   ], [totalProjectsCount, liveUsers.length, myTeamsCount, matchScore, matchScoreChange, backendStats]);
 
   return (

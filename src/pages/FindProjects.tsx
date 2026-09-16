@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { Search, SlidersHorizontal, Sparkles, ChevronLeft, ChevronRight, Plus, FolderOpen } from "lucide-react";
 import { useApp } from "@/lib/store";
 import ProjectCard from "@/components/ProjectCard";
 import CreatePostModal from "@/components/CreatePostModal";
+import AccessDeniedModal from "@/components/AccessDeniedModal";
 
 const categories = ["All", "AI", "Web", "Mobile", "DevTools", "Productivity", "Research", "OpenSource", "Education"];
 const statuses = ["All", "Recruiting", "In Progress", "Completed"];
@@ -12,6 +13,7 @@ const sorts = ["Recommended", "Newest", "Most Members", "Highest Progress"];
 export default function FindProjects() {
   const { state } = useApp();
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") || "");
 
@@ -35,15 +37,20 @@ export default function FindProjects() {
   const [sort, setSort] = useState("Recommended");
   const [page, setPage] = useState(1);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [accessDeniedOpen, setAccessDeniedOpen] = useState(false);
   const perPage = 12;
 
   useEffect(() => {
     if (location.state && (location.state as any).openCreateModal) {
+      if (!state.currentUser) {
+        setAccessDeniedOpen(true);
+        return;
+      }
       setCreateModalOpen(true);
       // Clear navigation state so that refreshing doesn't reopen the modal
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [location, state.currentUser, navigate]);
 
   // Fetch projects from backend on mount
   const [backendProjects, setBackendProjects] = useState<any[]>([]);
@@ -174,7 +181,14 @@ export default function FindProjects() {
           <p className="text-muted-foreground mt-2 max-w-2xl">Discover real-world student projects matched to your skills, interests, and availability.</p>
         </div>
         <button
-          onClick={() => setCreateModalOpen(true)}
+          onClick={() => {
+            console.log("Post a New Project clicked, currentUser:", state.currentUser);
+            if (!state.currentUser) {
+              setAccessDeniedOpen(true);
+              return;
+            }
+            setCreateModalOpen(true);
+          }}
           className="ds-card p-4 flex items-center gap-4 border border-primary/20 hover:border-primary bg-card/30 hover:bg-card transition-all md:w-64 shrink-0 group text-left"
         >
           <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -215,10 +229,22 @@ export default function FindProjects() {
       })()}
 
       {filtered.length === 0 && !q && cat === 'All' && status === 'All' && (
-        <div className="ds-card p-8 mb-6 text-center">
-          <FolderOpen className="size-12 text-muted-foreground/40 mx-auto mb-3" />
+        <div className="ds-card p-8 mb-6 text-center flex flex-col items-center">
+          <FolderOpen className="size-12 text-muted-foreground/40 mb-3" />
           <h3 className="font-semibold text-lg">No projects yet</h3>
-          <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">Be the first to post a project! Click "Post a New Project" above to get started and find collaborators.</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-4 max-w-md">Be the first to post a project and find collaborators!</p>
+          <button 
+            onClick={() => {
+              if (!state.currentUser) {
+                setAccessDeniedOpen(true);
+                return;
+              }
+              setCreateModalOpen(true);
+            }}
+            className="h-11 px-5 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center gap-2 hover:bg-primary-hover shadow-glow transition-all"
+          >
+            <Plus className="size-4" /> Post a New Project
+          </button>
         </div>
       )}
 
@@ -247,6 +273,7 @@ export default function FindProjects() {
         </div>
       )}
       <CreatePostModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
+      <AccessDeniedModal open={accessDeniedOpen} onClose={() => setAccessDeniedOpen(false)} message="Please log in to post a new project and find collaborators." />
     </div>
   );
 }
