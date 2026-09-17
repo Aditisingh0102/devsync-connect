@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/devsync-connect/",
+  base: "/",
 
   server: {
     host: "::",
