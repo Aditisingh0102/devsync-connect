@@ -184,7 +184,7 @@ export const api = {
   },
 
   markNotificationRead: async (notificationId: number) => {
-    return fetchAPI(`/notifications/${notificationId}/read`, { method: "PUT" });
+    return fetchAPI(`/notifications/${notificationId}/read`, { method: "PATCH" });
   },
 
   markAllNotificationsRead: async () => {
