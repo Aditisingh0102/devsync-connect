@@ -164,7 +164,7 @@ export default function Signup() {
       
       setLoginMessage("Success!");
       toast.success("Account created! 🎉");
-      setTimeout(() => navigate("/dashboard"), 500);
+      setTimeout(() => navigate("/dashboard", { state: { isNewSignup: true } }), 500);
 
     } catch (err: any) {
       setLoginMessage("");

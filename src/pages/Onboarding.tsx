@@ -76,7 +76,7 @@ export default function Onboarding() {
           <h1 className="ds-page-title mt-3">You're already signed in and your profile is set up</h1>
           <p className="text-muted-foreground mt-2 max-w-xl mx-auto">Your profile data is already saved. Go to the dashboard or profile to continue collaborating.</p>
           <div className="mt-6 flex justify-center gap-3 flex-wrap">
-            <button onClick={() => navigate("/dashboard")} className="h-11 px-5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover">Go to Dashboard</button>
+            <button onClick={() => navigate("/dashboard", { state: { isNewSignup: true } })} className="h-11 px-5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover">Go to Dashboard</button>
             <button onClick={() => navigate("/profile")} className="h-11 px-5 rounded-xl bg-card border border-border text-sm font-semibold hover:bg-secondary">Open Profile</button>
           </div>
         </div>

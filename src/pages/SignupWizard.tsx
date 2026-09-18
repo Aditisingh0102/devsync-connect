@@ -73,7 +73,7 @@ export default function SignupWizard() {
 
             dispatch({ type: "setCurrentUser", payload: user });
             toast.success("Account created successfully! 🎉");
-            navigate("/dashboard");
+            navigate("/dashboard", { state: { isNewSignup: true } });
 
         } catch (error: any) {
             console.error("Signup failed", error);
