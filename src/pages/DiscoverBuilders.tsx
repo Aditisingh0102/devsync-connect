@@ -85,6 +85,11 @@ export default function DiscoverBuilders() {
 
   // Fetch only on mount
   useEffect(() => {
+    if (!getToken()) {
+      setIsLoading(false);
+      toast("Login required", { description: "Please login first to view and connect with other builders.", icon: "🔒" });
+      return;
+    }
     fetchUsers();
     fetchSentRequests();
   }, [fetchUsers, fetchSentRequests]);
@@ -203,7 +208,7 @@ export default function DiscoverBuilders() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold">Discover Builders</h1>
-            <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain. <span className="text-primary font-medium">{liveUsers.length} registered</span></p>
+            <p className="text-sm text-muted-foreground">Search builders by name, username, skills, or domain. {getToken() && <span className="text-primary font-medium">{liveUsers.length} registered</span>}</p>
           </div>
         </div>
         <div className="mt-4 flex gap-2">
@@ -275,7 +280,19 @@ export default function DiscoverBuilders() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isLoading ? (
+        {!getToken() ? (
+          <div className="ds-card p-12 text-center col-span-full border-dashed">
+            <div className="size-16 rounded-full bg-secondary text-muted-foreground flex items-center justify-center mx-auto mb-4">
+              <Users className="size-8" />
+            </div>
+            <h3 className="font-semibold text-lg">Join to discover builders</h3>
+            <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">You need an account to view builder profiles, see their skills, and send connection requests.</p>
+            <div className="mt-6 flex flex-wrap gap-3 justify-center">
+              <Link to="/login" className="h-10 px-6 rounded-xl bg-primary text-white font-semibold inline-flex items-center justify-center hover:bg-primary-hover">Log In</Link>
+              <Link to="/signup" className="h-10 px-6 rounded-xl bg-card border border-border font-semibold inline-flex items-center justify-center hover:bg-secondary">Sign Up</Link>
+            </div>
+          </div>
+        ) : isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="ds-card p-4 flex flex-col gap-3">
               <div className="flex items-center gap-3">
