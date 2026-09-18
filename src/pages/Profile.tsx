@@ -7,6 +7,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useApp } from "@/lib/store";
 import { api, getToken } from "@/lib/api";
 import PostCard from "@/components/PostCard";
+import FollowListModal from "@/components/FollowListModal";
 import ProjectCard from "@/components/ProjectCard";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -673,4 +674,5 @@ export default function Profile() {
     </div>
   );
 }
+
 
