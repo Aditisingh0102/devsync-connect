@@ -136,10 +136,12 @@ export default function Dashboard() {
                       const isAccepted = acceptedRequests.includes(req.id);
                       const isFollowedBack = followedBack.includes(req.from_id);
                       
+                      const displayName = req.from_name ? `${req.from_name} (@${req.from_username})` : (req.from_username ? `@${req.from_username}` : "A builder");
+                      
                       return (
                         <div key={req.id} className="p-4 rounded-xl bg-surface-alt border border-border flex items-center justify-between">
                           <div className="text-sm">
-                            <span className="font-semibold">{req.from_username || "A builder"}</span> {req.message || "wants to connect."}
+                            <span className="font-semibold">{displayName}</span> {req.message || "wants to connect."}
                           </div>
                           <div className="flex gap-2">
                             {isAccepted ? (
