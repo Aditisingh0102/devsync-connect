@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useApp } from "@/lib/store";
+import { api, getToken } from "@/lib/api";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -34,6 +35,19 @@ export default function Navbar() {
 
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+
+  useEffect(() => {
+    if (currentUser && getToken()) {
+      api.getNotifications(true)
+        .then(data => {
+          if (Array.isArray(data)) {
+            setUnreadNotificationsCount(data.length);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const q = searchParams.get("q") || "";
@@ -102,7 +116,7 @@ export default function Navbar() {
         <Link to="/notifications" className="relative size-10 rounded-xl bg-secondary hover:bg-accent flex items-center justify-center transition-colors">
           <Bell className="size-4.5" />
           {(() => {
-            const unreadCount = currentUser && state.notifications ? Object.values(state.notifications).filter((n) => !n.read).length : 0;
+            const unreadCount = unreadNotificationsCount;
             if (!unreadCount) return null;
             return (
               <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
@@ -170,3 +184,4 @@ export default function Navbar() {
     </header>
   );
 }
+
