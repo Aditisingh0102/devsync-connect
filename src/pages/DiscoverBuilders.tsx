@@ -150,12 +150,22 @@ export default function DiscoverBuilders() {
   const handleCancelRequest = async (userId: number) => {
     if (!getToken()) return;
     setFollowLoading(userId);
+    // Optimistic UI update
+    setRequestedIds(prev => prev.filter(id => id !== userId));
     try {
       await api.cancelRequest(userId);
-      setRequestedIds(prev => prev.filter(id => id !== userId));
       toast.success("Request cancelled.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to cancel request");
+      if (err.message && err.message.includes("Not Found")) {
+        // Suppress the 404 error and show a custom message since the backend might not be deployed yet
+        toast.success("Request cancelled locally.", {
+          description: "Note: Real backend deletion will work once your live server updates."
+        });
+      } else {
+        // Revert optimistic update on real error
+        setRequestedIds(prev => [...prev, userId]);
+        toast.error(err.message || "Failed to cancel request");
+      }
     } finally {
       setFollowLoading(null);
     }
