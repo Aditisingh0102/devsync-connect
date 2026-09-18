@@ -33,7 +33,7 @@ export default function MyProjects() {
       .catch(() => {});
 
     // Fetch all projects for the right sidebar
-    fetch('https://16.170.255.194.nip.io/api/v1/projects/')
+    fetch('https://backenddevsyncconnect.dev/api/v1/projects/')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

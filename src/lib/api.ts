@@ -1,4 +1,4 @@
-const BASE_URL = "https://16.170.255.194.nip.io/api/v1";
+const BASE_URL = "https://backenddevsyncconnect.dev/api/v1";
 
 export function getToken() {
   return localStorage.getItem("devsync_auth_token");

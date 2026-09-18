@@ -55,7 +55,7 @@ export default function FindProjects() {
   // Fetch projects from backend on mount
   const [backendProjects, setBackendProjects] = useState<any[]>([]);
   useEffect(() => {
-    fetch('https://16.170.255.194.nip.io/api/v1/projects/')
+    fetch('https://backenddevsyncconnect.dev/api/v1/projects/')
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setBackendProjects(data); })
       .catch(() => {});

@@ -59,7 +59,7 @@ export default function Index() {
   ]);
   useEffect(() => {
     const fetchUsers = () => {
-      fetch('https://16.170.255.194.nip.io/api/v1/users/')
+      fetch('https://backenddevsyncconnect.dev/api/v1/users/')
         .then(r => r.json())
         .then(data => { if (Array.isArray(data)) setLiveUsers(data); })
         .catch(() => {});
@@ -156,7 +156,7 @@ export default function Index() {
   const [backendStats, setBackendStats] = useState<{active_projects: number; working_builders: number; average_match_score: number} | null>(null);
   useEffect(() => {
     const fetchStats = () => {
-      fetch('https://16.170.255.194.nip.io/api/v1/home/stats')
+      fetch('https://backenddevsyncconnect.dev/api/v1/home/stats')
         .then(r => r.json())
         .then(data => setBackendStats(data))
         .catch(() => {});

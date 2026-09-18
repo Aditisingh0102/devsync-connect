@@ -48,7 +48,7 @@ export default function DiscoverBuilders() {
       }
     } catch (err) {
       try {
-        const res = await fetch("https://16.170.255.194.nip.io/api/v1/users/");
+        const res = await fetch("https://backenddevsyncconnect.dev/api/v1/users/");
         const data = await res.json();
         if (Array.isArray(data)) setLiveUsers(data);
       } catch {
