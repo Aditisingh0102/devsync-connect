@@ -141,6 +141,21 @@ export default function DiscoverBuilders() {
     }
   };
 
+  // Cancel sent request via backend
+  const handleCancelRequest = async (userId: number) => {
+    if (!getToken()) return;
+    setFollowLoading(userId);
+    try {
+      await api.cancelRequest(userId);
+      setRequestedIds(prev => prev.filter(id => id !== userId));
+      toast.success("Request cancelled.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to cancel request");
+    } finally {
+      setFollowLoading(null);
+    }
+  };
+
   // Filter out current user from the list and apply local search/skill filters
   const displayUsers = liveUsers.filter(u => {
     // Exclude current user
@@ -327,10 +342,15 @@ export default function DiscoverBuilders() {
                     </button>
                   ) : isRequested ? (
                     <button
-                      disabled
-                      className="h-9 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 opacity-70"
+                      onClick={() => handleCancelRequest(u.id)}
+                      disabled={isLoadingFollow}
+                      className="h-9 px-4 rounded-xl bg-card border border-border text-sm font-medium inline-flex items-center gap-1.5 opacity-70 hover:opacity-100 hover:text-destructive hover:border-destructive transition-colors disabled:opacity-50"
                     >
-                      <UserCheck className="size-3.5 text-muted-foreground" />
+                      {isLoadingFollow ? (
+                        <div className="size-3.5 border-2 border-muted-foreground/30 border-t-muted-foreground rounded-full animate-spin" />
+                      ) : (
+                        <UserCheck className="size-3.5 text-muted-foreground" />
+                      )}
                       Requested
                     </button>
                   ) : (

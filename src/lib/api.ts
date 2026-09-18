@@ -195,7 +195,9 @@ export const api = {
   createRequest: async (data: { to_id: number; message?: string; role?: string; project_id?: number }) => {
     return fetchAPI("/requests/", { method: "POST", body: JSON.stringify(data) });
   },
-
+  cancelRequest: async (to_id: number) => {
+    return fetchAPI(`/requests/user/${to_id}`, { method: "DELETE" });
+  },
   updateRequest: async (requestId: number, data: { status: string }) => {
     return fetchAPI(`/requests/${requestId}`, { method: "PATCH", body: JSON.stringify(data) });
   },
