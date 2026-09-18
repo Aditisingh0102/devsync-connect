@@ -16,10 +16,11 @@ export default function Dashboard() {
   const [rejectedRequests, setRejectedRequests] = useState<number[]>([]);
   const [followedBack, setFollowedBack] = useState<number[]>([]);
 
-  const handleAcceptRequest = async (reqId: number) => {
+  const handleAcceptRequest = async (reqId: number, fromId: number) => {
     try {
       await api.updateRequest(reqId, { status: "accepted" });
       setAcceptedRequests(prev => [...prev, reqId]);
+      setFollowedBack(prev => [...prev, fromId]);
     } catch (err: any) {
       console.error(err);
     }
@@ -152,7 +153,7 @@ export default function Dashboard() {
                               )
                             ) : (
                               <>
-                                <button onClick={() => handleAcceptRequest(req.id)} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-hover">Accept</button>
+                                <button onClick={() => handleAcceptRequest(req.id, req.from_id)} className="h-8 px-3 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-hover">Accept</button>
                                 <button onClick={() => handleRejectRequest(req.id)} className="h-8 px-3 rounded-lg bg-secondary text-foreground text-xs font-medium hover:bg-secondary/80">Reject</button>
                               </>
                             )}
