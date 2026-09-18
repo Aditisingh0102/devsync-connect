@@ -110,6 +110,10 @@ export const api = {
     return fetchAPI(`/users/profile/${username}`, { method: "GET" });
   },
 
+  getStats: async () => {
+    return fetchAPI("/users/online-count", { method: "GET" });
+  },
+
   followUser: async (userId: number) => {
     return fetchAPI(`/users/${userId}/follow`, { method: "POST" });
   },

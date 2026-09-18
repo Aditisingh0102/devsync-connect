@@ -14,6 +14,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { api } from "@/lib/api";
 
 import Hero3D from "@/components/Hero3D";
 
@@ -57,15 +58,15 @@ export default function Index() {
   // Fetch live registered users from backend
   const [liveUsers, setLiveUsers] = useState<Array<{id: number; username: string; name: string | null; avatar: string | null}>>([
   ]);
+  const [userStats, setUserStats] = useState({ online_count: 0, total_users: 0 });
+
   useEffect(() => {
     const fetchUsers = () => {
-      fetch('https://backenddevsyncconnect.dev/api/v1/users/')
-        .then(r => r.json())
-        .then(data => { if (Array.isArray(data)) setLiveUsers(data); })
-        .catch(() => {});
+      api.listUsers({ limit: 10 }).then(data => { if (Array.isArray(data)) setLiveUsers(data); }).catch(() => {});
+      api.getStats().then(data => { if (data) setUserStats(data); }).catch(() => {});
     };
     fetchUsers();
-    const interval = setInterval(fetchUsers, 5000);
+    const interval = setInterval(fetchUsers, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -173,10 +174,10 @@ export default function Index() {
 
   const stats = useMemo(() => [
     { label: "Active Projects", value: totalProjectsCount.toString(), change: totalProjectsCount > 0 ? "Live" : "0", icon: Compass, color: "text-primary bg-primary-soft", route: "/find-projects" },
-    { label: "Builders Online", value: (backendStats?.working_builders || liveUsers.length).toString(), change: liveUsers.length > 0 ? "Active" : "0", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
+    { label: "Builders Online", value: userStats.online_count.toString(), change: userStats.online_count > 0 ? "Active" : "0", icon: Briefcase, color: "text-cyan bg-[hsl(var(--cyan)/0.1)]" },
     { label: "My Team", value: myTeamsCount.toString(), change: myTeamsCount > 0 ? "Active" : "—", icon: LayoutDashboard, color: "text-purple bg-[hsl(var(--purple)/0.1)]" },
     { label: state.currentUser ? "Your Match Score" : "Avg Match Score", value: `${state.currentUser ? matchScore : (backendStats?.average_match_score || 0)}%`, change: matchScoreChange, icon: TrendingUp, color: "text-success bg-success-bg" },
-  ], [totalProjectsCount, liveUsers.length, myTeamsCount, matchScore, matchScoreChange, backendStats]);
+  ], [totalProjectsCount, userStats.online_count, myTeamsCount, matchScore, matchScoreChange, backendStats]);
 
   return (
     <div>
@@ -214,7 +215,7 @@ export default function Index() {
                   );
                 })}
               </div>
-              <div><span className="font-semibold text-foreground">{liveUsers.length} students</span> already syncing</div>
+              <div><span className="font-semibold text-foreground">{userStats.total_users || liveUsers.length} students</span> already syncing</div>
             </div>
           </div>
 
