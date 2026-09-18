@@ -121,23 +121,7 @@ export default function Profile() {
       }
     });
 
-    // Add deterministic mock activity for demonstration so the heatmap is colorful
-    const usernameSeed = (profile?.username || "builder").split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    const today = new Date();
-    for (let i = 0; i < 365; i++) {
-      const cellDate = new Date(today);
-      cellDate.setDate(today.getDate() - i);
-      const dateKey = cellDate.toISOString().slice(0, 10);
-      
-      // If there's no real activity on this day, generate mock activity
-      if (!history[dateKey]) {
-        const rand = seededRandom(usernameSeed + i);
-        // ~35% chance to have some activity
-        if (rand > 0.65) {
-          history[dateKey] = Math.floor((rand - 0.65) * 12) + 1; // 1 to 4+ contributions
-        }
-      }
-    }
+    // Return only real data
 
     return history;
   }, [profile?.loginHistory, profile?.posts_by_user, profile?.working_projects, profile?.username]);
