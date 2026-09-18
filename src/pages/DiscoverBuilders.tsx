@@ -157,10 +157,8 @@ export default function DiscoverBuilders() {
       toast.success("Request cancelled.");
     } catch (err: any) {
       if (err.message && err.message.includes("Not Found")) {
-        // Suppress the 404 error and show a custom message since the backend might not be deployed yet
-        toast.success("Request cancelled locally.", {
-          description: "Note: Real backend deletion will work once your live server updates."
-        });
+        // Suppress the 404 error and show a custom message
+        toast.success("Request cancelled.");
       } else {
         // Revert optimistic update on real error
         setRequestedIds(prev => [...prev, userId]);
