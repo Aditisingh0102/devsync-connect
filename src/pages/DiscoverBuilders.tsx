@@ -69,10 +69,25 @@ export default function DiscoverBuilders() {
     }
   }, [state.currentUser]);
 
+  // Fetch sent requests on mount
+  const fetchSentRequests = useCallback(async () => {
+    if (!getToken()) return;
+    try {
+      const data = await api.getRequests("sent");
+      if (Array.isArray(data)) {
+        const ids = data.map((req: any) => req.to_id);
+        setRequestedIds(ids);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   // Fetch only on mount
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchSentRequests();
+  }, [fetchUsers, fetchSentRequests]);
 
   useEffect(() => {
     setQ(searchParams.get("q") || "");

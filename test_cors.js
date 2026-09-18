@@ -2,35 +2,30 @@ const BASE_URL = "https://backenddevsyncconnect.dev/api/v1";
 
 async function testBackend() {
     try {
-        console.log("2. Logging in...");
+        console.log("2. Logging in as admin...");
         const loginRes = await fetch(`${BASE_URL}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ identifier: "testuser_cors_1234@gmail.com", password: "Password123!" })
+            body: JSON.stringify({ identifier: "admin", password: "Password123!" })
         });
         const loginData = await loginRes.json();
-        console.log("Login data:", loginData);
         const token = loginData.access_token;
-        console.log("Token received:", !!token);
+        if (!token) {
+            console.log("Could not log in as admin", loginData);
+            return;
+        }
 
-        console.log("3. Sending Follow Request...");
-        const reqRes = await fetch(`${BASE_URL}/requests/`, {
-            method: "POST",
+        console.log("3. Fetching dashboard...");
+        const dashRes = await fetch(`${BASE_URL}/dashboard/me`, {
+            method: "GET",
             headers: { 
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                to_id: 1,
-                message: "wants to connect with you",
-                role: "follower"
-            })
+            }
         });
-        console.log("Request status:", reqRes.status);
-        console.log("Request headers:", Object.fromEntries(reqRes.headers.entries()));
         
-        const text = await reqRes.text();
-        console.log("Request body:", text);
+        const data = await dashRes.json();
+        console.log("Incoming Requests:", data.incoming_requests);
     } catch (e) {
         console.error(e);
     }
