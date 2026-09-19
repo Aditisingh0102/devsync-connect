@@ -79,7 +79,7 @@ export default function Dashboard() {
           <div>
             <span className="ds-chip-primary">Dashboard</span>
             <h1 className="ds-page-title mt-2">
-              {isNewSignup ? `Welcome, ${me.name || me.username || 'Builder'}!` : `Welcome back, ${me.name || me.username || 'Builder'}!`}
+              {isNewSignup ? `Welcome, ${me.name || me.username || 'Builder'}!` : `Welcome back, ${me.name || me.username || 'Builder'}!`}   // Can we make this more personalized by adding the user's name or username if available?
             </h1>
             <p className="text-muted-foreground mt-1 max-w-2xl">Your projects, requests, followers, and recent activity are connected here.</p>
           </div>
