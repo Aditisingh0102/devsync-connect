@@ -49,7 +49,7 @@ export default function Dashboard() {
     if (!getToken()) { setLoading(false); return; }
     api.getDashboard()
       .then(data => setDashData(data))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -79,8 +79,9 @@ export default function Dashboard() {
           <div>
             <span className="ds-chip-primary">Dashboard</span>
             <h1 className="ds-page-title mt-2">
-              {isNewSignup ? `Welcome, ${me.name || me.username || 'Builder'}!` : `Welcome back, ${me.name || me.username || 'Builder'}!`}   // Can we make this more personalized by adding the user's name or username if available?
+              {isNewSignup ? `Welcome, ${me.name || me.username || 'Builder'}!` : `Welcome back, ${me.name || me.username || 'Builder'}!`}
             </h1>
+
             <p className="text-muted-foreground mt-1 max-w-2xl">Your projects, requests, followers, and recent activity are connected here.</p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -136,9 +137,9 @@ export default function Dashboard() {
                       if (rejectedRequests.includes(req.id)) return null;
                       const isAccepted = acceptedRequests.includes(req.id);
                       const isFollowedBack = followedBack.includes(req.from_id);
-                      
+
                       const displayName = req.from_name ? `${req.from_name} (@${req.from_username})` : (req.from_username ? `@${req.from_username}` : "A builder");
-                      
+
                       return (
                         <div key={req.id} className="p-4 rounded-xl bg-surface-alt border border-border flex items-center justify-between">
                           <div className="text-sm">
