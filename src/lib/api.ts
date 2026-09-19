@@ -110,6 +110,10 @@ export const api = {
     return fetchAPI(`/users/profile/${username}`, { method: "GET" });
   },
 
+  getStats: async () => {
+    return fetchAPI("/users/online-count", { method: "GET" });
+  },
+
   followUser: async (userId: number) => {
     return fetchAPI(`/users/${userId}/follow`, { method: "POST" });
   },
@@ -180,7 +184,7 @@ export const api = {
   },
 
   markNotificationRead: async (notificationId: number) => {
-    return fetchAPI(`/notifications/${notificationId}/read`, { method: "PUT" });
+    return fetchAPI(`/notifications/${notificationId}/read`, { method: "PATCH" });
   },
 
   markAllNotificationsRead: async () => {
@@ -207,3 +211,10 @@ export const api = {
     return fetchAPI("/users/me/change-password", { method: "PUT", body: JSON.stringify(data) });
   },
 };
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> 642ab8d (feat: implement clickable follower/following lists with remove and redirect logic)
+
+
