@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.DEV ? "http://localhost:8000/api/v1" : "https://backenddevsyncconnect.dev/api/v1";
+const BASE_URL = "https://backenddevsyncconnect.dev/api/v1";
 
 export function getToken() {
   return localStorage.getItem("devsync_auth_token");
@@ -87,18 +87,6 @@ export const api = {
     return fetchAPI("/users/me", {
       method: "GET",
     });
-  },
-
-  getMyFollowers: async () => {
-    return fetchAPI("/users/me/followers", { method: "GET" });
-  },
-
-  getMyFollowing: async () => {
-    return fetchAPI("/users/me/following", { method: "GET" });
-  },
-
-  getMyPosts: async () => {
-    return fetchAPI("/users/me/posts", { method: "GET" });
   },
 
   updateMe: async (data: any) => {
@@ -223,3 +211,10 @@ export const api = {
     return fetchAPI("/users/me/change-password", { method: "PUT", body: JSON.stringify(data) });
   },
 };
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> 642ab8d (feat: implement clickable follower/following lists with remove and redirect logic)
+
+

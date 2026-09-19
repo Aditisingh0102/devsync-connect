@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList, Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, getToken } from "@/lib/api";
 
@@ -15,31 +15,6 @@ export default function Dashboard() {
   const [acceptedRequests, setAcceptedRequests] = useState<number[]>([]);
   const [rejectedRequests, setRejectedRequests] = useState<number[]>([]);
   const [followedBack, setFollowedBack] = useState<number[]>([]);
-
-  // Modal State
-  const [activeModal, setActiveModal] = useState<"posts" | "followers" | "following" | "requests" | null>(null);
-  const [modalData, setModalData] = useState<any[]>([]);
-  const [modalLoading, setModalLoading] = useState(false);
-
-  const openModal = async (type: "posts" | "followers" | "following" | "requests") => {
-    setActiveModal(type);
-    setModalLoading(true);
-    try {
-      if (type === "followers") {
-        setModalData(await api.getMyFollowers());
-      } else if (type === "following") {
-        setModalData(await api.getMyFollowing());
-      } else if (type === "posts") {
-        setModalData(await api.getMyPosts());
-      } else if (type === "requests") {
-        setModalData(await api.getRequests("incoming"));
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setModalLoading(false);
-    }
-  };
 
   const handleAcceptRequest = async (reqId: number, fromId: number) => {
     try {
@@ -74,7 +49,7 @@ export default function Dashboard() {
     if (!getToken()) { setLoading(false); return; }
     api.getDashboard()
       .then(data => setDashData(data))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -104,7 +79,7 @@ export default function Dashboard() {
           <div>
             <span className="ds-chip-primary">Dashboard</span>
             <h1 className="ds-page-title mt-2">
-              {isNewSignup ? `Welcome, ${me.name || me.username || 'Builder'}!` : `Welcome back, ${me.name || me.username || 'Builder'}!`}
+              {isNewSignup ? `Welcome, ${me.name || me.username || 'Builder'}!` : `Welcome back, ${me.name || me.username || 'Builder'}!`}   // Can we make this more personalized by adding the user's name or username if available?
             </h1>
             <p className="text-muted-foreground mt-1 max-w-2xl">Your projects, requests, followers, and recent activity are connected here.</p>
           </div>
@@ -121,10 +96,10 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Stat title="Posts" value={postCount} icon={ClipboardList} onClick={() => openModal("posts")} />
-              <Stat title="Followers" value={followerCount} icon={Users} onClick={() => openModal("followers")} />
-              <Stat title="Following" value={followingCount} icon={UserPlus} onClick={() => openModal("following")} />
-              <Stat title="Pending Requests" value={pendingRequestCount} icon={Bell} onClick={() => openModal("requests")} />
+              <Stat title="Posts" value={postCount} icon={ClipboardList} />
+              <Stat title="Followers" value={followerCount} icon={Users} />
+              <Stat title="Following" value={followingCount} icon={UserPlus} />
+              <Stat title="Pending Requests" value={pendingRequestCount} icon={Bell} />
             </div>
 
             <div className="grid lg:grid-cols-3 gap-5">
@@ -161,9 +136,9 @@ export default function Dashboard() {
                       if (rejectedRequests.includes(req.id)) return null;
                       const isAccepted = acceptedRequests.includes(req.id);
                       const isFollowedBack = followedBack.includes(req.from_id);
-
+                      
                       const displayName = req.from_name ? `${req.from_name} (@${req.from_username})` : (req.from_username ? `@${req.from_username}` : "A builder");
-
+                      
                       return (
                         <div key={req.id} className="p-4 rounded-xl bg-surface-alt border border-border flex items-center justify-between">
                           <div className="text-sm">
@@ -193,63 +168,13 @@ export default function Dashboard() {
           </>
         )}
       </div>
-
-      {activeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl flex flex-col max-h-[80vh]">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h2 className="text-lg font-semibold capitalize">{activeModal}</h2>
-              <button onClick={() => setActiveModal(null)} className="p-2 rounded-full hover:bg-surface-alt">
-                <X className="size-5" />
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1">
-              {modalLoading ? (
-                <div className="flex justify-center py-10"><Loader2 className="size-6 animate-spin text-primary" /></div>
-              ) : modalData.length === 0 ? (
-                <p className="text-center text-muted-foreground py-10">No {activeModal} found.</p>
-              ) : (
-                <div className="space-y-3">
-                  {modalData.map((item: any) => (
-                    <div key={item.id} className="p-4 rounded-xl bg-surface-alt border border-border">
-                      {activeModal === "posts" && (
-                        <div>
-                          <p className="font-semibold text-sm">{item.title}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{item.domain || item.project_type || "General"}</p>
-                        </div>
-                      )}
-                      {(activeModal === "followers" || activeModal === "following") && (
-                        <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                            {(item.name || item.username || "U").charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm">{item.name || item.username}</p>
-                            <p className="text-xs text-muted-foreground">@{item.username}</p>
-                          </div>
-                        </div>
-                      )}
-                      {activeModal === "requests" && (
-                        <div>
-                          <p className="font-semibold text-sm">{item.from_name || item.from_username}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{item.message || "wants to connect."}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-function Stat({ title, value, icon: Icon, onClick }: { title: string; value: number; icon: React.ComponentType<{ className?: string }>; onClick?: () => void }) {
+function Stat({ title, value, icon: Icon }: { title: string; value: number; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className={`ds-card p-5 ${onClick ? 'cursor-pointer hover:bg-surface-alt transition-colors duration-200' : ''}`} onClick={onClick}>
+    <div className="ds-card p-5">
       <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-3"><Icon className="size-5" /></div>
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm text-muted-foreground">{title}</div>
