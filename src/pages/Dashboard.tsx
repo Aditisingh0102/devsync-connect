@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [acceptedRequests, setAcceptedRequests] = useState<number[]>([]);
   const [rejectedRequests, setRejectedRequests] = useState<number[]>([]);
   const [followedBack, setFollowedBack] = useState<number[]>([]);
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following"}>({isOpen: false, type: "followers"});
 
   const handleAcceptRequest = async (reqId: number, fromId: number) => {
     try {
@@ -96,10 +97,14 @@ export default function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Stat title="Posts" value={postCount} icon={ClipboardList} />
-              <Stat title="Followers" value={followerCount} icon={Users} />
-              <Stat title="Following" value={followingCount} icon={UserPlus} />
+              <div onClick={() => setModalConfig({isOpen: true, type: "followers"})} className="cursor-pointer transition-transform active:scale-95">
+                <Stat title="Followers" value={followerCount} icon={Users} />
+              </div>
+              <div onClick={() => setModalConfig({isOpen: true, type: "following"})} className="cursor-pointer transition-transform active:scale-95">
+                <Stat title="Following" value={followingCount} icon={UserPlus} />
+              </div>
               <Stat title="Pending Requests" value={pendingRequestCount} icon={Bell} />
             </div>
 
@@ -169,6 +174,13 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      <FollowListModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        type={modalConfig.type}
+        username={me?.username}
+        isOwnProfile={true}
+      />
     </div>
   );
 }

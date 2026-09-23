@@ -71,6 +71,7 @@ export default function Profile() {
   const queryTab = searchParams.get("tab");
   const [tab, setTab] = useState("Overview");
   const completion = 78;
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following"}>({isOpen: false, type: "followers"});
 
   useEffect(() => {
     if (queryTab) {
@@ -377,7 +378,15 @@ export default function Profile() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Object.entries(profileStats).map(([k, v]) => (
-          <button key={k} className="ds-card p-5 text-left hover:bg-secondary transition-colors">
+          <button 
+            key={k} 
+            onClick={() => {
+              if (k === "followers" || k === "following") {
+                setModalConfig({ isOpen: true, type: k as "followers" | "following" });
+              }
+            }}
+            className="ds-card p-5 text-left hover:bg-secondary transition-colors"
+          >
             <p className="text-sm text-muted-foreground capitalize">{k.replace(/([A-Z])/g, " $1")}</p>
             <p className="text-2xl font-bold mt-1">{v as React.ReactNode}{k === "matchScore" && "%"}</p>
           </button>
@@ -701,12 +710,12 @@ export default function Profile() {
 
       {tab === "Network" && (
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="ds-card p-6">
+          <div onClick={() => setModalConfig({isOpen: true, type: "followers"})} className="ds-card p-6 cursor-pointer hover:bg-secondary transition-colors">
             <div className="flex items-center gap-2 text-primary mb-2"><Users className="size-4" /><h3 className="font-semibold text-lg">Followers</h3></div>
             <p className="text-3xl font-bold">{profileStats.followers}</p>
             <p className="text-sm text-muted-foreground mt-1">People following this builder.</p>
           </div>
-          <div className="ds-card p-6">
+          <div onClick={() => setModalConfig({isOpen: true, type: "following"})} className="ds-card p-6 cursor-pointer hover:bg-secondary transition-colors">
             <div className="flex items-center gap-2 text-primary mb-2"><Send className="size-4" /><h3 className="font-semibold text-lg">Following</h3></div>
             <p className="text-3xl font-bold">{profileStats.following}</p>
             <p className="text-sm text-muted-foreground mt-1">Builders this user follows.</p>
@@ -726,6 +735,13 @@ export default function Profile() {
           <Link to="/requests" className="mt-4 h-10 px-4 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center hover:bg-primary-hover">Go to Requests</Link>
         </div>
       )}
+      <FollowListModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        type={modalConfig.type}
+        username={profile?.username}
+        isOwnProfile={isOwnProfile}
+      />
     </div>
   );
 }
