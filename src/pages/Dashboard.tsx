@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import FollowListModal from "@/components/FollowListModal";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
@@ -191,5 +192,6 @@ function EmptyCard({ title, body, actionLabel, href }: { title: string; body: st
     </div>
   );
 }
+
 
 

@@ -212,9 +212,6 @@ export const api = {
   },
 };
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 642ab8d (feat: implement clickable follower/following lists with remove and redirect logic)
 
 
