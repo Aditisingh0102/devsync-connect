@@ -79,7 +79,7 @@ export default function FollowListModal({ isOpen, onClose, type, username, isOwn
                 
                 return (
                   <div key={user.id} className="flex items-center justify-between p-2 rounded-xl hover:bg-secondary transition-colors">
-                    <Link to={`/profile/${user.username}`} onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0 group">
+                    <Link to={/profile/\} onClick={onClose} className="flex items-center gap-3 flex-1 min-w-0 group">
                       <Avatar className="size-10 shrink-0">
                         {isImageAvatar ? (
                           <img src={user.avatar} alt={user.name} className="size-full object-cover" />
@@ -112,4 +112,3 @@ export default function FollowListModal({ isOpen, onClose, type, username, isOwn
     </Dialog>
   );
 }
-
