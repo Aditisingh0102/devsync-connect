@@ -56,7 +56,7 @@ export default function SignupWizard() {
                 identifier: formData.email.trim(),
                 password: formData.password
             });
-            setToken(tokenRes.access_token);
+            setToken(tokenRes.access_token, tokenRes.refresh_token);
 
             // 3. Fetch user to ensure valid session
             let user = await api.getMe();

@@ -138,7 +138,7 @@ export default function Signup() {
         identifier: email.trim(),
         password: password,
       });
-      setToken(tokenRes.access_token);
+      setToken(tokenRes.access_token, tokenRes.refresh_token);
       
       // 3. Update profile
       setLoginMessage("Saving profile...");

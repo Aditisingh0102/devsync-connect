@@ -4,12 +4,20 @@ export function getToken() {
   return localStorage.getItem("devsync_auth_token");
 }
 
-export function setToken(token: string) {
+export function getRefreshToken() {
+  return localStorage.getItem("devsync_refresh_token");
+}
+
+export function setToken(token: string, refreshToken?: string) {
   localStorage.setItem("devsync_auth_token", token);
+  if (refreshToken) {
+    localStorage.setItem("devsync_refresh_token", refreshToken);
+  }
 }
 
 export function removeToken() {
   localStorage.removeItem("devsync_auth_token");
+  localStorage.removeItem("devsync_refresh_token");
 }
 
 async function fetchAPI(endpoint: string, options: RequestInit = {}) {
@@ -54,8 +62,43 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
         // Ignored
       }
 
-      // Handle expired/invalid token: auto-logout
+      // Handle expired/invalid token: try refresh token
       if (response.status === 401) {
+        const refreshToken = getRefreshToken();
+        if (refreshToken) {
+          try {
+            const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refresh_token: refreshToken })
+            });
+
+            if (refreshRes.ok) {
+              const data = await refreshRes.json();
+              setToken(data.access_token, data.refresh_token);
+              
+              headers.set("Authorization", `Bearer ${data.access_token}`);
+              const retryResponse = await fetch(`${BASE_URL}${endpoint}`, {
+                ...options,
+                headers,
+                signal: controller.signal,
+              });
+              
+              if (!retryResponse.ok) {
+                removeToken();
+                if (typeof window !== "undefined" && !window.location.hash.includes("/login")) {
+                  window.location.hash = "/login";
+                }
+                throw new Error("Session expired. Please log in again.");
+              }
+              
+              const retryText = await retryResponse.text();
+              return retryText ? JSON.parse(retryText) : null;
+            }
+          } catch (e) {
+            // Fall through to logout
+          }
+        }
         removeToken();
         // Redirect to login page
         if (typeof window !== "undefined" && !window.location.hash.includes("/login")) {

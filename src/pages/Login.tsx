@@ -40,7 +40,7 @@ export default function Login() {
         password: password,
       });
 
-      setToken(tokenRes.access_token);
+      setToken(tokenRes.access_token, tokenRes.refresh_token);
 
       const user = await api.getMe();
       
