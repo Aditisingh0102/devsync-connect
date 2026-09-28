@@ -121,11 +121,11 @@ export default function DiscoverBuilders() {
     }
     setFollowLoading(userId);
     try {
-      await api.createRequest({ to_id: userId, message: "wants to connect with you", role: "follower" });
-      setRequestedIds(prev => [...prev, userId]);
-      toast.success("Request sent!", { description: "They will be notified of your request.", icon: "📩" });
+      await api.followUser(userId);
+      setFollowingIds(prev => [...prev, userId]);
+      toast.success("Followed successfully!", { icon: "✅" });
     } catch (err: any) {
-      toast.error(err.message || "Failed to send request");
+      toast.error(err.message || "Failed to follow user");
     } finally {
       setFollowLoading(null);
     }
