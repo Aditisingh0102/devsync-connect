@@ -53,8 +53,20 @@ async function fetchAPI(endpoint: string, options: RequestInit = {}) {
       } catch (e) {
         // Ignored
       }
+
+      // Handle expired/invalid token: auto-logout
+      if (response.status === 401) {
+        removeToken();
+        // Redirect to login page
+        if (typeof window !== "undefined" && !window.location.hash.includes("/login")) {
+          window.location.hash = "/login";
+        }
+        throw new Error("Session expired. Please log in again.");
+      }
+
       throw new Error(errorMsg);
     }
+
 
     // If response is empty (e.g. 204 No Content), return null
     const text = await response.text();
@@ -211,10 +223,3 @@ export const api = {
     return fetchAPI("/users/me/change-password", { method: "PUT", body: JSON.stringify(data) });
   },
 };
-
-<<<<<<< HEAD
-
-=======
->>>>>>> 642ab8d (feat: implement clickable follower/following lists with remove and redirect logic)
-
-
