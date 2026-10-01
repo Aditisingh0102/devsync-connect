@@ -266,6 +266,7 @@ export default function Profile() {
   }, [profile?.skills, state.projects]);
 
   const isOwnProfile = state.currentUser && profile?.id === state.currentUser.id;
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following"}>({isOpen: false, type: "followers"});
   const profileStats: any = {
     posts: profilePosts.length,
     followers: profile?.follower_count ?? 0,

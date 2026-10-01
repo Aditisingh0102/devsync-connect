@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import FollowListModal from "@/components/FollowListModal";
 import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { api, getToken } from "@/lib/api";
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [acceptedRequests, setAcceptedRequests] = useState<number[]>([]);
   const [rejectedRequests, setRejectedRequests] = useState<number[]>([]);
   const [followedBack, setFollowedBack] = useState<number[]>([]);
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following"}>({isOpen: false, type: "followers"});
 
   const handleAcceptRequest = async (reqId: number, fromId: number) => {
     try {
@@ -168,6 +170,13 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      <FollowListModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        type={modalConfig.type}
+        username={me?.username}
+        isOwnProfile={true}
+      />
     </div>
   );
 }

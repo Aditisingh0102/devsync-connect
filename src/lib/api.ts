@@ -177,6 +177,18 @@ export const api = {
     return fetchAPI(`/users/${userId}/follow`, { method: "DELETE" });
   },
 
+  getFollowers: async (username: string) => {
+    return fetchAPI(`/users/${username}/followers`, { method: "GET" });
+  },
+
+  getFollowing: async (username: string) => {
+    return fetchAPI(`/users/${username}/following`, { method: "GET" });
+  },
+
+  removeFollower: async (userId: number) => {
+    return fetchAPI(`/users/me/followers/${userId}`, { method: "DELETE" });
+  },
+
   // Dashboard
   getDashboard: async () => {
     return fetchAPI("/dashboard/me", { method: "GET" });
@@ -235,7 +247,7 @@ export const api = {
   // Notifications
   getNotifications: async (unreadOnly?: boolean) => {
     const qs = unreadOnly ? "?unread_only=true" : "";
-    return fetchAPI(`/notifications/${qs}`, { method: "GET" });
+    return fetchAPI(`/notifications${qs}`, { method: "GET" });
   },
 
   markNotificationRead: async (notificationId: number) => {
@@ -266,3 +278,7 @@ export const api = {
     return fetchAPI("/users/me/change-password", { method: "PUT", body: JSON.stringify(data) });
   },
 };
+
+
+
+
