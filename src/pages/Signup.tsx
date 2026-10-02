@@ -35,6 +35,19 @@ const PREDEFINED_SKILLS = [
   "Tailwind CSS", "Data Science", "Cybersecurity", "Blockchain"
 ];
 
+const COURSE_YEARS: Record<string, string[]> = {
+  "B.Tech": ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+  "BCA": ["1st Year", "2nd Year", "3rd Year"],
+  "MCA": ["1st Year", "2nd Year"],
+};
+
+const YEAR_SEMESTERS: Record<string, string[]> = {
+  "1st Year": ["1st Semester", "2nd Semester"],
+  "2nd Year": ["3rd Semester", "4th Semester"],
+  "3rd Year": ["5th Semester", "6th Semester"],
+  "4th Year": ["7th Semester", "8th Semester"],
+};
+
 export default function Signup() {
   const { state, dispatch } = useApp();
   const navigate = useNavigate();
@@ -53,6 +66,7 @@ export default function Signup() {
   // Step 2
   const [college, setCollege] = useState("");
   const [department, setDepartment] = useState("");
+  const [course, setCourse] = useState("");
   const [year, setYear] = useState("");
   const [semester, setSemester] = useState("");
 
@@ -73,6 +87,10 @@ export default function Signup() {
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+
+  const isAcademicMismatch = useMemo(() => {
+    return Boolean(year && semester && YEAR_SEMESTERS[year] && !YEAR_SEMESTERS[year].includes(semester));
+  }, [year, semester]);
 
   const isUsernameTaken = useMemo(() => {
     if (!username.trim()) return false;
@@ -153,6 +171,7 @@ export default function Signup() {
           bio: bio.trim(),
           preferences: {
             department: department.trim(),
+            course: course.trim(),
             semester: semester.trim()
           }
         });
@@ -415,6 +434,25 @@ export default function Signup() {
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-medium mb-1.5 block">Course</label>
+                  <div className="relative">
+                    <select
+                      value={course}
+                      onChange={(e) => {
+                        setCourse(e.target.value);
+                        setYear("");
+                        setSemester("");
+                      }}
+                      className="ds-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10"
+                    >
+                      <option value="" disabled>Select your course</option>
+                      <option value="B.Tech">B.Tech</option>
+                      <option value="BCA">BCA</option>
+                      <option value="MCA">MCA</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
                   <label className="text-sm font-medium mb-1.5 block">Department Name</label>
                   <div className="relative">
                     <select
@@ -440,14 +478,17 @@ export default function Signup() {
                     <div className="relative">
                       <select
                         value={year}
-                        onChange={(e) => setYear(e.target.value)}
-                        className="ds-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10"
+                        onChange={(e) => {
+                          setYear(e.target.value);
+                          setSemester("");
+                        }}
+                        disabled={!course}
+                        className="ds-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10 disabled:opacity-50"
                       >
                         <option value="" disabled>Select Year</option>
-                        <option value="1st Year">1st Year</option>
-                        <option value="2nd Year">2nd Year</option>
-                        <option value="3rd Year">3rd Year</option>
-                        <option value="4th Year">4th Year</option>
+                        {course && COURSE_YEARS[course]?.map(y => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -457,21 +498,21 @@ export default function Signup() {
                       <select
                         value={semester}
                         onChange={(e) => setSemester(e.target.value)}
-                        className="ds-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10"
+                        disabled={!year}
+                        className="ds-input appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[position:calc(100%-12px)_center] bg-no-repeat pr-10 disabled:opacity-50"
                       >
                         <option value="" disabled>Select Sem</option>
-                        <option value="1st Semester">1st Semester</option>
-                        <option value="2nd Semester">2nd Semester</option>
-                        <option value="3rd Semester">3rd Semester</option>
-                        <option value="4th Semester">4th Semester</option>
-                        <option value="5th Semester">5th Semester</option>
-                        <option value="6th Semester">6th Semester</option>
-                        <option value="7th Semester">7th Semester</option>
-                        <option value="8th Semester">8th Semester</option>
+                        {year && YEAR_SEMESTERS[year]?.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
                 </div>
+                
+                {isAcademicMismatch && (
+                  <p className="text-sm text-danger font-medium mt-2">Kindly select a valid semester for the chosen year.</p>
+                )}
                 
                 <div className="flex gap-3 mt-4">
                   <button
@@ -482,7 +523,8 @@ export default function Signup() {
                   </button>
                   <button
                     onClick={() => setStep(3)}
-                    className="h-12 w-2/3 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all shadow-glow active:scale-[0.98]"
+                    disabled={!course || !year || !semester || isAcademicMismatch}
+                    className="h-12 w-2/3 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all shadow-glow active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
                   >
                     Continue <ArrowRight className="size-4" />
                   </button>
@@ -591,7 +633,7 @@ export default function Signup() {
                       <div>
                         <p className="text-foreground font-medium">{college}</p>
                         <p className="text-muted-foreground mt-0.5">
-                          {department ? `${department}` : ""} {year ? ` | Class of ${year}` : ""} {semester ? ` | ${semester} Sem` : ""}
+                          {course ? `${course}` : ""} {department ? `(${department})` : ""} {year ? ` | ${year}` : ""} {semester ? ` | ${semester}` : ""}
                         </p>
                       </div>
                     ) : (
