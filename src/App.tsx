@@ -50,11 +50,11 @@ const App = () => (
             <Route path="/find-builders" element={<DiscoverBuilders />} />
             <Route path="/my-team" element={<MyTeam />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:id" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfilePage />} />
             <Route path="/profile/network" element={<ProfileNetwork />} />
             <Route path="/profile/posts" element={<ProfilePosts />} />
             <Route path="/profile/requests" element={<RequestsPage />} />
+            <Route path="/profile/:id" element={<Profile />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/team/:id" element={<TeamDetail />} />
             <Route path="/post/:id" element={<PostPage />} />
