@@ -377,12 +377,20 @@ export default function Profile() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Object.entries(profileStats).map(([k, v]) => (
-          <button key={k} className="ds-card p-5 text-left hover:bg-secondary transition-colors">
-            <p className="text-sm text-muted-foreground capitalize">{k.replace(/([A-Z])/g, " $1")}</p>
-            <p className="text-2xl font-bold mt-1">{v as React.ReactNode}{k === "matchScore" && "%"}</p>
-          </button>
-        ))}
+        {Object.entries(profileStats).map(([k, v]) => {
+          const handleClick = () => {
+            if (k === "followers") setModalConfig({isOpen: true, type: "followers"});
+            else if (k === "following") setModalConfig({isOpen: true, type: "following"});
+            else if (k === "posts") setTab("Posts");
+            else if (k === "pendingRequests") setTab("Requests");
+          };
+          return (
+            <button key={k} onClick={handleClick} className={`ds-card p-5 text-left transition-colors ${k !== "matchScore" ? "hover:bg-secondary active:scale-95 cursor-pointer" : "cursor-default"}`}>
+              <p className="text-sm text-muted-foreground capitalize">{k.replace(/([A-Z])/g, " $1")}</p>
+              <p className="text-2xl font-bold mt-1">{v as React.ReactNode}{k === "matchScore" && "%"}</p>
+            </button>
+          );
+        })}
       </div>
 
       <div className="ds-card p-2 inline-flex flex-wrap gap-1">
