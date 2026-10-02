@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/lib/store";
-import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, UserPlus, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Sparkles, ArrowRight, Check, X, UserPlus, ShieldCheck, Github, Linkedin, Globe } from "lucide-react";
 import { api, setToken } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -74,6 +74,10 @@ export default function Signup() {
   const [skills, setSkills] = useState<string[]>([]);
   const [customSkill, setCustomSkill] = useState("");
   const [bio, setBio] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
+  const [linkErrors, setLinkErrors] = useState<Record<string, string>>({});
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -140,6 +144,30 @@ export default function Signup() {
     setCustomSkill("");
   };
 
+  const validateLink = (field: string, value: string) => {
+    if (!value.trim()) {
+      setLinkErrors((prev) => ({ ...prev, [field]: "" }));
+      return;
+    }
+    let error = "";
+    if (field === "github") {
+      if (!/^https?:\/\/(www\.)?github\.com\/.+/i.test(value.trim())) {
+        error = "Please enter a valid GitHub URL (e.g. https://github.com/username)";
+      }
+    } else if (field === "linkedin") {
+      if (!/^https?:\/\/(www\.)?linkedin\.com\/.+/i.test(value.trim())) {
+        error = "Please enter a valid LinkedIn URL (e.g. https://linkedin.com/in/username)";
+      }
+    } else if (field === "portfolio") {
+      if (!/^https?:\/\/.+/i.test(value.trim())) {
+        error = "Please enter a valid URL (must include http:// or https://)";
+      }
+    }
+    setLinkErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  const hasLinkErrors = Object.values(linkErrors).some((e) => e !== "");
+
   const submitDetails = async () => {
     setLoginMessage("Creating account...");
     try {
@@ -169,6 +197,9 @@ export default function Signup() {
           year: year.trim(), 
           skills, 
           bio: bio.trim(),
+          github: githubUrl.trim() || undefined,
+          linkedin: linkedinUrl.trim() || undefined,
+          portfolio: portfolioUrl.trim() || undefined,
           preferences: {
             department: department.trim(),
             course: course.trim(),
@@ -219,7 +250,7 @@ export default function Signup() {
             <Sparkles className="size-3.5" /> Join DevSync
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-            {step === 1 ? "Create your account" : step === 4 ? "Review Profile" : "Complete your profile"}
+            {step === 1 ? "Create your account" : step === 5 ? "Review Profile" : "Complete your profile"}
           </h1>
           <p className="text-muted-foreground mt-2">
             {step === 1 ? "Start discovering projects and building with great teams." : "Tell the community more about yourself."}
@@ -228,7 +259,7 @@ export default function Signup() {
 
         {/* Multi-step progress bar */}
         <div className="flex gap-2 mb-6">
-          {[1, 2, 3, 4].map(s => (
+          {[1, 2, 3, 4, 5].map(s => (
             <div key={s} className={`h-1.5 flex-1 rounded-full ${step >= s ? 'bg-primary' : 'bg-border'}`} />
           ))}
         </div>
@@ -611,13 +642,88 @@ export default function Signup() {
                     }}
                     className="h-12 w-2/3 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all shadow-glow active:scale-[0.98]"
                   >
-                    Review <ArrowRight className="size-4" />
+                    Continue <ArrowRight className="size-4" />
                   </button>
                 </div>
               </div>
             )}
 
             {step === 4 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div>
+                  <h3 className="text-base font-bold mb-4">Links</h3>
+                  <div className="space-y-4">
+                    {/* GitHub */}
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">GitHub</label>
+                      <div className="relative">
+                        <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                        <input
+                          value={githubUrl}
+                          onChange={(e) => { setGithubUrl(e.target.value); setLinkErrors((p) => ({ ...p, github: "" })); }}
+                          onBlur={() => validateLink("github", githubUrl)}
+                          placeholder="https://github.com/username"
+                          className={`ds-input pl-10 ${linkErrors.github ? 'border-red-500 focus:border-red-500' : ''}`}
+                        />
+                      </div>
+                      {linkErrors.github && <p className="text-xs text-danger mt-1.5">{linkErrors.github}</p>}
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">LinkedIn</label>
+                      <div className="relative">
+                        <Linkedin className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                        <input
+                          value={linkedinUrl}
+                          onChange={(e) => { setLinkedinUrl(e.target.value); setLinkErrors((p) => ({ ...p, linkedin: "" })); }}
+                          onBlur={() => validateLink("linkedin", linkedinUrl)}
+                          placeholder="https://linkedin.com/in/username"
+                          className={`ds-input pl-10 ${linkErrors.linkedin ? 'border-red-500 focus:border-red-500' : ''}`}
+                        />
+                      </div>
+                      {linkErrors.linkedin && <p className="text-xs text-danger mt-1.5">{linkErrors.linkedin}</p>}
+                    </div>
+
+                    {/* Portfolio */}
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">Portfolio</label>
+                      <div className="relative">
+                        <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                        <input
+                          value={portfolioUrl}
+                          onChange={(e) => { setPortfolioUrl(e.target.value); setLinkErrors((p) => ({ ...p, portfolio: "" })); }}
+                          onBlur={() => validateLink("portfolio", portfolioUrl)}
+                          placeholder="https://yoursite.com"
+                          className={`ds-input pl-10 ${linkErrors.portfolio ? 'border-red-500 focus:border-red-500' : ''}`}
+                        />
+                      </div>
+                      {linkErrors.portfolio && <p className="text-xs text-danger mt-1.5">{linkErrors.portfolio}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">All link fields are optional. Leave blank to skip.</p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep(3)}
+                    className="h-12 w-1/3 rounded-xl bg-secondary text-foreground font-semibold text-sm inline-flex items-center justify-center hover:bg-secondary/80 transition-all"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setStep(5)}
+                    disabled={hasLinkErrors}
+                    className="h-12 w-2/3 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center gap-2 hover:bg-primary-hover transition-all shadow-glow active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    Review <ArrowRight className="size-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 5 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="p-5 rounded-xl bg-secondary/30 border border-border space-y-4 text-sm">
                   <div className="flex flex-col gap-1.5">
@@ -650,6 +756,35 @@ export default function Signup() {
                       )) : <p className="text-muted-foreground text-sm">None added</p>}
                     </div>
                   </div>
+                  <div className="w-full h-px bg-border/60" />
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Links</span>
+                    {(githubUrl || linkedinUrl || portfolioUrl) ? (
+                      <div className="space-y-1">
+                        {githubUrl && (
+                          <div className="flex items-center gap-2">
+                            <Github className="size-3.5 text-muted-foreground" />
+                            <span className="text-foreground text-xs truncate">{githubUrl}</span>
+                          </div>
+                        )}
+                        {linkedinUrl && (
+                          <div className="flex items-center gap-2">
+                            <Linkedin className="size-3.5 text-muted-foreground" />
+                            <span className="text-foreground text-xs truncate">{linkedinUrl}</span>
+                          </div>
+                        )}
+                        {portfolioUrl && (
+                          <div className="flex items-center gap-2">
+                            <Globe className="size-3.5 text-muted-foreground" />
+                            <span className="text-foreground text-xs truncate">{portfolioUrl}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">None added</p>
+                    )}
+                  </div>
                 </div>
 
                 {loginMessage && (
@@ -661,7 +796,7 @@ export default function Signup() {
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setStep(3)}
+                    onClick={() => setStep(4)}
                     disabled={!!loginMessage}
                     className="h-12 w-1/3 rounded-xl bg-secondary text-foreground font-semibold text-sm inline-flex items-center justify-center hover:bg-secondary/80 transition-all disabled:opacity-50"
                   >
