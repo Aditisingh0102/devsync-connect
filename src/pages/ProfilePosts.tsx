@@ -4,6 +4,8 @@ import { useApp } from "@/lib/store";
 import { api } from "@/lib/api";
 import { Loader2, ArrowLeft, PlusCircle, Image as ImageIcon } from "lucide-react";
 import PostCard from "@/components/PostCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function ProfilePosts() {
   const { state } = useApp();
@@ -29,7 +31,7 @@ export default function ProfilePosts() {
               setPosts(data.posts_by_user);
             }
          }
-      }).catch(console.error).finally(() => setLoading(false));
+      }).catch((err) => { console.error(err); toast.error("Failed to load posts."); }).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -63,8 +65,20 @@ export default function ProfilePosts() {
       </div>
 
       {loading ? (
-        <div className="h-60 flex items-center justify-center">
-          <Loader2 className="size-8 animate-spin text-primary" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="ds-card p-5 space-y-4 h-[300px]">
+              <div className="flex gap-3 items-center">
+                <Skeleton className="size-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-32 w-full rounded-xl" />
+            </div>
+          ))}
         </div>
       ) : posts.length === 0 ? (
         <div className="ds-card h-[400px] flex flex-col items-center justify-center text-center p-6">

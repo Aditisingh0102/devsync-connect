@@ -4,6 +4,8 @@ import { useApp } from "@/lib/store";
 import { api } from "@/lib/api";
 import { Loader2, ArrowLeft, Users, UserMinus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export default function ProfileNetwork() {
   const { state } = useApp();
@@ -26,7 +28,7 @@ export default function ProfileNetwork() {
         .then((data) => {
           if (Array.isArray(data)) setUsers(data);
         })
-        .catch((err) => console.error(err))
+        .catch((err) => { console.error(err); toast.error("Failed to load network data."); })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -40,12 +42,14 @@ export default function ProfileNetwork() {
       if (tab === "followers") {
         await api.removeFollower(userId);
         setUsers(prev => prev.filter(u => u.id !== userId));
+        toast.success("Follower removed successfully.");
       } else {
         await api.unfollowUser(username);
         setUsers(prev => prev.filter(u => u.id !== userId));
       }
     } catch (error) {
       console.error(error);
+      toast.error("An error occurred. Please try again.");
     } finally {
       setProcessingId(null);
     }
@@ -90,8 +94,17 @@ export default function ProfileNetwork() {
 
       <div className="ds-card p-2 md:p-6 min-h-[400px]">
         {loading ? (
-          <div className="h-60 flex items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-primary" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-border/50">
+                <Skeleton className="size-12 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-9 w-20 rounded-lg" />
+              </div>
+            ))}
           </div>
         ) : users.length === 0 ? (
           <div className="h-60 flex flex-col items-center justify-center text-center p-6 text-muted-foreground">

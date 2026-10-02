@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { Check, X, Inbox, Send, Users, FileText, Loader2 } from "lucide-react";
 import { api, getToken } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const tabs = ["Incoming", "Sent", "Accepted", "Declined"] as const;
 
@@ -19,12 +21,13 @@ export default function RequestsPage() {
       return;
     }
     Promise.all([
-      api.getRequests("pending").catch(() => []),
+      api.getRequests("incoming").catch(() => []),
+      api.getRequests("sent").catch(() => []),
       api.getRequests("accepted").catch(() => []),
       api.getRequests("declined").catch(() => [])
     ])
-    .then(([pending, accepted, declined]) => {
-      const all = [...pending, ...accepted, ...declined];
+    .then(([incoming, sent, accepted, declined]) => {
+      const all = [...incoming, ...sent, ...accepted, ...declined];
       all.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
       setRequests(all);
 
@@ -47,8 +50,10 @@ export default function RequestsPage() {
     try {
       await api.updateRequest(id, { status });
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      toast.success(`Request ${status} successfully.`);
     } catch (err) {
       console.error(err);
+      toast.error("Action failed. Please try again.");
     }
   };
 
@@ -68,8 +73,16 @@ export default function RequestsPage() {
 
   if (loading) {
     return (
-      <div className="container py-20 flex items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-primary" />
+            <div className="container py-20 space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="ds-card p-4 flex gap-4">
+            <Skeleton className="size-11 rounded-2xl" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-3 w-1/4" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
