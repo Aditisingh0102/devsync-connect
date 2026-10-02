@@ -74,9 +74,9 @@ export default function EditProfilePage() {
     setSkills(currentUser.skills || []);
     setDomains(currentUser.domains || []);
     setRoles(currentUser.roles || []);
-    setGithub(currentUser.links?.github || "");
-    setLinkedin(currentUser.links?.linkedin || "");
-    setPortfolio(currentUser.links?.portfolio || "");
+    setGithub(currentUser.github || "");
+    setLinkedin(currentUser.linkedin || "");
+    setPortfolio(currentUser.portfolio || "");
   }, [currentUser]);
 
   // Click outside dropdown handler
@@ -221,6 +221,9 @@ export default function EditProfilePage() {
           year: year,
           skills: skills,
           domains: domains,
+          github: github.trim() || undefined,
+          linkedin: linkedin.trim() || undefined,
+          portfolio: portfolio.trim() || undefined,
           preferences: {
             ...currentUser.preferences,
             department: department,
