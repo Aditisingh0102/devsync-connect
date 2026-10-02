@@ -24,6 +24,8 @@ import RequestsPage from "./pages/Requests";
 import ReviewsPage from "./pages/Reviews";
 import SettingsPage from "./pages/Settings";
 import EditProfilePage from "./pages/EditProfilePage";
+import ProfileNetwork from "./pages/ProfileNetwork";
+import ProfilePosts from "./pages/ProfilePosts";
 import { AppProvider } from "@/lib/store";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -50,6 +52,9 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfilePage />} />
+            <Route path="/profile/network" element={<ProfileNetwork />} />
+            <Route path="/profile/posts" element={<ProfilePosts />} />
+            <Route path="/profile/requests" element={<RequestsPage />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/team/:id" element={<TeamDetail />} />
             <Route path="/post/:id" element={<PostPage />} />

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import FollowListModal from "@/components/FollowListModal";
 import { ArrowRight, Bell, FolderPlus, Users, UserPlus, ClipboardList, Loader2 } from "lucide-react";
@@ -10,13 +10,13 @@ export default function Dashboard() {
   const location = useLocation();
   const isNewSignup = location.state?.isNewSignup;
   const me = state.currentUser;
+  const navigate = useNavigate();
 
   const [dashData, setDashData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [acceptedRequests, setAcceptedRequests] = useState<number[]>([]);
   const [rejectedRequests, setRejectedRequests] = useState<number[]>([]);
   const [followedBack, setFollowedBack] = useState<number[]>([]);
-  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following"}>({isOpen: false, type: "followers"});
 
   const handleAcceptRequest = async (reqId: number, fromId: number) => {
     try {
@@ -98,10 +98,10 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Stat title="Posts" value={postCount} icon={ClipboardList} />
-              <Stat title="Followers" value={followerCount} icon={Users} />
-              <Stat title="Following" value={followingCount} icon={UserPlus} />
-              <Stat title="Pending Requests" value={pendingRequestCount} icon={Bell} />
+              <Stat title="Posts" value={postCount} icon={ClipboardList} onClick={() => navigate("/profile/posts")} />
+              <Stat title="Followers" value={followerCount} icon={Users} onClick={() => navigate("/profile/network?tab=followers")} />
+              <Stat title="Following" value={followingCount} icon={UserPlus} onClick={() => navigate("/profile/network?tab=following")} />
+              <Stat title="Pending Requests" value={pendingRequestCount} icon={Bell} onClick={() => navigate("/profile/requests")} />
             </div>
 
             <div className="grid lg:grid-cols-3 gap-5">
@@ -170,20 +170,14 @@ export default function Dashboard() {
           </>
         )}
       </div>
-      <FollowListModal
-        isOpen={modalConfig.isOpen}
-        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
-        type={modalConfig.type}
-        username={me?.username}
-        isOwnProfile={true}
-      />
+      </div>
     </div>
   );
 }
 
-function Stat({ title, value, icon: Icon }: { title: string; value: number; icon: React.ComponentType<{ className?: string }> }) {
+function Stat({ title, value, icon: Icon, onClick }: { title: string; value: number; icon: React.ComponentType<{ className?: string }>; onClick?: () => void }) {
   return (
-    <div className="ds-card p-5">
+    <div onClick={onClick} className={`ds-card p-5 ${onClick ? 'cursor-pointer hover:bg-secondary active:scale-95 transition-all' : ''}`}>
       <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-3"><Icon className="size-5" /></div>
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm text-muted-foreground">{title}</div>
