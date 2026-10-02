@@ -7,8 +7,8 @@ export default function Footer() {
       <div className="container py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
         <div className="col-span-2">
           <div className="flex items-center gap-2 mb-3">
-            <div className="size-8 rounded-lg bg-gradient-primary flex items-center justify-center"><Sparkles className="size-4 text-white" /></div>
-            <span className="font-display font-bold">DevSync</span>
+            <img src="/devsync_connect_logo_v3.ico" alt="DevSync Logo" className="size-8 rounded-lg object-contain drop-shadow-md" />
+            <span className="font-display font-bold">DevSync Connect</span>
           </div>
           <p className="text-sm text-muted-foreground max-w-sm">
             Connect. Collaborate. Build. The student platform for real-world projects, skill-matched teams, and verified portfolios.

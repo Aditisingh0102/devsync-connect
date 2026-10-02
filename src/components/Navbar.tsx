@@ -79,10 +79,8 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center gap-4">
         <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="size-9 rounded-xl bg-gradient-primary flex items-center justify-center shadow-glow">
-            <Sparkles className="size-5 text-white" />
-          </div>
-          <span className="font-display font-bold text-lg tracking-tight">DevSync</span>
+          <img src="/devsync_connect_logo_v3.ico" alt="DevSync Logo" className="size-9 rounded-xl object-contain drop-shadow-md" />
+          <span className="font-display font-bold text-lg tracking-tight">DevSync Connect</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 ml-6">
