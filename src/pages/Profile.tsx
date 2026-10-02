@@ -8,7 +8,7 @@ import { useApp } from "@/lib/store";
 import { api, getToken } from "@/lib/api";
 import PostCard from "@/components/PostCard";
 import FollowListModal from "@/components/FollowListModal";
-import FollowListModal from "@/components/FollowListModal";
+import PendingRequestsModal from "@/components/PendingRequestsModal";
 import ProjectCard from "@/components/ProjectCard";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -266,7 +266,7 @@ export default function Profile() {
   }, [profile?.skills, state.projects]);
 
   const isOwnProfile = state.currentUser && profile?.id === state.currentUser.id;
-  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following"}>({isOpen: false, type: "followers"});
+  const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: "followers" | "following" | "pendingRequests"}>({isOpen: false, type: "followers"});
   const profileStats: any = {
     posts: profilePosts.length,
     followers: profile?.follower_count ?? 0,
@@ -381,8 +381,14 @@ export default function Profile() {
           const handleClick = () => {
             if (k === "followers") setModalConfig({isOpen: true, type: "followers"});
             else if (k === "following") setModalConfig({isOpen: true, type: "following"});
-            else if (k === "posts") setTab("Posts");
-            else if (k === "pendingRequests") setTab("Requests");
+            else if (k === "posts") {
+              const element = document.getElementById("profile-tabs");
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth" });
+              }
+              setTab("Posts");
+            }
+            else if (k === "pendingRequests") setModalConfig({isOpen: true, type: "pendingRequests"});
           };
           return (
             <button key={k} onClick={handleClick} className={`ds-card p-5 text-left transition-colors ${k !== "matchScore" ? "hover:bg-secondary active:scale-95 cursor-pointer" : "cursor-default"}`}>
@@ -735,9 +741,17 @@ export default function Profile() {
           <Link to="/requests" className="mt-4 h-10 px-4 rounded-xl bg-primary text-white font-semibold text-sm inline-flex items-center justify-center hover:bg-primary-hover">Go to Requests</Link>
         </div>
       )}
+      <FollowListModal
+        isOpen={modalConfig.isOpen && (modalConfig.type === "followers" || modalConfig.type === "following")}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        type={modalConfig.type as any}
+        username={profile?.username}
+        isOwnProfile={isOwnProfile}
+      />
+      <PendingRequestsModal
+        isOpen={modalConfig.isOpen && modalConfig.type === "pendingRequests"}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+      />
     </div>
   );
 }
-
-
-
