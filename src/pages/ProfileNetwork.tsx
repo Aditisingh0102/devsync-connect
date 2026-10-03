@@ -28,7 +28,14 @@ export default function ProfileNetwork() {
         .then((data) => {
           if (Array.isArray(data)) setUsers(data);
         })
-        .catch((err) => { console.error(err); toast.error("Failed to load network data."); })
+        .catch((err) => { 
+          console.error(err); 
+          if (err.message && err.message.includes("Not Found")) {
+            toast.error("Endpoint not found. Please deploy the latest backend code to Render/EC2.");
+          } else {
+            toast.error("Failed to load network data."); 
+          }
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);

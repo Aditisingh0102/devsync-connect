@@ -71,7 +71,7 @@ export default function Dashboard() {
   const followerCount = dashData?.followers_count ?? me.followers?.length ?? 0;
   const followingCount = dashData?.following_count ?? me.following?.length ?? 0;
   const pendingRequestCount = dashData?.pending_requests_count ?? 0;
-  const recentPosts = dashData?.recent_posts ?? [];
+  const recentPosts = dashData?.posts ?? [];
   const recentRequests = dashData?.incoming_requests ?? [];
 
   return (

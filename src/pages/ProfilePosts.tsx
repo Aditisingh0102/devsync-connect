@@ -23,15 +23,15 @@ export default function ProfilePosts() {
       userPosts.sort((a: any, b: any) => +new Date(b.createdAt) - +new Date(a.createdAt));
       setPosts(userPosts);
       
-      // If we also want to ensure we have the latest, we can fetch getMe() and sync.
-      api.getMe().then((data) => {
+      // Fetch from getUserProfile because /users/me doesn't include posts_by_user
+      api.getUserProfile(me.username).then((data) => {
          if (data.posts_by_user) {
-            // Usually we'd dispatch to store, but let's just set them if store is empty
-            if (userPosts.length === 0) {
-              setPosts(data.posts_by_user);
-            }
+            setPosts(data.posts_by_user);
          }
-      }).catch((err) => { console.error(err); toast.error("Failed to load posts."); }).finally(() => setLoading(false));
+      }).catch((err) => { 
+        console.error(err); 
+        toast.error("Failed to load posts. Is your backend fully deployed?"); 
+      }).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
